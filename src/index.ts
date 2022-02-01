@@ -35,7 +35,6 @@ export class AvatarResolver implements AvatarResolver {
   }
 
   async getMetadata({ ens }: AvatarRequestOpts) {
-
     // retrieve registrar address and resolver object from ens name
     const [registrarAddress, resolver] = await Promise.all([
       this.provider.resolveName(ens),

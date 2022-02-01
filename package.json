@@ -39,16 +39,19 @@
   "size-limit": [
     {
       "path": "dist/avatar-resolver.cjs.production.min.js",
-      "limit": "200 KB"
+      "limit": "200 KB",
+      "ignore": ["jsdom"]
     },
     {
       "path": "dist/avatar-resolver.esm.js",
-      "limit": "150 KB"
+      "limit": "150 KB",
+      "ignore": ["jsdom"]
     }
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.5",
     "@types/dompurify": "^2.3.3",
+    "@types/jsdom": "^16.2.14",
     "@types/url-join": "^4.0.1",
     "husky": "^7.0.4",
     "size-limit": "^7.0.5",

@@ -7,7 +7,7 @@ import urlJoin from 'url-join';
 
 let domWindow = window;
 if (!domWindow) {
-  // if nodejs process run under nodejs require jsdom
+  // if js process run under nodejs require jsdom
   const { JSDOM } = require('jsdom');
   domWindow = new JSDOM('').window;
 }
@@ -31,7 +31,6 @@ export class BaseError extends Error {
 export interface NFTURIParsingError {}
 export class NFTURIParsingError extends BaseError {}
 
-
 export function isCID(hash: any) {
   // check if given string or object is a valid IPFS CID
   try {
@@ -47,17 +46,17 @@ export function isCID(hash: any) {
 
 export function parseNFT(uri: string, seperator: string = '/') {
   // parse valid nft spec (CAIP-22/CAIP-29)
-  // @see: 
+  // @see: https://github.com/ChainAgnostic/CAIPs/tree/master/CAIPs
   try {
     assert(uri, 'parameter URI cannot be empty');
 
-    if(uri.startsWith('did:nft:')) {
+    if (uri.startsWith('did:nft:')) {
       // convert DID to CAIP
       uri = uri.replace('did:nft:', '').replace(/_/g, '/');
     }
 
     const [reference, asset_namespace, tokenID] = uri.split(seperator);
-    const [_type, chainID] = reference.split(':');
+    const [, chainID] = reference.split(':');
     const [namespace, contractAddress] = asset_namespace.split(':');
 
     assert(chainID, 'chainID not found');
