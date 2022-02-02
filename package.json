@@ -40,12 +40,16 @@
     {
       "path": "dist/avatar-resolver.cjs.production.min.js",
       "limit": "200 KB",
-      "ignore": ["jsdom"]
+      "ignore": [
+        "jsdom"
+      ]
     },
     {
       "path": "dist/avatar-resolver.esm.js",
       "limit": "150 KB",
-      "ignore": ["jsdom"]
+      "ignore": [
+        "jsdom"
+      ]
     }
   ],
   "devDependencies": {
@@ -54,6 +58,7 @@
     "@types/jsdom": "^16.2.14",
     "@types/url-join": "^4.0.1",
     "husky": "^7.0.4",
+    "nock": "^13.2.2",
     "size-limit": "^7.0.5",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
