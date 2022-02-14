@@ -24,15 +24,20 @@ export default class ERC1155 {
     ]);
     if (!registrarAddress || !balance.gt(0)) return null;
 
-    const {uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
-        _resolvedUri = Buffer.from(resolvedURI.replace('data:application/json;base64,', ''), 'base64').toString();
+        _resolvedUri = Buffer.from(
+          resolvedURI.replace('data:application/json;base64,', ''),
+          'base64'
+        ).toString();
       }
       return JSON.parse(_resolvedUri);
     }
-    const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex));
+    const response = await fetch(
+      resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)
+    );
     return await response?.data;
   }
 }

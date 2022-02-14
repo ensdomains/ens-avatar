@@ -18,7 +18,7 @@ const DOMPurify = createDOMPurify(domWindow as any);
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
 const ipfsRegex = /(?<protocol>ipfs:\/|ipns:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w-.]+)(?<subtarget>\/.*)?/;
-const base64Regex = /data:([a-zA-Z\/-/+]*);base64,([^\"].*)/;
+const base64Regex = /data:([a-zA-Z\-/+]*);base64,([^"].*)/;
 
 export interface BaseError {}
 export class BaseError extends Error {
@@ -81,7 +81,7 @@ export function parseNFT(uri: string, seperator: string = '/') {
 export function resolveURI(
   uri: string,
   customGateway?: string
-): { uri: string; isOnChain: boolean, isEncoded: boolean } {
+): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
   const isEncoded = base64Regex.test(uri);
   if (isEncoded || uri.startsWith('http')) {
@@ -96,21 +96,21 @@ export function resolveURI(
     return {
       uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
       isOnChain: false,
-      isEncoded: false
+      isEncoded: false,
     };
   } else if (isCID(target)) {
     // Assume that it's a regular IPFS CID and not an IPNS key
     return {
       uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
       isOnChain: false,
-      isEncoded: false
+      isEncoded: false,
     };
   } else {
     // we may want to throw error here
     return {
-      uri: uri.replace(/^data:([a-zA-Z\/-/+]*);?([a-zA-Z0-9].*?,)?/, ''),
+      uri: uri.replace(/^data:([a-zA-Z\-/+]*);?([a-zA-Z0-9].*?,)?/, ''),
       isOnChain: true,
-      isEncoded: false
+      isEncoded: false,
     };
   }
 }

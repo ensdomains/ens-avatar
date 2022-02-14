@@ -20,11 +20,14 @@ export default class ERC721 {
     ]);
     if (owner.toLowerCase() !== registrarAddress.toLowerCase()) return null;
 
-    const {uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
-        _resolvedUri = Buffer.from(resolvedURI.replace('data:application/json;base64,', ''), 'base64').toString();
+        _resolvedUri = Buffer.from(
+          resolvedURI.replace('data:application/json;base64,', ''),
+          'base64'
+        ).toString();
       }
       return JSON.parse(_resolvedUri);
     }
