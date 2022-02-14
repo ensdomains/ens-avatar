@@ -1,5 +1,5 @@
 import { Contract } from '@ethersproject/contracts';
-import { fetch } from '../utils';
+import { fetch, resolveURI } from '../utils';
 
 const abi = [
   'function uri(uint256 _id) public view returns (string memory)',
@@ -23,7 +23,16 @@ export default class ERC1155 {
       registrarAddress && contract.balanceOf(registrarAddress, tokenID),
     ]);
     if (!registrarAddress || !balance.gt(0)) return null;
-    const response = await fetch(tokenURI.replace(/(?:0x)?{id}/, tokenIDHex));
+
+    const {uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    let _resolvedUri = resolvedURI;
+    if (isOnChain) {
+      if (isEncoded) {
+        _resolvedUri = Buffer.from(resolvedURI.replace('data:application/json;base64,', ''), 'base64').toString();
+      }
+      return JSON.parse(_resolvedUri);
+    }
+    const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex));
     return await response?.data;
   }
 }

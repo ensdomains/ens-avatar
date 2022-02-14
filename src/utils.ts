@@ -5,8 +5,10 @@ import { CID } from 'multiformats/cid';
 import isSVG from 'is-svg';
 import urlJoin from 'url-join';
 
-let domWindow = window;
-if (!domWindow) {
+let domWindow;
+try {
+  domWindow = window;
+} catch {
   // if js process run under nodejs require jsdom
   const { JSDOM } = require('jsdom');
   domWindow = new JSDOM('').window;
@@ -16,6 +18,7 @@ const DOMPurify = createDOMPurify(domWindow as any);
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
 const ipfsRegex = /(?<protocol>ipfs:\/|ipns:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w-.]+)(?<subtarget>\/.*)?/;
+const base64Regex = /data:([a-zA-Z\/-/+]*);base64,([^\"].*)/;
 
 export interface BaseError {}
 export class BaseError extends Error {
@@ -75,10 +78,14 @@ export function parseNFT(uri: string, seperator: string = '/') {
   }
 }
 
-export function resolveURI(uri: string, customGateway?: string): string {
+export function resolveURI(
+  uri: string,
+  customGateway?: string
+): { uri: string; isOnChain: boolean, isEncoded: boolean } {
   // resolves uri based on its' protocol
-  if (uri.startsWith('data:') || uri.startsWith('http')) {
-    return uri;
+  const isEncoded = base64Regex.test(uri);
+  if (isEncoded || uri.startsWith('http')) {
+    return { uri, isOnChain: isEncoded, isEncoded };
   }
 
   const ipfsGateway = customGateway || 'https://ipfs.io';
@@ -86,13 +93,25 @@ export function resolveURI(uri: string, customGateway?: string): string {
   const { protocol, subpath, target, subtarget = '' } =
     ipfsRegexpResult?.groups || {};
   if ((protocol === 'ipns:/' || subpath === 'ipns/') && target) {
-    return urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget);
+    return {
+      uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
+      isOnChain: false,
+      isEncoded: false
+    };
   } else if (isCID(target)) {
     // Assume that it's a regular IPFS CID and not an IPNS key
-    return urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget);
+    return {
+      uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
+      isOnChain: false,
+      isEncoded: false
+    };
   } else {
     // we may want to throw error here
-    return uri;
+    return {
+      uri: uri.replace(/^data:([a-zA-Z\/-/+]*);?([a-zA-Z0-9].*?,)?/, ''),
+      isOnChain: true,
+      isEncoded: false
+    };
   }
 }
 
@@ -108,7 +127,7 @@ export function getImageURI(meta: any, customGateway?: string) {
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
-  const parsedURI = resolveURI(_image, customGateway);
+  const { uri: parsedURI } = resolveURI(_image, customGateway);
 
   if (parsedURI.startsWith('data:') || parsedURI.startsWith('http')) {
     return parsedURI;
@@ -117,7 +136,7 @@ export function getImageURI(meta: any, customGateway?: string) {
   if (isSVG(parsedURI)) {
     // svg - image_data
     const data = _sanitize(parsedURI);
-    return data.toString('base64');
+    return `data:image/svg+xml;base64,${data.toString('base64')}`;
   }
   return null;
 }
