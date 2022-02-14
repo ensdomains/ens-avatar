@@ -19,7 +19,7 @@ yarn add @ensdomains/avatar-resolver
 
 ```js
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
-import { AvatarResolver } from '@ensdomains/avatar-resolver';
+import { AvatarResolver, utils: avtUtils } from '@ensdomains/avatar-resolver';
 
 const provider = new StaticJsonRpcProvider(
     ...
@@ -35,6 +35,8 @@ async function getAvatarMetadata() {
     const avt = new AvatarResolver(provider);
     const avatarMetadata = await avt.getMetadata({ ens: 'tanrikulu.eth' });
     // avatarMetadata = { image: ... , uri: ... , name: ... , description: ... }
+    const avatarURI = avtUtils.getImageURI(metadata);
+    // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
 ```
 
@@ -61,3 +63,17 @@ const avt = new AvatarResolver(provider, { ttl: 300 }); // 5 min response cache 
 const avt = new AvatarResolver(provider, { ipfs: 'https://dweb.link' });
 ```
 
+## Demo
+- Create .env file with INFURA_KEY env variable
+- Build the library
+
+- Node example
+```bash
+node example/node.js ENS_NAME
+```
+
+- Browser example
+```bash
+yarn build:demo
+http-server example
+```
