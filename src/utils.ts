@@ -1,23 +1,13 @@
-import { strict as assert } from 'assert';
 import axios from 'axios';
+import { Buffer } from 'buffer/';
 import createDOMPurify from 'dompurify';
 import { CID } from 'multiformats/cid';
 import isSVG from 'is-svg';
 import urlJoin from 'url-join';
 
-let domWindow;
-try {
-  domWindow = window;
-} catch {
-  // if js process run under nodejs require jsdom
-  const { JSDOM } = require('jsdom');
-  domWindow = new JSDOM('').window;
-}
-const DOMPurify = createDOMPurify(domWindow as any);
-
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
-const ipfsRegex = /(?<protocol>ipfs:\/|ipns:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w-.]+)(?<subtarget>\/.*)?/;
+const ipfsRegex = /(?<protocol>ipfs:\/|ipns:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
 const base64Regex = /data:([a-zA-Z\-/+]*);base64,([^"].*)/;
 
 export interface BaseError {}
@@ -28,6 +18,13 @@ export class BaseError extends Error {
     super(message);
 
     this.__proto__ = trueProto;
+  }
+}
+
+// simple assert without nested check
+function assert(condition: any, message: string) {
+  if (!condition) {
+    throw message;
   }
 }
 
@@ -115,15 +112,36 @@ export function resolveURI(
   }
 }
 
-function _sanitize(data: string): Buffer {
+function _sanitize(data: string, jsDomWindow?: any): Buffer {
+  let domWindow;
+  try {
+    domWindow = window;
+  } catch {
+    // if js process run under nodejs require jsdom window
+    if (!jsDomWindow) {
+      throw Error('In node environment JSDOM window is required');
+    }
+    domWindow = jsDomWindow;
+  }
+  const DOMPurify = createDOMPurify(domWindow as any);
   // purges malicious scripting from svg content
   const cleanDOM = DOMPurify.sanitize(data);
   return Buffer.from(cleanDOM);
 }
 
-export function getImageURI(meta: any, customGateway?: string) {
+export interface ImageURIOpts {
+  metadata: any;
+  customGateway?: string;
+  jsdomWindow?: any;
+}
+
+export function getImageURI({
+  metadata,
+  customGateway,
+  jsdomWindow,
+}: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
-  const { image, image_url, image_data } = meta;
+  const { image, image_url, image_data } = metadata;
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
@@ -135,7 +153,7 @@ export function getImageURI(meta: any, customGateway?: string) {
 
   if (isSVG(parsedURI)) {
     // svg - image_data
-    const data = _sanitize(parsedURI);
+    const data = _sanitize(parsedURI, jsdomWindow);
     return `data:image/svg+xml;base64,${data.toString('base64')}`;
   }
   return null;

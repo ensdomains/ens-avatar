@@ -11,6 +11,7 @@ const SPECS: { [key: string]: any } = Object.freeze({
 
 interface AvatarRequestOpts {
   ens: string;
+  jsdomWindow?: any;
 }
 
 interface AvatarResolverOpts {
@@ -83,7 +84,11 @@ export class AvatarResolver implements AvatarResolver {
   async getAvatar(data: AvatarRequestOpts): Promise<string | null> {
     const metadata = await this.getMetadata(data);
     if (!metadata) return null;
-    return getImageURI(metadata, this.options?.ipfs);
+    return getImageURI({
+      metadata,
+      customGateway: this.options?.ipfs,
+      jsdomWindow: data.jsdomWindow,
+    });
   }
 }
 

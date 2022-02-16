@@ -30,7 +30,7 @@ for (let ens of ensNames) {
     .getMetadata({ ens })
     .then(metadata => {
       console.log('metadata', ens, '-',metadata)
-      const avatar = avtUtils.getImageURI(metadata);
+      const avatar = avtUtils.getImageURI({ metadata });
       setImage(ens, avatar);
     })
     .catch(error => {

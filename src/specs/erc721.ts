@@ -1,4 +1,5 @@
 import { Contract } from '@ethersproject/contracts';
+import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
 
 const abi = [
