@@ -1,6 +1,6 @@
 # ens-avatar-resolver
 
-Avatar resolution library for both nodejs and browser.
+Avatar resolver library for both nodejs and browser.
 
 ## Getting started
 
