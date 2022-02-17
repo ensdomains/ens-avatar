@@ -11,6 +11,7 @@ const SPECS: { [key: string]: any } = Object.freeze({
 
 interface AvatarRequestOpts {
   ens: string;
+  jsdomWindow?: any;
 }
 
 interface AvatarResolverOpts {
@@ -49,14 +50,26 @@ export class AvatarResolver implements AvatarResolver {
     // test case-insensitive in case of uppercase records
     if (!/\/erc1155:|\/erc721:/i.test(avatarURI)) {
       const uriSpec = new URI();
-      return await uriSpec.getMetadata(avatarURI);
+      const metadata = await uriSpec.getMetadata(avatarURI);
+      return { uri: ens, ...metadata };
     }
 
     // parse retrieved avatar uri
-    const { namespace, contractAddress, tokenID } = parseNFT(avatarURI);
+    const { chainID, namespace, contractAddress, tokenID } = parseNFT(
+      avatarURI
+    );
     // detect avatar spec by namespace
     const spec = new SPECS[namespace]();
     if (!spec) return null;
+
+    // add meta information of the avatar record
+    const host_meta = {
+      chain_id: chainID,
+      namespace,
+      contract_address: contractAddress,
+      token_id: tokenID,
+      reference_url: `https://opensea.io/assets/${contractAddress}/${tokenID}`,
+    };
 
     // retrieve metadata
     const metadata = await spec.getMetadata(
@@ -65,12 +78,18 @@ export class AvatarResolver implements AvatarResolver {
       contractAddress,
       tokenID
     );
-    return metadata;
+    return { uri: ens, host_meta, ...metadata };
   }
 
   async getAvatar(data: AvatarRequestOpts): Promise<string | null> {
     const metadata = await this.getMetadata(data);
     if (!metadata) return null;
-    return getImageURI(metadata, this.options?.ipfs);
+    return getImageURI({
+      metadata,
+      customGateway: this.options?.ipfs,
+      jsdomWindow: data.jsdomWindow,
+    });
   }
 }
+
+export const utils = { getImageURI, parseNFT };

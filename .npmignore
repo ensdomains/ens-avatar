@@ -1,0 +1,11 @@
+*.log
+.DS_Store
+.env
+.github
+coverage
+example
+node_modules
+test
+.gitignore
+tsconfig.json
+yarn.lock

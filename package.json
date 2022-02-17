@@ -13,6 +13,7 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
+    "build:demo": "node ./example/build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
@@ -33,7 +34,7 @@
   "jest": {
     "testTimeout": 20000
   },
-  "name": "avatar-resolver",
+  "name": "@ensdomains/avatar-resolver",
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
   "module": "dist/avatar-resolver.esm.js",
   "size-limit": [
@@ -57,6 +58,8 @@
     "@types/dompurify": "^2.3.3",
     "@types/jsdom": "^16.2.14",
     "@types/url-join": "^4.0.1",
+    "dotenv": "^16.0.0",
+    "esbuild": "^0.14.21",
     "husky": "^7.0.4",
     "nock": "^13.2.2",
     "size-limit": "^7.0.5",
@@ -70,10 +73,10 @@
     "assert": "^2.0.0",
     "axios": "^0.25.0",
     "axios-cache-adapter": "^2.7.3",
+    "buffer": "^6.0.3",
     "cid": "multiformats/cid",
     "dompurify": "^2.3.5",
     "is-svg": "^4.3.2",
-    "jsdom": "^19.0.0",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"
   }

@@ -26,13 +26,15 @@ describe('resolve ipfs', () => {
 
   it('resolve different ipfs uri cases', async () => {
     for (let uri of ipfsCases) {
-      expect(resolveURI(uri)).toMatch(/^https:\/\/ipfs.io\/?/);
+      const { uri: resolvedURI } = resolveURI(uri);
+      expect(resolvedURI).toMatch(/^https:\/\/ipfs.io\/?/);
     }
   });
 
   it('resolve http and base64 cases', async () => {
     for (let uri of httpOrDataCases) {
-      expect(resolveURI(uri)).toMatch(/^(http(?:s)?:\/\/|data:).*$/);
+      const { uri: resolvedURI } = resolveURI(uri);
+      expect(resolvedURI).toMatch(/^(http(?:s)?:\/\/|data:).*$/);
     }
   });
 
@@ -40,7 +42,8 @@ describe('resolve ipfs', () => {
   // any other protocol than http, ipfs, data
   it('resolve ftp as it is', async () => {
     const uri = 'ftp://user:password@host:port/path';
-    expect(resolveURI(uri)).toMatch(/^(ftp:\/\/).*$/);
+    const { uri: resolvedURI } = resolveURI(uri);
+    expect(resolvedURI).toMatch(/^(ftp:\/\/).*$/);
   });
 
   it('check if given hash is CID', async () => {

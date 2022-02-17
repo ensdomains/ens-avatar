@@ -2,10 +2,12 @@ import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import nock from 'nock';
 import { AvatarResolver } from '../src';
 
+require('dotenv').config();
+
 const ENSRegistryWithFallback = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
 const PublicResolver = '0x4976fb03C32e5B8cfe2b6cCB31c09Ba78EBaBa41';
 const INFURA_URL = new URL(
-  'https://mainnet.infura.io/v3/372375d582d843c48a4eaee6aa5c1b3a'
+  `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
 const CORS_HEADERS = {
   'access-control-allow-credentials': true,

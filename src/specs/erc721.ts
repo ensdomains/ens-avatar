@@ -1,5 +1,6 @@
 import { Contract } from '@ethersproject/contracts';
-import { fetch } from '../utils';
+import { Buffer } from 'buffer/';
+import { fetch, resolveURI } from '../utils';
 
 const abi = [
   'function tokenURI(uint256 tokenId) external view returns (string memory)',
@@ -19,7 +20,19 @@ export default class ERC721 {
       registrarAddress && contract.ownerOf(tokenID),
     ]);
     if (owner.toLowerCase() !== registrarAddress.toLowerCase()) return null;
-    const response = await fetch(tokenURI.replace(/(?:0x)?{id}/, tokenID));
+
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    let _resolvedUri = resolvedURI;
+    if (isOnChain) {
+      if (isEncoded) {
+        _resolvedUri = Buffer.from(
+          resolvedURI.replace('data:application/json;base64,', ''),
+          'base64'
+        ).toString();
+      }
+      return JSON.parse(_resolvedUri);
+    }
+    const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
     return await response?.data;
   }
 }
