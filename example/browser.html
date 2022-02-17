@@ -6,12 +6,85 @@
     <title>ENS Avatar Resolver Demo</title>
   </head>
   <body>
-    <div id="avatars" />
+    <div class="container">
+      <div id="avatars"></div>
+      <div class="queryContainer">
+        <h2>Query ENS Avatar</h2>
+        <div>
+          <img class="queryImage" id="queryImage" width="300" height="300" src="./ens.png" />
+          <div>
+            <input
+              class="queryInput"
+              id="queryInput"
+              type="text"
+              placeholder="vitalik.eth"
+              autofocus
+              autocomplete="off"
+            />
+            <div class="hint">
+              (type ENS name and hit the enter button)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
   <style>
+    body {
+      font-family: 'Helvetica', serif;
+    }
     #avatars {
+      position: absolute;
+      inset: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fill, 300px);
+      background: black;
+      grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+      grid-template-rows: repeat(auto-fill, minmax(20rem, 1fr));
+      align-items: center;
+      justify-items: center;
+
+      transition: 0.2 grid-template-columns;
+      opacity: 0.3;
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
+    }
+    .hint {
+      margin-top: 0.5rem;
+      color: #aaa;
+    }
+    .queryContainer {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      opacity: 1;
+      width: 50%;
+      min-width: 20rem;
+      height: 30rem;
+      background-color: white;
+      border-radius: 1.5rem;
+      border: 1px solid #eee;
+      box-shadow: 0.2rem 0.4rem 1rem #ccc;
+      padding: 3rem 2.5rem;
+
+      /* text */
+      text-align: center;
+    }
+    .queryImage,
+    .queryInput {
+      border-radius: 0.3rem;
+    }
+    .queryImage {
+      object-fit: contain;
+    }
+    .queryInput {
+      width: 19rem;
+      box-sizing: border-box;
+      padding: 0.5rem 0.5rem;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 1.4rem;
+      border: 1px solid #bbb;
     }
   </style>
 </html>

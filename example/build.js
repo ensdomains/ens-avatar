@@ -3,7 +3,7 @@ require('esbuild')
   .build({
     bundle: true,
     entryPoints: ['example/browser.js'],
-    external: ['dotenv', 'jsdom'],
+    external: ['dotenv'],
     loader: {
       '.html': 'text',
     },
@@ -11,8 +11,6 @@ require('esbuild')
     define: {
       "process": `{
         "env": {
-          "NODE_ENV": 'production',
-          "NODE_DEBUG": false,
           "INFURA_KEY": '${process.env.INFURA_KEY}'
         },
       }`,
