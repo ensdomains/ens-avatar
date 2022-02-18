@@ -10,7 +10,7 @@ const abi = [
 export default class ERC1155 {
   async getMetadata(
     provider: any,
-    registrarAddress: string,
+    ownerAddress: string|undefined,
     contractAddress: string,
     tokenID: string
   ) {
@@ -21,9 +21,9 @@ export default class ERC1155 {
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, balance] = await Promise.all([
       contract.uri(tokenID),
-      registrarAddress && contract.balanceOf(registrarAddress, tokenID),
+      ownerAddress && contract.balanceOf(ownerAddress, tokenID),
     ]);
-    if (!registrarAddress || !balance.gt(0)) return null;
+    if (ownerAddress && balance.eq(0)) return null;
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
