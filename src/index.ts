@@ -5,7 +5,7 @@ import { createCacheAdapter, fetch, getImageURI, parseNFT } from './utils';
 import URI from './specs/uri';
 
 export interface Spec {
-  getMetadata(
+  getMetadata: (
     provider: BaseProvider,
     ownerAddress: string | undefined,
     contractAddress: string,
