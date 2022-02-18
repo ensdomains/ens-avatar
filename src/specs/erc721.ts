@@ -19,7 +19,9 @@ export default class ERC721 {
       contract.tokenURI(tokenID),
       ownerAddress && contract.ownerOf(tokenID),
     ]);
-    if (ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase()) return null;
+    if (ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase()) {
+      return null;
+    }
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
