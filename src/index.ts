@@ -13,7 +13,7 @@ export interface Spec {
   ) => Promise<any>;
 }
 
-export const specs: { [key: string]: () => Spec } = Object.freeze({
+export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
   erc1155: ERC1155,
 });
