@@ -1,3 +1,4 @@
+import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
@@ -9,17 +10,19 @@ const abi = [
 
 export default class ERC721 {
   async getMetadata(
-    provider: any,
-    registrarAddress: string,
+    provider: BaseProvider,
+    ownerAddress: string | undefined,
     contractAddress: string,
     tokenID: string
   ) {
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
       contract.tokenURI(tokenID),
-      registrarAddress && contract.ownerOf(tokenID),
+      ownerAddress && contract.ownerOf(tokenID),
     ]);
-    if (owner.toLowerCase() !== registrarAddress.toLowerCase()) return null;
+    if (ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase()) {
+      return null;
+    }
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;

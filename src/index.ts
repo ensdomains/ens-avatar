@@ -4,7 +4,16 @@ import ERC721 from './specs/erc721';
 import { createCacheAdapter, fetch, getImageURI, parseNFT } from './utils';
 import URI from './specs/uri';
 
-const SPECS: { [key: string]: any } = Object.freeze({
+export interface Spec {
+  getMetadata: (
+    provider: BaseProvider,
+    ownerAddress: string | undefined,
+    contractAddress: string,
+    tokenID: string
+  ) => Promise<any>;
+}
+
+export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
   erc1155: ERC1155,
 });
@@ -37,11 +46,11 @@ export class AvatarResolver implements AvatarResolver {
 
   async getMetadata({ ens }: AvatarRequestOpts) {
     // retrieve registrar address and resolver object from ens name
-    const [registrarAddress, resolver] = await Promise.all([
+    const [resolvedAddress, resolver] = await Promise.all([
       this.provider.resolveName(ens),
       this.provider.getResolver(ens),
     ]);
-    if (!registrarAddress || !resolver) return null;
+    if (!resolvedAddress || !resolver) return null;
 
     // retrieve 'avatar' text recored from resolver
     const avatarURI = await resolver.getText('avatar');
@@ -59,7 +68,7 @@ export class AvatarResolver implements AvatarResolver {
       avatarURI
     );
     // detect avatar spec by namespace
-    const spec = new SPECS[namespace]();
+    const spec = new specs[namespace]();
     if (!spec) return null;
 
     // add meta information of the avatar record
@@ -74,7 +83,7 @@ export class AvatarResolver implements AvatarResolver {
     // retrieve metadata
     const metadata = await spec.getMetadata(
       this.provider,
-      registrarAddress,
+      resolvedAddress,
       contractAddress,
       tokenID
     );
