@@ -5,11 +5,13 @@ const ensNames = [
   'achal.eth',
   'alisha.eth',
   'jefflau.eth',
+  'leontalbert.eth',
   'matoken.eth',
   'nick.eth',
   'ricmoo.eth',
   'tanrikulu.eth',
   'taytems.eth',
+  'validator.eth',
   'brantly.eth',
   'coinbase.eth',
   'she256.eth',
@@ -57,22 +59,44 @@ function fadeImg() {
   this.style.opacity = '1';
 }
 
-function setImage(ens, avatarUri = notFoundImage) {
+function setImage(ens, avatarUri = notFoundImage, warn = false) {
   const elem = document.getElementById('queryImage');
   elem.setAttribute('src', avatarUri);
   elem.setAttribute('alt', ens);
+  const warnText = document.getElementById('warnText');
+  if (warn) {
+    if (warnText) return;
+    const newWarnText = document.createElement('div');
+    newWarnText.id = 'warnText';
+    newWarnText.textContent = 'The query is not valid';
+    newWarnText.style.color = 'red';
+    newWarnText.style.lineHeight = '10px';
+    elem.setAttribute('height', 290);
+    elem.parentNode.insertBefore(newWarnText, elem.nextSibling);
+  } else {
+    elem.setAttribute('height', 300);
+    warnText && warnText.remove();
+  }
 }
 
 document.getElementById('queryInput').addEventListener('change', event => {
   let ens = event.target.value;
   ens = ens.toLowerCase().trim();
 
-  if (ens === 'nevergonnagiveyouup') {
-    setImage("nevergonnagiveyouup", 'http://ipfs.io/ipfs/QmPmU7h1rcZkivDntjvfh8BJB5Yk32ozMjPd12HNMoAZZ8');
+  if (ens === 'nevergonnagiveyouup' || ens === 'rickroll') {
+    setImage(
+      'rickroll',
+      'http://ipfs.io/ipfs/QmPmU7h1rcZkivDntjvfh8BJB5Yk32ozMjPd12HNMoAZZ8'
+    );
     return;
   }
 
   if (ens.length < 7 || !ens.endsWith('.eth')) {
+    setImage(
+      'fail',
+      'http://ipfs.io/ipfs/QmYVZtV4Xtbqqj6hKojgbLskf5b1rV2wNfpAwgZ2EBuQnD',
+      true
+    );
     return;
   }
 
