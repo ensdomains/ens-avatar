@@ -8,7 +8,8 @@ import urlJoin from 'url-join';
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
 const ipfsRegex = /(?<protocol>ipfs:\/|ipns:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
-const base64Regex = /data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+const base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+const dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
 
 export interface BaseError {}
 export class BaseError extends Error {
@@ -105,7 +106,7 @@ export function resolveURI(
   } else {
     // we may want to throw error here
     return {
-      uri: uri.replace(/^data:([a-zA-Z\-/+]*);?([a-zA-Z0-9].*?,)?/, ''),
+      uri: uri.replace(dataURIRegex, ''),
       isOnChain: true,
       isEncoded: false,
     };

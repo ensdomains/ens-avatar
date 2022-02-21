@@ -6,11 +6,43 @@ export default class URI {
     if (isOnChain) {
       return resolvedURI;
     }
-    const response = await fetch(resolvedURI);
-    const contentType = response.headers['content-type'];
-    if (contentType.startsWith('image/')) {
-      return { image: uri };
+
+    // check if resolvedURI is an image, if it is return the url
+    const isImage = await isImageURI(resolvedURI);
+    if (isImage) {
+      return { image: resolvedURI };
     }
+
+    // if resolvedURI is not an image, try retrieve the data.
+    const response = await fetch(resolvedURI);
     return await response?.data;
   }
+}
+
+function isImageURI(url: string) {
+  return new Promise(resolve => {
+    fetch({ url, method: 'HEAD' })
+      .then(result => {
+        if (result.status === 200) {
+          // retrieve content type header to check if content is image
+          const contentType = result.headers['content-type'];
+          resolve(contentType?.startsWith('image/'));
+        } else {
+          resolve(false);
+        }
+      })
+      .catch(error => {
+        // if error is not cors related then fail
+        if (typeof error.response !== 'undefined') resolve(false);
+        // in case of cors, use image api to validate if given url is an actual image
+        const img = new Image();
+        img.onload = () => {
+          resolve(true);
+        };
+        img.onerror = () => {
+          resolve(false);
+        };
+        img.src = url;
+      });
+  });
 }

@@ -255,6 +255,14 @@ describe('get avatar', () => {
     const MANIFEST_URI_TANRIKULU = new URL(
       'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
     );
+    /* mock head call */
+    nock(MANIFEST_URI_TANRIKULU.origin)
+      .head(MANIFEST_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    /* mock get call */
     nock(MANIFEST_URI_TANRIKULU.origin)
       .get(MANIFEST_URI_TANRIKULU.pathname)
       .reply(200, {}, {
