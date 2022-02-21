@@ -31,7 +31,7 @@ const provider = new StaticJsonRpcProvider(
 const avt = new AvatarResolver(provider);
 for (let ens of ensNames) {
   avt
-    .getMetadata({ ens })
+    .getMetadata(ens)
     .then(metadata => {
       const avatar = avtUtils.getImageURI({ metadata });
       createImage(ens, avatar);
@@ -104,7 +104,7 @@ document.getElementById('queryInput').addEventListener('change', event => {
   elem.style.filter = 'blur(5px) grayscale(70%)';
   elem.style.transition = 'filter .5s';
   avt
-    .getMetadata({ ens })
+    .getMetadata(ens)
     .then(metadata => {
       const avatar = avtUtils.getImageURI({ metadata });
       setImage(ens, avatar);
