@@ -35211,9 +35211,9 @@ if (cid) {
     }
   });
 
-  // node_modules/@ensdomains/avatar-resolver/dist/avatar-resolver.cjs.production.min.js
-  var require_avatar_resolver_cjs_production_min = __commonJS({
-    "node_modules/@ensdomains/avatar-resolver/dist/avatar-resolver.cjs.production.min.js"(exports) {
+  // dist/ens-avatar.cjs.production.min.js
+  var require_ens_avatar_cjs_production_min = __commonJS({
+    "dist/ens-avatar.cjs.production.min.js"(exports) {
       "use strict";
       init_define_process();
       function t(t2) {
@@ -35428,7 +35428,7 @@ if (cid) {
           u2(d2, o2, function() {
             return this;
           });
-          var v2 = Object.getPrototypeOf, y2 = v2 && v2(v2(j2([])));
+          var v2 = Object.getPrototypeOf, y2 = v2 && v2(v2(E2([])));
           y2 && y2 !== e3 && r2.call(y2, o2) && (d2 = y2);
           var g2 = h2.prototype = p2.prototype = Object.create(d2);
           function m2(t4) {
@@ -35491,7 +35491,7 @@ if (cid) {
           function _2(t4) {
             this.tryEntries = [{ tryLoc: "root" }], t4.forEach(x2, this), this.reset(true);
           }
-          function j2(t4) {
+          function E2(t4) {
             if (t4) {
               var e4 = t4[o2];
               if (e4)
@@ -35508,9 +35508,9 @@ if (cid) {
                 return a3.next = a3;
               }
             }
-            return { next: E2 };
+            return { next: j2 };
           }
-          function E2() {
+          function j2() {
             return { value: void 0, done: true };
           }
           return l2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", l2), l2.displayName = u2(h2, i2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
@@ -35544,7 +35544,7 @@ if (cid) {
               }
               return r4.done = true, r4;
             };
-          }, t3.values = j2, _2.prototype = { constructor: _2, reset: function(t4) {
+          }, t3.values = E2, _2.prototype = { constructor: _2, reset: function(t4) {
             if (this.prev = 0, this.next = 0, this.sent = this._sent = void 0, this.done = false, this.delegate = null, this.method = "next", this.arg = void 0, this.tryEntries.forEach(O2), !t4)
               for (var e4 in this)
                 e4.charAt(0) === "t" && r2.call(this, e4) && !isNaN(+e4.slice(1)) && (this[e4] = void 0);
@@ -35618,7 +35618,7 @@ if (cid) {
             }
             throw new Error("illegal catch attempt");
           }, delegateYield: function(t4, e4, r3) {
-            return this.delegate = { iterator: j2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), f2;
+            return this.delegate = { iterator: E2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), f2;
           } }, t3;
         }(t2.exports);
         try {
@@ -35628,8 +35628,9 @@ if (cid) {
         }
       }(b = { exports: {} }), b.exports);
       var x = c(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
-      var O = /data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      function _(t2, e2) {
+      var O = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var _ = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
+      function E(t2, e2) {
         if (!t2)
           throw e2;
       }
@@ -35645,17 +35646,17 @@ if (cid) {
         }
         return h(e2, t2), e2;
       }(m(Error)));
-      function E(t2, e2) {
+      function k(t2, e2) {
         e2 === void 0 && (e2 = "/");
         try {
-          _(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
+          E(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
           var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], a2 = r2[0].split(":")[1], i2 = n2.split(":"), u2 = i2[0], c2 = i2[1];
-          return _(a2, "chainID not found"), _(c2, "contractAddress not found"), _(u2, "namespace not found"), _(o2, "tokenID not found"), { chainID: Number(a2), namespace: u2.toLowerCase(), contractAddress: c2, tokenID: o2 };
+          return E(a2, "chainID not found"), E(c2, "contractAddress not found"), E(u2, "namespace not found"), E(o2, "tokenID not found"), { chainID: Number(a2), namespace: u2.toLowerCase(), contractAddress: c2, tokenID: o2 };
         } catch (e3) {
           throw new j(e3.message + " - " + t2);
         }
       }
-      function k(t2, e2) {
+      function L(t2, e2) {
         var r2 = O.test(t2);
         if (r2 || t2.startsWith("http"))
           return { uri: t2, isOnChain: r2, isEncoded: r2 };
@@ -35666,12 +35667,12 @@ if (cid) {
           } catch (t4) {
             return false;
           }
-        }(c2) ? { uri: u(n2, "/ipfs/", c2, f2), isOnChain: false, isEncoded: false } : { uri: t2.replace(/^data:([a-zA-Z\-/+]*);?([a-zA-Z0-9].*?,)?/, ""), isOnChain: true, isEncoded: false } : { uri: u(n2, "/ipns/", c2, f2), isOnChain: false, isEncoded: false };
+        }(c2) ? { uri: u(n2, "/ipfs/", c2, f2), isOnChain: false, isEncoded: false } : { uri: t2.replace(_, ""), isOnChain: true, isEncoded: false } : { uri: u(n2, "/ipns/", c2, f2), isOnChain: false, isEncoded: false };
       }
-      function L(t2) {
+      function I(t2) {
         var e2 = t2.metadata, n2 = t2.customGateway, a2 = t2.jsdomWindow, u2 = e2.image || e2.image_url || e2.image_data;
-        _(u2, "Image is not available");
-        var c2 = k(u2, n2).uri;
+        E(u2, "Image is not available");
+        var c2 = L(u2, n2).uri;
         return c2.startsWith("data:") || c2.startsWith("http") ? c2 : i(c2) ? "data:image/svg+xml;base64," + function(t3, e3) {
           var n3;
           try {
@@ -35685,16 +35686,16 @@ if (cid) {
           return r.Buffer.from(a3);
         }(c2, a2).toString("base64") : null;
       }
-      function I(t2) {
+      function S(t2) {
         return (0, require_cache().setupCache)({ maxAge: 1e3 * t2 }).adapter;
       }
-      function S(t2) {
+      function P(t2) {
         var e2 = t2.ttl, r2 = {};
-        return e2 && e2 > 0 && (r2 = { adapter: I(e2) }), n.create(r2);
+        return e2 && e2 > 0 && (r2 = { adapter: S(e2) }), n.create(r2);
       }
-      var P = S({});
-      var R = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
-      var C = function() {
+      var R = P({});
+      var C = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
+      var A = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
@@ -35704,21 +35705,21 @@ if (cid) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return u2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(a2, R, n2), t5.next = 4, Promise.all([c2.uri(i2), o2 && c2.balanceOf(o2, i2)]);
+                    return u2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(a2, C, n2), t5.next = 4, Promise.all([c2.uri(i2), o2 && c2.balanceOf(o2, i2)]);
                   case 4:
-                    if (f2 = (s2 = t5.sent)[0], p2 = s2[1], o2 && p2.gt(0)) {
+                    if (f2 = (s2 = t5.sent)[0], p2 = s2[1], !o2 || !p2.eq(0)) {
                       t5.next = 9;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 9:
-                    if (l2 = k(f2), d2 = l2.isEncoded, v2 = h2 = l2.uri, !l2.isOnChain) {
+                    if (l2 = L(f2), d2 = l2.isEncoded, v2 = h2 = l2.uri, !l2.isOnChain) {
                       t5.next = 14;
                       break;
                     }
                     return d2 && (v2 = r.Buffer.from(h2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(v2));
                   case 14:
-                    return t5.next = 16, P(h2.replace(/(?:0x)?{id}/, u2));
+                    return t5.next = 16, R(h2.replace(/(?:0x)?{id}/, u2));
                   case 16:
                     return y2 = t5.sent, t5.next = 19, y2 == null ? void 0 : y2.data;
                   case 19:
@@ -35735,33 +35736,33 @@ if (cid) {
         }(), t2;
       }();
       var N = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
-      var A = function() {
+      var D = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
           var t3 = f(w.mark(function t4(n2, o2, a2, i2) {
-            var u2, c2, s2, f2, p2, l2, h2, d2;
+            var u2, c2, s2, f2, p2, l2, h2, d2, v2;
             return w.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return u2 = new e.Contract(a2, N, n2), t5.next = 3, Promise.all([u2.tokenURI(i2), o2 && u2.ownerOf(i2)]);
                   case 3:
-                    if (s2 = (c2 = t5.sent)[0], c2[1].toLowerCase() === o2.toLowerCase()) {
+                    if (s2 = (c2 = t5.sent)[0], f2 = c2[1], !o2 || f2.toLowerCase() === o2.toLowerCase()) {
                       t5.next = 8;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 8:
-                    if (f2 = k(s2), l2 = f2.isEncoded, h2 = p2 = f2.uri, !f2.isOnChain) {
+                    if (p2 = L(s2), h2 = p2.isEncoded, d2 = l2 = p2.uri, !p2.isOnChain) {
                       t5.next = 13;
                       break;
                     }
-                    return l2 && (h2 = r.Buffer.from(p2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(h2));
+                    return h2 && (d2 = r.Buffer.from(l2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(d2));
                   case 13:
-                    return t5.next = 15, P(p2.replace(/(?:0x)?{id}/, i2));
+                    return t5.next = 15, R(l2.replace(/(?:0x)?{id}/, i2));
                   case 15:
-                    return d2 = t5.sent, t5.next = 18, d2 == null ? void 0 : d2.data;
+                    return v2 = t5.sent, t5.next = 18, v2 == null ? void 0 : v2.data;
                   case 18:
                     return t5.abrupt("return", t5.sent);
                   case 19:
@@ -35785,24 +35786,26 @@ if (cid) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    if (r2 = k(e2), n2 = r2.uri, !r2.isOnChain) {
+                    if (r2 = L(e2), n2 = r2.uri, !r2.isOnChain) {
                       t5.next = 3;
                       break;
                     }
                     return t5.abrupt("return", n2);
                   case 3:
-                    return t5.next = 5, P(n2);
+                    return t5.next = 5, T(n2);
                   case 5:
-                    if (!(o2 = t5.sent).headers["content-type"].startsWith("image/")) {
-                      t5.next = 9;
+                    if (!t5.sent) {
+                      t5.next = 8;
                       break;
                     }
-                    return t5.abrupt("return", { image: e2 });
-                  case 9:
-                    return t5.next = 11, o2 == null ? void 0 : o2.data;
-                  case 11:
+                    return t5.abrupt("return", { image: n2 });
+                  case 8:
+                    return t5.next = 10, R(n2);
+                  case 10:
+                    return o2 = t5.sent, t5.next = 13, o2 == null ? void 0 : o2.data;
+                  case 13:
                     return t5.abrupt("return", t5.sent);
-                  case 12:
+                  case 14:
                   case "end":
                     return t5.stop();
                 }
@@ -35813,53 +35816,72 @@ if (cid) {
           };
         }(), t2;
       }();
-      var D = Object.freeze({ erc721: A, erc1155: C });
-      var T = function() {
+      function T(t2) {
+        return new Promise(function(e2) {
+          R({ url: t2, method: "HEAD" }).then(function(t3) {
+            if (t3.status === 200) {
+              var r2 = t3.headers["content-type"];
+              e2(r2 == null ? void 0 : r2.startsWith("image/"));
+            } else
+              e2(false);
+          }).catch(function(r2) {
+            r2.response !== void 0 && e2(false);
+            var n2 = new Image();
+            n2.onload = function() {
+              e2(true);
+            }, n2.onerror = function() {
+              e2(false);
+            }, n2.src = t2;
+          });
+        });
+      }
+      var q = Object.freeze({ erc721: D, erc1155: A });
+      var G = function() {
         function t2(t3, e3) {
-          this.provider = t3, this.options = e3, e3 != null && e3.cache && (P.defaults.adapter = I(e3 == null ? void 0 : e3.cache));
+          this.provider = t3, this.options = e3, e3 != null && e3.cache && (R.defaults.adapter = S(e3 == null ? void 0 : e3.cache));
         }
         var e2 = t2.prototype;
         return e2.getMetadata = function() {
           var t3 = f(w.mark(function t4(e3) {
-            var r2, n2, o2, a2, i2, u2, c2, s2, f2, l2, h2, d2, v2;
+            var r2, n2, o2, a2, i2, u2, c2, s2, f2, l2, h2, d2;
             return w.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return r2 = e3.ens, t5.next = 3, Promise.all([this.provider.resolveName(r2), this.provider.getResolver(r2)]);
-                  case 3:
-                    if (a2 = (n2 = t5.sent)[1], (o2 = n2[0]) && a2) {
-                      t5.next = 8;
+                    return t5.next = 2, Promise.all([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
+                  case 2:
+                    if (o2 = (r2 = t5.sent)[1], (n2 = r2[0]) && o2) {
+                      t5.next = 7;
                       break;
                     }
                     return t5.abrupt("return", null);
-                  case 8:
-                    return t5.next = 10, a2.getText("avatar");
-                  case 10:
-                    if (i2 = t5.sent) {
-                      t5.next = 13;
+                  case 7:
+                    return t5.next = 9, o2.getText("avatar");
+                  case 9:
+                    if (a2 = t5.sent) {
+                      t5.next = 12;
                       break;
                     }
                     return t5.abrupt("return", null);
-                  case 13:
-                    if (/\/erc1155:|\/erc721:/i.test(i2)) {
-                      t5.next = 19;
+                  case 12:
+                    if (/\/erc1155:|\/erc721:/i.test(a2)) {
+                      t5.next = 18;
                       break;
                     }
-                    return u2 = new M(), t5.next = 17, u2.getMetadata(i2);
-                  case 17:
-                    return t5.abrupt("return", p({ uri: r2 }, t5.sent));
-                  case 19:
-                    if (c2 = E(i2), s2 = c2.chainID, l2 = c2.contractAddress, h2 = c2.tokenID, d2 = new D[f2 = c2.namespace]()) {
-                      t5.next = 23;
+                    return i2 = new M(), t5.next = 16, i2.getMetadata(a2);
+                  case 16:
+                    return t5.abrupt("return", p({ uri: e3 }, t5.sent));
+                  case 18:
+                    if (u2 = k(a2), c2 = u2.chainID, f2 = u2.contractAddress, l2 = u2.tokenID, h2 = new q[s2 = u2.namespace]()) {
+                      t5.next = 22;
                       break;
                     }
                     return t5.abrupt("return", null);
-                  case 23:
-                    return v2 = { chain_id: s2, namespace: f2, contract_address: l2, token_id: h2, reference_url: "https://opensea.io/assets/" + l2 + "/" + h2 }, t5.next = 26, d2.getMetadata(this.provider, o2, l2, h2);
-                  case 26:
-                    return t5.abrupt("return", p({ uri: r2, host_meta: v2 }, t5.sent));
-                  case 28:
+                  case 22:
+                    return d2 = { chain_id: c2, namespace: s2, contract_address: f2, token_id: l2, reference_url: "https://opensea.io/assets/" + f2 + "/" + l2 }, t5.next = 25, h2.getMetadata(this.provider, n2, f2, l2);
+                  case 25:
+                    return t5.abrupt("return", p({ uri: e3, host_meta: d2 }, t5.sent));
+                  case 27:
                   case "end":
                     return t5.stop();
                 }
@@ -35869,40 +35891,40 @@ if (cid) {
             return t3.apply(this, arguments);
           };
         }(), e2.getAvatar = function() {
-          var t3 = f(w.mark(function t4(e3) {
-            var r2, n2;
+          var t3 = f(w.mark(function t4(e3, r2) {
+            var n2, o2;
             return w.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return t5.next = 2, this.getMetadata(e3);
                   case 2:
-                    if (n2 = t5.sent) {
+                    if (o2 = t5.sent) {
                       t5.next = 5;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 5:
-                    return t5.abrupt("return", L({ metadata: n2, customGateway: (r2 = this.options) == null ? void 0 : r2.ipfs, jsdomWindow: e3.jsdomWindow }));
+                    return t5.abrupt("return", I({ metadata: o2, customGateway: (n2 = this.options) == null ? void 0 : n2.ipfs, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
                   case 6:
                   case "end":
                     return t5.stop();
                 }
             }, t4, this);
           }));
-          return function(e3) {
+          return function(e3, r2) {
             return t3.apply(this, arguments);
           };
         }(), t2;
       }();
-      var G = { getImageURI: L, parseNFT: E };
-      exports.AvatarResolver = T, exports.utils = G;
+      var W = { getImageURI: I, parseNFT: k };
+      exports.AvatarResolver = G, exports.specs = q, exports.utils = W;
     }
   });
 
-  // node_modules/@ensdomains/avatar-resolver/dist/avatar-resolver.cjs.development.js
-  var require_avatar_resolver_cjs_development = __commonJS({
-    "node_modules/@ensdomains/avatar-resolver/dist/avatar-resolver.cjs.development.js"(exports) {
+  // dist/ens-avatar.cjs.development.js
+  var require_ens_avatar_cjs_development = __commonJS({
+    "dist/ens-avatar.cjs.development.js"(exports) {
       "use strict";
       init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
@@ -36574,7 +36596,8 @@ if (cid) {
         target: 4,
         subtarget: 5
       });
-      var base64Regex = /data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
       var BaseError = /* @__PURE__ */ function(_Error) {
         _inheritsLoose(BaseError2, _Error);
         function BaseError2(message) {
@@ -36660,7 +36683,7 @@ if (cid) {
           };
         } else {
           return {
-            uri: uri.replace(/^data:([a-zA-Z\-/+]*);?([a-zA-Z0-9].*?,)?/, ""),
+            uri: uri.replace(dataURIRegex, ""),
             isOnChain: true,
             isEncoded: false
           };
@@ -36719,7 +36742,7 @@ if (cid) {
         }
         var _proto = ERC11552.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, registrarAddress, contractAddress, tokenID) {
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
             var tokenIDHex, contract, _yield$Promise$all, tokenURI, balance, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
@@ -36728,12 +36751,12 @@ if (cid) {
                     tokenIDHex = !tokenID.startsWith("https://api.opensea.io") ? tokenID.replace("0x", "").padStart(64, "0") : tokenID;
                     contract = new contracts.Contract(contractAddress, abi, provider2);
                     _context.next = 4;
-                    return Promise.all([contract.uri(tokenID), registrarAddress && contract.balanceOf(registrarAddress, tokenID)]);
+                    return Promise.all([contract.uri(tokenID), ownerAddress && contract.balanceOf(ownerAddress, tokenID)]);
                   case 4:
                     _yield$Promise$all = _context.sent;
                     tokenURI = _yield$Promise$all[0];
                     balance = _yield$Promise$all[1];
-                    if (!(!registrarAddress || !balance.gt(0))) {
+                    if (!(ownerAddress && balance.eq(0))) {
                       _context.next = 9;
                       break;
                     }
@@ -36778,7 +36801,7 @@ if (cid) {
         }
         var _proto = ERC7212.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, registrarAddress, contractAddress, tokenID) {
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
             var contract, _yield$Promise$all, tokenURI, owner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
@@ -36786,12 +36809,12 @@ if (cid) {
                   case 0:
                     contract = new contracts.Contract(contractAddress, abi$1, provider2);
                     _context.next = 3;
-                    return Promise.all([contract.tokenURI(tokenID), registrarAddress && contract.ownerOf(tokenID)]);
+                    return Promise.all([contract.tokenURI(tokenID), ownerAddress && contract.ownerOf(tokenID)]);
                   case 3:
                     _yield$Promise$all = _context.sent;
                     tokenURI = _yield$Promise$all[0];
                     owner = _yield$Promise$all[1];
-                    if (!(owner.toLowerCase() !== registrarAddress.toLowerCase())) {
+                    if (!(ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase())) {
                       _context.next = 8;
                       break;
                     }
@@ -36836,7 +36859,7 @@ if (cid) {
         var _proto = URI2.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
           var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(uri) {
-            var _resolveURI, resolvedURI, isOnChain, response, contentType;
+            var _resolveURI, resolvedURI, isOnChain, isImage, response;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
@@ -36849,23 +36872,26 @@ if (cid) {
                     return _context.abrupt("return", resolvedURI);
                   case 3:
                     _context.next = 5;
-                    return fetch2(resolvedURI);
+                    return isImageURI(resolvedURI);
                   case 5:
-                    response = _context.sent;
-                    contentType = response.headers["content-type"];
-                    if (!contentType.startsWith("image/")) {
-                      _context.next = 9;
+                    isImage = _context.sent;
+                    if (!isImage) {
+                      _context.next = 8;
                       break;
                     }
                     return _context.abrupt("return", {
-                      image: uri
+                      image: resolvedURI
                     });
-                  case 9:
-                    _context.next = 11;
+                  case 8:
+                    _context.next = 10;
+                    return fetch2(resolvedURI);
+                  case 10:
+                    response = _context.sent;
+                    _context.next = 13;
                     return response == null ? void 0 : response.data;
-                  case 11:
+                  case 13:
                     return _context.abrupt("return", _context.sent);
-                  case 12:
+                  case 14:
                   case "end":
                     return _context.stop();
                 }
@@ -36879,7 +36905,33 @@ if (cid) {
         }();
         return URI2;
       }();
-      var SPECS = /* @__PURE__ */ Object.freeze({
+      function isImageURI(url) {
+        return new Promise(function(resolve) {
+          fetch2({
+            url,
+            method: "HEAD"
+          }).then(function(result) {
+            if (result.status === 200) {
+              var contentType = result.headers["content-type"];
+              resolve(contentType == null ? void 0 : contentType.startsWith("image/"));
+            } else {
+              resolve(false);
+            }
+          })["catch"](function(error) {
+            if (typeof error.response !== "undefined")
+              resolve(false);
+            var img = new Image();
+            img.onload = function() {
+              resolve(true);
+            };
+            img.onerror = function() {
+              resolve(false);
+            };
+            img.src = url;
+          });
+        });
+      }
+      var specs = /* @__PURE__ */ Object.freeze({
         erc721: ERC721,
         erc1155: ERC1155
       });
@@ -36893,56 +36945,55 @@ if (cid) {
         }
         var _proto = AvatarResolver3.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(_ref) {
-            var ens, _yield$Promise$all, registrarAddress, resolver, avatarURI, uriSpec, _metadata, _parseNFT, chainID, namespace, contractAddress, tokenID, spec, host_meta, metadata;
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(ens) {
+            var _yield$Promise$all, resolvedAddress, resolver, avatarURI, uriSpec, _metadata, _parseNFT, chainID, namespace, contractAddress, tokenID, spec, host_meta, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
                   case 0:
-                    ens = _ref.ens;
-                    _context.next = 3;
+                    _context.next = 2;
                     return Promise.all([this.provider.resolveName(ens), this.provider.getResolver(ens)]);
-                  case 3:
+                  case 2:
                     _yield$Promise$all = _context.sent;
-                    registrarAddress = _yield$Promise$all[0];
+                    resolvedAddress = _yield$Promise$all[0];
                     resolver = _yield$Promise$all[1];
-                    if (!(!registrarAddress || !resolver)) {
-                      _context.next = 8;
+                    if (!(!resolvedAddress || !resolver)) {
+                      _context.next = 7;
                       break;
                     }
                     return _context.abrupt("return", null);
-                  case 8:
-                    _context.next = 10;
+                  case 7:
+                    _context.next = 9;
                     return resolver.getText("avatar");
-                  case 10:
+                  case 9:
                     avatarURI = _context.sent;
                     if (avatarURI) {
-                      _context.next = 13;
+                      _context.next = 12;
                       break;
                     }
                     return _context.abrupt("return", null);
-                  case 13:
+                  case 12:
                     if (/\/erc1155:|\/erc721:/i.test(avatarURI)) {
-                      _context.next = 19;
+                      _context.next = 18;
                       break;
                     }
                     uriSpec = new URI();
-                    _context.next = 17;
+                    _context.next = 16;
                     return uriSpec.getMetadata(avatarURI);
-                  case 17:
+                  case 16:
                     _metadata = _context.sent;
                     return _context.abrupt("return", _extends({
                       uri: ens
                     }, _metadata));
-                  case 19:
+                  case 18:
                     _parseNFT = parseNFT(avatarURI), chainID = _parseNFT.chainID, namespace = _parseNFT.namespace, contractAddress = _parseNFT.contractAddress, tokenID = _parseNFT.tokenID;
-                    spec = new SPECS[namespace]();
+                    spec = new specs[namespace]();
                     if (spec) {
-                      _context.next = 23;
+                      _context.next = 22;
                       break;
                     }
                     return _context.abrupt("return", null);
-                  case 23:
+                  case 22:
                     host_meta = {
                       chain_id: chainID,
                       namespace,
@@ -36950,15 +37001,15 @@ if (cid) {
                       token_id: tokenID,
                       reference_url: "https://opensea.io/assets/" + contractAddress + "/" + tokenID
                     };
-                    _context.next = 26;
-                    return spec.getMetadata(this.provider, registrarAddress, contractAddress, tokenID);
-                  case 26:
+                    _context.next = 25;
+                    return spec.getMetadata(this.provider, resolvedAddress, contractAddress, tokenID);
+                  case 25:
                     metadata = _context.sent;
                     return _context.abrupt("return", _extends({
                       uri: ens,
                       host_meta
                     }, metadata));
-                  case 28:
+                  case 27:
                   case "end":
                     return _context.stop();
                 }
@@ -36971,7 +37022,7 @@ if (cid) {
           return getMetadata;
         }();
         _proto.getAvatar = /* @__PURE__ */ function() {
-          var _getAvatar = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee2(data) {
+          var _getAvatar = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee2(ens, data) {
             var _this$options;
             var metadata;
             return runtime_1.wrap(function _callee2$(_context2) {
@@ -36979,7 +37030,7 @@ if (cid) {
                 switch (_context2.prev = _context2.next) {
                   case 0:
                     _context2.next = 2;
-                    return this.getMetadata(data);
+                    return this.getMetadata(ens);
                   case 2:
                     metadata = _context2.sent;
                     if (metadata) {
@@ -36991,7 +37042,7 @@ if (cid) {
                     return _context2.abrupt("return", getImageURI({
                       metadata,
                       customGateway: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
-                      jsdomWindow: data.jsdomWindow
+                      jsdomWindow: data == null ? void 0 : data.jsdomWindow
                     }));
                   case 6:
                   case "end":
@@ -37000,7 +37051,7 @@ if (cid) {
               }
             }, _callee2, this);
           }));
-          function getAvatar(_x2) {
+          function getAvatar(_x2, _x3) {
             return _getAvatar.apply(this, arguments);
           }
           return getAvatar;
@@ -37012,19 +37063,20 @@ if (cid) {
         parseNFT
       };
       exports.AvatarResolver = AvatarResolver2;
+      exports.specs = specs;
       exports.utils = utils;
     }
   });
 
-  // node_modules/@ensdomains/avatar-resolver/dist/index.js
+  // dist/index.js
   var require_dist = __commonJS({
-    "node_modules/@ensdomains/avatar-resolver/dist/index.js"(exports, module) {
+    "dist/index.js"(exports, module) {
       "use strict";
       init_define_process();
       if (define_process_default.env.NODE_ENV === "production") {
-        module.exports = require_avatar_resolver_cjs_production_min();
+        module.exports = require_ens_avatar_cjs_production_min();
       } else {
-        module.exports = require_avatar_resolver_cjs_development();
+        module.exports = require_ens_avatar_cjs_development();
       }
     }
   });
@@ -37037,11 +37089,13 @@ if (cid) {
     "achal.eth",
     "alisha.eth",
     "jefflau.eth",
+    "leontalbert.eth",
     "matoken.eth",
     "nick.eth",
     "ricmoo.eth",
     "tanrikulu.eth",
     "taytems.eth",
+    "validator.eth",
     "brantly.eth",
     "coinbase.eth",
     "she256.eth",
@@ -37056,7 +37110,7 @@ if (cid) {
   var provider = new StaticJsonRpcProvider(`https://mainnet.infura.io/v3/${define_process_default.env.INFURA_KEY}`);
   var avt = new AvatarResolver(provider);
   for (let ens of ensNames) {
-    avt.getMetadata({ ens }).then((metadata) => {
+    avt.getMetadata(ens).then((metadata) => {
       const avatar = avtUtils.getImageURI({ metadata });
       createImage(ens, avatar);
     }).catch((error) => {
@@ -37079,25 +37133,41 @@ if (cid) {
     this.style.transition = "opacity 2s";
     this.style.opacity = "1";
   }
-  function setImage(ens, avatarUri = notFoundImage) {
+  function setImage(ens, avatarUri = notFoundImage, warn = false) {
     const elem = document.getElementById("queryImage");
     elem.setAttribute("src", avatarUri);
     elem.setAttribute("alt", ens);
+    const warnText = document.getElementById("warnText");
+    if (warn) {
+      if (warnText)
+        return;
+      const newWarnText = document.createElement("div");
+      newWarnText.id = "warnText";
+      newWarnText.textContent = "The query is not valid";
+      newWarnText.style.color = "red";
+      newWarnText.style.lineHeight = "10px";
+      elem.setAttribute("height", 290);
+      elem.parentNode.insertBefore(newWarnText, elem.nextSibling);
+    } else {
+      elem.setAttribute("height", 300);
+      warnText && warnText.remove();
+    }
   }
   document.getElementById("queryInput").addEventListener("change", (event) => {
     let ens = event.target.value;
     ens = ens.toLowerCase().trim();
-    if (ens === "nevergonnagiveyouup") {
-      setImage("nevergonnagiveyouup", "http://ipfs.io/ipfs/QmPmU7h1rcZkivDntjvfh8BJB5Yk32ozMjPd12HNMoAZZ8");
+    if (ens === "nevergonnagiveyouup" || ens === "rickroll") {
+      setImage("rickroll", "http://ipfs.io/ipfs/QmPmU7h1rcZkivDntjvfh8BJB5Yk32ozMjPd12HNMoAZZ8");
       return;
     }
     if (ens.length < 7 || !ens.endsWith(".eth")) {
+      setImage("fail", "http://ipfs.io/ipfs/QmYVZtV4Xtbqqj6hKojgbLskf5b1rV2wNfpAwgZ2EBuQnD", true);
       return;
     }
     const elem = document.getElementById("queryImage");
     elem.style.filter = "blur(5px) grayscale(70%)";
     elem.style.transition = "filter .5s";
-    avt.getMetadata({ ens }).then((metadata) => {
+    avt.getMetadata(ens).then((metadata) => {
       const avatar = avtUtils.getImageURI({ metadata });
       setImage(ens, avatar);
       elem.style.filter = "none";
