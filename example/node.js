@@ -16,7 +16,7 @@ const provider = new StaticJsonRpcProvider(
 );
 const avt = new AvatarResolver(provider);
 avt
-  .getMetadata({ ens: process.argv[2] })
+  .getMetadata(ensName)
   .then(metadata => {
     if (!metadata) {
       console.log('Avatar not found!');

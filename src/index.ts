@@ -19,7 +19,6 @@ export const specs: { [key: string]: new () => Spec } = Object.freeze({
 });
 
 interface AvatarRequestOpts {
-  ens: string;
   jsdomWindow?: any;
 }
 
@@ -31,8 +30,8 @@ interface AvatarResolverOpts {
 export interface AvatarResolver {
   provider: BaseProvider;
   options?: AvatarResolverOpts;
-  getAvatar(data: AvatarRequestOpts): Promise<string | null>;
-  getMetadata(data: AvatarRequestOpts): Promise<string | null>;
+  getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
+  getMetadata(ens: string): Promise<string | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
@@ -44,7 +43,7 @@ export class AvatarResolver implements AvatarResolver {
     }
   }
 
-  async getMetadata({ ens }: AvatarRequestOpts) {
+  async getMetadata(ens: string) {
     // retrieve registrar address and resolver object from ens name
     const [resolvedAddress, resolver] = await Promise.all([
       this.provider.resolveName(ens),
@@ -90,13 +89,16 @@ export class AvatarResolver implements AvatarResolver {
     return { uri: ens, host_meta, ...metadata };
   }
 
-  async getAvatar(data: AvatarRequestOpts): Promise<string | null> {
-    const metadata = await this.getMetadata(data);
+  async getAvatar(
+    ens: string,
+    data?: AvatarRequestOpts
+  ): Promise<string | null> {
+    const metadata = await this.getMetadata(ens);
     if (!metadata) return null;
     return getImageURI({
       metadata,
       customGateway: this.options?.ipfs,
-      jsdomWindow: data.jsdomWindow,
+      jsdomWindow: data?.jsdomWindow,
     });
   }
 }
