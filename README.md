@@ -1,6 +1,6 @@
-# ens-avatar-resolver
+# ens-avatar
 
-Avatar resolution library for both nodejs and browser.
+Avatar resolver library for both nodejs and browser.
 
 ## Getting started
 
@@ -14,16 +14,16 @@ And good to go!
 
 ```bash
 # npm
-npm i @ensdomains/avatar-resolver
+npm i @ensdomains/ens-avatar
 # yarn
-yarn add @ensdomains/avatar-resolver
+yarn add @ensdomains/ens-avatar
 ```
 
 ### Usage
 
 ```js
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
-import { AvatarResolver, utils: avtUtils } from '@ensdomains/avatar-resolver';
+import { AvatarResolver, utils: avtUtils } from '@ensdomains/ens-avatar';
 
 // const { JSDOM } = require('jsdom'); on nodejs
 // const jsdom = new JSDOM().window; on nodejs

@@ -34,19 +34,19 @@
   "jest": {
     "testTimeout": 20000
   },
-  "name": "@ensdomains/avatar-resolver",
+  "name": "@ensdomains/ens-avatar",
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
-  "module": "dist/avatar-resolver.esm.js",
+  "module": "dist/ens-avatar.esm.js",
   "size-limit": [
     {
-      "path": "dist/avatar-resolver.cjs.production.min.js",
+      "path": "dist/ens-avatar.cjs.production.min.js",
       "limit": "200 KB",
       "ignore": [
         "jsdom"
       ]
     },
     {
-      "path": "dist/avatar-resolver.esm.js",
+      "path": "dist/ens-avatar.esm.js",
       "limit": "150 KB",
       "ignore": [
         "jsdom"

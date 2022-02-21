@@ -135,7 +135,7 @@ describe('get avatar', () => {
         },
         CORS_HEADERS as any
       );
-    expect(await avt.getAvatar({ ens: 'nick.eth' })).toEqual(
+    expect(await avt.getAvatar('nick.eth')).toEqual(
       'https://lh3.googleusercontent.com/hKHZTZSTmcznonu8I6xcVZio1IF76fq0XmcxnvUykC-FGuVJ75UPdLDlKJsfgVXH9wOSmkyHw0C39VAYtsGyxT7WNybjQ6s3fM3macE'
     );
   });
@@ -217,7 +217,7 @@ describe('get avatar', () => {
         },
         CORS_HEADERS as any
       );
-    expect(await avt.getAvatar({ ens: 'brantly.eth' })).toEqual(
+    expect(await avt.getAvatar('brantly.eth')).toEqual(
       'https://api.wrappedpunks.com/images/punks/2430.png'
     );
   });
@@ -255,13 +255,21 @@ describe('get avatar', () => {
     const MANIFEST_URI_TANRIKULU = new URL(
       'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
     );
+    /* mock head call */
+    nock(MANIFEST_URI_TANRIKULU.origin)
+      .head(MANIFEST_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    /* mock get call */
     nock(MANIFEST_URI_TANRIKULU.origin)
       .get(MANIFEST_URI_TANRIKULU.pathname)
       .reply(200, {}, {
         ...CORS_HEADERS,
         'content-type': 'image/png',
       } as any);
-    expect(await avt.getAvatar({ ens: 'tanrikulu.eth' })).toEqual(
+    expect(await avt.getAvatar('tanrikulu.eth')).toEqual(
       'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
     );
   });
