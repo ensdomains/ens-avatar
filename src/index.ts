@@ -31,7 +31,7 @@ export interface AvatarResolver {
   provider: BaseProvider;
   options?: AvatarResolverOpts;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
-  getMetadata(ens: string): Promise<string | null>;
+  getMetadata(ens: string): Promise<any | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
