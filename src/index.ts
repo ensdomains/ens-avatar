@@ -1,7 +1,7 @@
 import { BaseProvider } from '@ethersproject/providers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
-import { createCacheAdapter, fetch, getImageURI, parseNFT } from './utils';
+import { createCacheAdapter, fetch, getImageURI, parseNFT, resolveURI } from './utils';
 import URI from './specs/uri';
 
 export interface Spec {
@@ -103,4 +103,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-export const utils = { getImageURI, parseNFT };
+export const utils = { getImageURI, parseNFT, resolveURI };
