@@ -2,6 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
 import {
+  BaseError,
   createCacheAdapter,
   fetch,
   getImageURI,
@@ -23,6 +24,9 @@ export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
   erc1155: ERC1155,
 });
+
+export interface UnsupportedNamespace {}
+export class UnsupportedNamespace extends BaseError {}
 
 interface AvatarRequestOpts {
   jsdomWindow?: any;
@@ -62,7 +66,7 @@ export class AvatarResolver implements AvatarResolver {
     if (!avatarURI) return null;
 
     // test case-insensitive in case of uppercase records
-    if (!/\/erc1155:|\/erc721:/i.test(avatarURI)) {
+    if (!/eip155:/i.test(avatarURI)) {
       const uriSpec = new URI();
       const metadata = await uriSpec.getMetadata(avatarURI);
       return { uri: ens, ...metadata };
@@ -74,7 +78,8 @@ export class AvatarResolver implements AvatarResolver {
     );
     // detect avatar spec by namespace
     const spec = new specs[namespace]();
-    if (!spec) return null;
+    if (!spec)
+      throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
 
     // add meta information of the avatar record
     const host_meta = {
