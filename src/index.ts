@@ -77,9 +77,10 @@ export class AvatarResolver implements AvatarResolver {
       avatarURI
     );
     // detect avatar spec by namespace
-    const spec = new specs[namespace]();
-    if (!spec)
+    const Spec = specs[namespace];
+    if (!Spec)
       throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
+    const spec = new Spec();
 
     // add meta information of the avatar record
     const host_meta = {
