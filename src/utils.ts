@@ -72,7 +72,7 @@ export function parseNFT(uri: string, seperator: string = '/') {
       tokenID,
     };
   } catch (error) {
-    throw new NFTURIParsingError(`${(error as string)} - ${uri}`);
+    throw new NFTURIParsingError(`${error as string} - ${uri}`);
   }
 }
 

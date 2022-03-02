@@ -277,7 +277,7 @@ describe('get avatar', () => {
   it('sets cache to 1 sec', async () => {
     const avt = new AvatarResolver(provider, { cache: 1 });
     expect(avt?.options?.cache).toEqual(1);
-  })
+  });
 
   // it('retrieves image uri with custom nested uri', async () => {
   //   expect(await avt.getAvatar({ ens: 'testname.eth' })).toEqual(
