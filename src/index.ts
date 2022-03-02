@@ -1,7 +1,14 @@
 import { BaseProvider } from '@ethersproject/providers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
-import { createCacheAdapter, fetch, getImageURI, parseNFT } from './utils';
+import {
+  BaseError,
+  createCacheAdapter,
+  fetch,
+  getImageURI,
+  parseNFT,
+  resolveURI,
+} from './utils';
 import URI from './specs/uri';
 
 export interface Spec {
@@ -18,6 +25,9 @@ export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc1155: ERC1155,
 });
 
+export interface UnsupportedNamespace {}
+export class UnsupportedNamespace extends BaseError {}
+
 interface AvatarRequestOpts {
   jsdomWindow?: any;
 }
@@ -31,7 +41,7 @@ export interface AvatarResolver {
   provider: BaseProvider;
   options?: AvatarResolverOpts;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
-  getMetadata(ens: string): Promise<string | null>;
+  getMetadata(ens: string): Promise<any | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
@@ -56,7 +66,7 @@ export class AvatarResolver implements AvatarResolver {
     if (!avatarURI) return null;
 
     // test case-insensitive in case of uppercase records
-    if (!/\/erc1155:|\/erc721:/i.test(avatarURI)) {
+    if (!/eip155:/i.test(avatarURI)) {
       const uriSpec = new URI();
       const metadata = await uriSpec.getMetadata(avatarURI);
       return { uri: ens, ...metadata };
@@ -67,8 +77,10 @@ export class AvatarResolver implements AvatarResolver {
       avatarURI
     );
     // detect avatar spec by namespace
-    const spec = new specs[namespace]();
-    if (!spec) return null;
+    const Spec = specs[namespace];
+    if (!Spec)
+      throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
+    const spec = new Spec();
 
     // add meta information of the avatar record
     const host_meta = {
@@ -103,4 +115,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-export const utils = { getImageURI, parseNFT };
+export const utils = { getImageURI, parseNFT, resolveURI };

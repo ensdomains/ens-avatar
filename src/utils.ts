@@ -23,7 +23,7 @@ export class BaseError extends Error {
 }
 
 // simple assert without nested check
-function assert(condition: any, message: string) {
+export function assert(condition: any, message: string) {
   if (!condition) {
     throw message;
   }
@@ -72,7 +72,7 @@ export function parseNFT(uri: string, seperator: string = '/') {
       tokenID,
     };
   } catch (error) {
-    throw new NFTURIParsingError(`${(error as Error).message} - ${uri}`);
+    throw new NFTURIParsingError(`${error as string} - ${uri}`);
   }
 }
 
