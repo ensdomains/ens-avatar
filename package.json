@@ -19,7 +19,6 @@
     "prepare": "tsdx build",
     "size": "size-limit"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -74,10 +73,12 @@
     "axios": "^0.25.0",
     "axios-cache-interceptor": "^0.9.3",
     "buffer": "^6.0.3",
-    "cid": "multiformats/cid",
     "dompurify": "^2.3.5",
     "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"
+  },
+  "volta": {
+    "node": "16.14.0"
   }
 }
