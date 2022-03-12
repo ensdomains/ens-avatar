@@ -48,8 +48,8 @@ export class AvatarResolver implements AvatarResolver {
   constructor(provider: BaseProvider, options?: AvatarResolverOpts) {
     this.provider = provider;
     this.options = options;
-    if (options?.cache) {
-      fetch.defaults.adapter = createCacheAdapter(options?.cache);
+    if (options?.cache && options?.cache > 0) {
+      createCacheAdapter(fetch, options?.cache);
     }
   }
 
