@@ -62,7 +62,7 @@ async function getAvatarMetadata() {
 
 ### Cache _(Default: Disabled)_
 ```js
-const avt = new AvatarResolver(provider, { ttl: 300 }); // 5 min response cache in memory
+const avt = new AvatarResolver(provider, { cache: 300 }); // 5 min response cache in memory
 ```
 
 ### Custom IPFS Gateway _(Default: https://ipfs.io)_
