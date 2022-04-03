@@ -1,5 +1,12 @@
 import { CID } from 'multiformats/cid';
-import { assert, BaseError, isCID, parseNFT, resolveURI } from '../src/utils';
+import {
+  assert,
+  BaseError,
+  isCID,
+  parseNFT,
+  resolveURI,
+  getImageURI,
+} from '../src/utils';
 
 describe('resolve ipfs', () => {
   const ipfsCases = [
@@ -93,5 +100,29 @@ describe('resolve ipfs', () => {
     expect(() => parseNFT(uri)).toThrow(
       'tokenID not found - eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e'
     );
+  });
+
+  it('retrieve image of given metadata', () => {
+    const metadata = {
+      image: ipfsCases[0],
+    };
+    const uri = getImageURI({ metadata });
+    expect(uri).toBe(`https://ipfs.io/${ipfsCases[0].replace('ipfs://', '')}`);
+  });
+
+  it('retrieve image of given metadata', () => {
+    const metadata = {
+      image: ipfsCases[1],
+    };
+    const uri = getImageURI({ metadata });
+    expect(uri).toBe(`https://ipfs.io/${ipfsCases[1].replace('ipfs://', '')}`);
+  });
+
+  it('retrieve image of given metadata', () => {
+    const metadata = {
+      image: ipfsCases[2],
+    };
+    const uri = getImageURI({ metadata });
+    expect(uri).toBe(`https://ipfs.io/ipfs/${ipfsCases[2]}`);
   });
 });
