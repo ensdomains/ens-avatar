@@ -15,6 +15,7 @@ export default class ERC1155 {
     contractAddress: string,
     tokenID: string
   ) {
+    let isOwner = false;
     // exclude opensea api which does not follow erc1155 spec
     const tokenIDHex = !tokenID.startsWith('https://api.opensea.io')
       ? tokenID.replace('0x', '').padStart(64, '0')
@@ -24,7 +25,7 @@ export default class ERC1155 {
       contract.uri(tokenID),
       ownerAddress && contract.balanceOf(ownerAddress, tokenID),
     ]);
-    if (ownerAddress && balance.eq(0)) return null;
+    if (ownerAddress && !balance.eq(0)) isOwner = true;
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
@@ -40,6 +41,7 @@ export default class ERC1155 {
     const response = await fetch(
       resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)
     );
-    return await response?.data;
+    const metadata = await response?.data;
+    return { ...metadata, is_owner: isOwner };
   }
 }

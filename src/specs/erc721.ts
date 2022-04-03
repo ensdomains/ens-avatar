@@ -15,13 +15,14 @@ export default class ERC721 {
     contractAddress: string,
     tokenID: string
   ) {
+    let isOwner = false;
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
       contract.tokenURI(tokenID),
       ownerAddress && contract.ownerOf(tokenID),
     ]);
-    if (ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase()) {
-      return null;
+    if (ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()) {
+      isOwner = true;
     }
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
@@ -36,6 +37,7 @@ export default class ERC721 {
       return JSON.parse(_resolvedUri);
     }
     const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
-    return await response?.data;
+    const metadata = await response?.data;
+    return { ...metadata, is_owner: isOwner };
   }
 }
