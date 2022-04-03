@@ -15,15 +15,13 @@ export default class ERC721 {
     contractAddress: string,
     tokenID: string
   ) {
-    let isOwner = false;
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
       contract.tokenURI(tokenID),
       ownerAddress && contract.ownerOf(tokenID),
     ]);
-    if (ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()) {
-      isOwner = true;
-    }
+    // if user has valid address and if owner of the nft matches with the owner address
+    const isOwner = !!(ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase());
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
