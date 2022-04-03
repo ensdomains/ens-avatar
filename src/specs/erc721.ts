@@ -21,7 +21,9 @@ export default class ERC721 {
       ownerAddress && contract.ownerOf(tokenID),
     ]);
     // if user has valid address and if owner of the nft matches with the owner address
-    const isOwner = !!(ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase());
+    const isOwner = !!(
+      ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
+    );
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
