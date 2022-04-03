@@ -20,9 +20,10 @@ export default class ERC721 {
       contract.tokenURI(tokenID),
       ownerAddress && contract.ownerOf(tokenID),
     ]);
-    if (ownerAddress && owner.toLowerCase() !== ownerAddress.toLowerCase()) {
-      return null;
-    }
+    // if user has valid address and if owner of the nft matches with the owner address
+    const isOwner = !!(
+      ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
+    );
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
@@ -36,6 +37,7 @@ export default class ERC721 {
       return JSON.parse(_resolvedUri);
     }
     const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
-    return await response?.data;
+    const metadata = await response?.data;
+    return { ...metadata, is_owner: isOwner };
   }
 }

@@ -24,7 +24,8 @@ export default class ERC1155 {
       contract.uri(tokenID),
       ownerAddress && contract.balanceOf(ownerAddress, tokenID),
     ]);
-    if (ownerAddress && balance.eq(0)) return null;
+    // if user has valid address and if token balance of given address is greater than 0
+    const isOwner = !!(ownerAddress && balance.gt(0));
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
     let _resolvedUri = resolvedURI;
@@ -40,6 +41,7 @@ export default class ERC1155 {
     const response = await fetch(
       resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)
     );
-    return await response?.data;
+    const metadata = await response?.data;
+    return { ...metadata, is_owner: isOwner };
   }
 }

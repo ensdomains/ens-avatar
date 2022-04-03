@@ -1,7 +1,7 @@
 import axios, { Axios } from 'axios';
 import { Buffer } from 'buffer/';
 import createDOMPurify from 'dompurify';
-import { CID } from 'multiformats/cid';
+import { CID } from 'multiformats';
 import isSVG from 'is-svg';
 import urlJoin from 'url-join';
 
