@@ -66,7 +66,7 @@ export function parseNFT(uri: string, seperator: string = '/') {
     );
     assert(chainID, 'chainID not found');
     assert(contractAddress, 'contractAddress not found');
-    assert(erc_namespace, 'namespace not found');
+    assert(erc_namespace, 'erc namespace not found');
     assert(tokenID, 'tokenID not found');
 
     return {
