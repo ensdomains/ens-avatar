@@ -57,17 +57,21 @@ export function parseNFT(uri: string, seperator: string = '/') {
     }
 
     const [reference, asset_namespace, tokenID] = uri.split(seperator);
-    const [, chainID] = reference.split(':');
-    const [namespace, contractAddress] = asset_namespace.split(':');
+    const [eip_namespace, chainID] = reference.split(':');
+    const [erc_namespace, contractAddress] = asset_namespace.split(':');
 
+    assert(
+      eip_namespace && eip_namespace.toLowerCase() === 'eip155',
+      'Only EIP-155 is supported'
+    );
     assert(chainID, 'chainID not found');
     assert(contractAddress, 'contractAddress not found');
-    assert(namespace, 'namespace not found');
+    assert(erc_namespace, 'erc namespace not found');
     assert(tokenID, 'tokenID not found');
 
     return {
       chainID: Number(chainID),
-      namespace: namespace.toLowerCase(),
+      namespace: erc_namespace.toLowerCase(),
       contractAddress,
       tokenID,
     };
