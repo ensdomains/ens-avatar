@@ -11,7 +11,7 @@ const abi = [
 export default class ERC1155 {
   async getMetadata(
     provider: BaseProvider,
-    ownerAddress: string | undefined,
+    ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string
   ) {
