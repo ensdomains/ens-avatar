@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios, { Axios } from 'axios';
 import { Buffer } from 'buffer/';
 import createDOMPurify from 'dompurify';
-import { CID } from 'multiformats/cid';
+import { CID } from 'multiformats';
 import isSVG from 'is-svg';
 import urlJoin from 'url-join';
 
@@ -23,10 +23,20 @@ export class BaseError extends Error {
 }
 
 // simple assert without nested check
-function assert(condition: any, message: string) {
+export function assert(condition: any, message: string) {
   if (!condition) {
     throw message;
   }
+}
+
+export async function handleSettled(promises: Promise<any>[]) {
+  const values = [];
+  const results = await Promise.allSettled(promises);
+  for (let result of results) {
+    if (result.status === 'fulfilled') values.push(result.value);
+    else if (result.status === 'rejected') values.push(null);
+  }
+  return values;
 }
 
 export interface NFTURIParsingError {}
@@ -57,22 +67,26 @@ export function parseNFT(uri: string, seperator: string = '/') {
     }
 
     const [reference, asset_namespace, tokenID] = uri.split(seperator);
-    const [, chainID] = reference.split(':');
-    const [namespace, contractAddress] = asset_namespace.split(':');
+    const [eip_namespace, chainID] = reference.split(':');
+    const [erc_namespace, contractAddress] = asset_namespace.split(':');
 
+    assert(
+      eip_namespace && eip_namespace.toLowerCase() === 'eip155',
+      'Only EIP-155 is supported'
+    );
     assert(chainID, 'chainID not found');
     assert(contractAddress, 'contractAddress not found');
-    assert(namespace, 'namespace not found');
+    assert(erc_namespace, 'erc namespace not found');
     assert(tokenID, 'tokenID not found');
 
     return {
       chainID: Number(chainID),
-      namespace: namespace.toLowerCase(),
+      namespace: erc_namespace.toLowerCase(),
       contractAddress,
       tokenID,
     };
   } catch (error) {
-    throw new NFTURIParsingError(`${(error as Error).message} - ${uri}`);
+    throw new NFTURIParsingError(`${error as string} - ${uri}`);
   }
 }
 
@@ -160,23 +174,20 @@ export function getImageURI({
   return null;
 }
 
-export function createCacheAdapter(ttl: number) {
+export function createCacheAdapter(fetch: Axios, ttl: number) {
   // creates cache adapter for axios
-  const { setupCache } = require('axios-cache-adapter');
-  const cache = setupCache({
-    maxAge: ttl * 1000,
+  const { setupCache } = require('axios-cache-interceptor');
+  setupCache(fetch, {
+    ttl: ttl * 1000,
   });
-  return cache.adapter;
 }
 
 function createFetcher({ ttl }: { ttl?: number }) {
-  let options = {};
+  const _fetch = axios.create();
   if (ttl && ttl > 0) {
-    options = {
-      adapter: createCacheAdapter(ttl),
-    };
+    createCacheAdapter(_fetch, ttl);
   }
-  return axios.create(options);
+  return _fetch;
 }
 
 export const fetch = createFetcher({});

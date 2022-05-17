@@ -34,13 +34,13 @@ const provider = new StaticJsonRpcProvider(
 ...
 async function getAvatar() {
     const avt = new AvatarResolver(provider);
-    const avatarURI = await avt.getAvatar({ ens: 'tanrikulu.eth' /*, jsdomWindow: jsdom (on nodejs) */ });
+    const avatarURI = await avt.getAvatar('tanrikulu.eth', { /* jsdomWindow: jsdom (on nodejs) */ });
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
 
 async function getAvatarMetadata() {
     const avt = new AvatarResolver(provider);
-    const avatarMetadata = await avt.getMetadata({ ens: 'tanrikulu.eth' });
+    const avatarMetadata = await avt.getMetadata('tanrikulu.eth');
     // avatarMetadata = { image: ... , uri: ... , name: ... , description: ... }
     const avatarURI = avtUtils.getImageURI({ metadata /*, jsdomWindow: jsdom (on nodejs) */ });
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
@@ -62,7 +62,7 @@ async function getAvatarMetadata() {
 
 ### Cache _(Default: Disabled)_
 ```js
-const avt = new AvatarResolver(provider, { ttl: 300 }); // 5 min response cache in memory
+const avt = new AvatarResolver(provider, { cache: 300 }); // 5 min response cache in memory
 ```
 
 ### Custom IPFS Gateway _(Default: https://ipfs.io)_

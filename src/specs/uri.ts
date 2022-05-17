@@ -33,8 +33,16 @@ function isImageURI(url: string) {
       })
       .catch(error => {
         // if error is not cors related then fail
-        if (typeof error.response !== 'undefined') resolve(false);
-        // in case of cors, use image api to validate if given url is an actual image
+        if (typeof error.response !== 'undefined') {
+          // in case of cors, use image api to validate if given url is an actual image
+          resolve(false);
+          return;
+        }
+        if (!globalThis.hasOwnProperty('Image')) {
+          // fail in NodeJS, since the error is not cors but any other network issue
+          resolve(false);
+          return;
+        }
         const img = new Image();
         img.onload = () => {
           resolve(true);

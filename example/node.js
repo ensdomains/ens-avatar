@@ -9,7 +9,7 @@ if (!ensName) {
   console.log(
     'Please provide an ENS name as an argument (> node demo.js nick.eth)'
   );
-  return;
+  process.exit(1);
 }
 const provider = new StaticJsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.5",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -19,7 +19,6 @@
     "prepare": "tsdx build",
     "size": "size-limit"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -72,12 +71,14 @@
     "@ethersproject/providers": "^5.5.2",
     "assert": "^2.0.0",
     "axios": "^0.25.0",
-    "axios-cache-adapter": "^2.7.3",
+    "axios-cache-interceptor": "^0.9.3",
     "buffer": "^6.0.3",
-    "cid": "multiformats/cid",
     "dompurify": "^2.3.5",
     "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"
+  },
+  "volta": {
+    "node": "16.14.0"
   }
 }
