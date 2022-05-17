@@ -6,6 +6,7 @@ import {
   createCacheAdapter,
   fetch,
   getImageURI,
+  handleSettled,
   parseNFT,
   resolveURI,
 } from './utils';
@@ -14,7 +15,7 @@ import URI from './specs/uri';
 export interface Spec {
   getMetadata: (
     provider: BaseProvider,
-    ownerAddress: string | undefined,
+    ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string
   ) => Promise<any>;
@@ -55,11 +56,11 @@ export class AvatarResolver implements AvatarResolver {
 
   async getMetadata(ens: string) {
     // retrieve registrar address and resolver object from ens name
-    const [resolvedAddress, resolver] = await Promise.all([
+    const [resolvedAddress, resolver] = await handleSettled([
       this.provider.resolveName(ens),
       this.provider.getResolver(ens),
     ]);
-    if (!resolvedAddress || !resolver) return null;
+    if (!resolver) return null;
 
     // retrieve 'avatar' text recored from resolver
     const avatarURI = await resolver.getText('avatar');
