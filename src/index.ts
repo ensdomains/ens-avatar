@@ -36,6 +36,7 @@ interface AvatarRequestOpts {
 interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
+  maxContentLength?: number;
 }
 
 export interface AvatarResolver {
@@ -51,6 +52,9 @@ export class AvatarResolver implements AvatarResolver {
     this.options = options;
     if (options?.cache && options?.cache > 0) {
       createCacheAdapter(fetch, options?.cache);
+    }
+    if (options?.maxContentLength && options?.maxContentLength > 0) {
+      fetch.defaults.maxContentLength = options?.maxContentLength;
     }
   }
 

@@ -182,8 +182,16 @@ export function createCacheAdapter(fetch: Axios, ttl: number) {
   });
 }
 
-function createFetcher({ ttl }: { ttl?: number }) {
-  const _fetch = axios.create();
+function createFetcher({
+  ttl,
+  maxContentLength,
+}: {
+  ttl?: number;
+  maxContentLength?: number;
+}) {
+  const _fetch = axios.create({
+    ...(maxContentLength && { maxContentLength }),
+  });
   if (ttl && ttl > 0) {
     createCacheAdapter(_fetch, ttl);
   }
