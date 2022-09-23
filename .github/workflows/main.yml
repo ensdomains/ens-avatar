@@ -20,9 +20,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
+          cache: 'yarn'
 
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
+      - run: yarn install --immutable --immutable-cache --check-cache
 
       - name: Lint
         run: yarn lint
