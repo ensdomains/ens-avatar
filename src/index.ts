@@ -113,7 +113,7 @@ export class AvatarResolver implements AvatarResolver {
       metadata,
       gateways: {
         ipfs: this.options?.ipfs,
-        arweave: this.options?.arweave
+        arweave: this.options?.arweave,
       },
       jsdomWindow: data?.jsdomWindow,
     });

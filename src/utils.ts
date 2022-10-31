@@ -91,13 +91,13 @@ export function parseNFT(uri: string, seperator: string = '/') {
 }
 
 type Gateways = {
- ipfs?: string,
- arweave?: string
-}
+  ipfs?: string;
+  arweave?: string;
+};
 
 export function resolveURI(
   uri: string,
-  gateways?: Gateways,
+  gateways?: Gateways
 ): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
   const isEncoded = base64Regex.test(uri);
@@ -123,7 +123,7 @@ export function resolveURI(
       isOnChain: false,
       isEncoded: false,
     };
-  } else if(protocol === 'ar:/' && target && subtarget) {
+  } else if (protocol === 'ar:/' && target && subtarget) {
     return {
       uri: urlJoin(arGateway, target, subtarget),
       isOnChain: false,
@@ -162,11 +162,7 @@ export interface ImageURIOpts {
   jsdomWindow?: any;
 }
 
-export function getImageURI({
-  metadata,
-  gateways,
-  jsdomWindow,
-}: ImageURIOpts) {
+export function getImageURI({ metadata, gateways, jsdomWindow }: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
   const { image, image_url, image_data } = metadata;
 
