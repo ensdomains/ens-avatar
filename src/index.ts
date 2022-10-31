@@ -36,6 +36,7 @@ interface AvatarRequestOpts {
 interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
+  arweave?: string;
 }
 
 export interface AvatarResolver {
@@ -110,7 +111,10 @@ export class AvatarResolver implements AvatarResolver {
     if (!metadata) return null;
     return getImageURI({
       metadata,
-      customGateway: this.options?.ipfs,
+      gateways: {
+        ipfs: this.options?.ipfs,
+        arweave: this.options?.arweave
+      },
       jsdomWindow: data?.jsdomWindow,
     });
   }
