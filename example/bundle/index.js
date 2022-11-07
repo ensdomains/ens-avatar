@@ -35797,22 +35797,22 @@ if (cid) {
           return r2.prototype = Object.create(t3.prototype, { constructor: { value: r2, enumerable: false, writable: true, configurable: true } }), v(r2, t3);
         })(t2);
       }
-      function b(t2, e2) {
+      function w(t2, e2) {
         (e2 == null || e2 > t2.length) && (e2 = t2.length);
         for (var r2 = 0, n2 = new Array(e2); r2 < e2; r2++)
           n2[r2] = t2[r2];
         return n2;
       }
-      function w(t2, e2) {
+      function b(t2, e2) {
         var r2 = typeof Symbol != "undefined" && t2[Symbol.iterator] || t2["@@iterator"];
         if (r2)
           return (r2 = r2.call(t2)).next.bind(r2);
         if (Array.isArray(t2) || (r2 = function(t3, e3) {
           if (t3) {
             if (typeof t3 == "string")
-              return b(t3, void 0);
+              return w(t3, void 0);
             var r3 = Object.prototype.toString.call(t3).slice(8, -1);
-            return r3 === "Object" && t3.constructor && (r3 = t3.constructor.name), r3 === "Map" || r3 === "Set" ? Array.from(t3) : r3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r3) ? b(t3, void 0) : void 0;
+            return r3 === "Object" && t3.constructor && (r3 = t3.constructor.name), r3 === "Map" || r3 === "Set" ? Array.from(t3) : r3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r3) ? w(t3, void 0) : void 0;
           }
         }(t2)) || e2 && t2 && typeof t2.length == "number") {
           r2 && (t2 = r2);
@@ -35852,7 +35852,7 @@ if (cid) {
                 for (r4.method = o4, r4.arg = i4; ; ) {
                   var a3 = r4.delegate;
                   if (a3) {
-                    var u3 = w2(a3, r4);
+                    var u3 = b2(a3, r4);
                     if (u3) {
                       if (u3 === f2)
                         continue;
@@ -35908,7 +35908,7 @@ if (cid) {
               });
             });
           }
-          function b2(t4, e4) {
+          function w2(t4, e4) {
             var n3;
             this._invoke = function(o3, i3) {
               function a3() {
@@ -35934,11 +35934,11 @@ if (cid) {
               return n3 = n3 ? n3.then(a3, a3) : a3();
             };
           }
-          function w2(t4, e4) {
+          function b2(t4, e4) {
             var r3 = t4.iterator[e4.method];
             if (r3 === void 0) {
               if (e4.delegate = null, e4.method === "throw") {
-                if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, w2(t4, e4), e4.method === "throw"))
+                if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, b2(t4, e4), e4.method === "throw"))
                   return f2;
                 e4.method = "throw", e4.arg = new TypeError("The iterator does not provide a 'throw' method");
               }
@@ -35990,11 +35990,11 @@ if (cid) {
             return Object.setPrototypeOf ? Object.setPrototypeOf(t4, h2) : (t4.__proto__ = h2, u2(t4, a2, "GeneratorFunction")), t4.prototype = Object.create(g2), t4;
           }, t3.awrap = function(t4) {
             return { __await: t4 };
-          }, m2(b2.prototype), u2(b2.prototype, i2, function() {
+          }, m2(w2.prototype), u2(w2.prototype, i2, function() {
             return this;
-          }), t3.AsyncIterator = b2, t3.async = function(e4, r3, n3, o3, i3) {
+          }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, i3) {
             i3 === void 0 && (i3 = Promise);
-            var a3 = new b2(c2(e4, r3, n3, o3), i3);
+            var a3 = new w2(c2(e4, r3, n3, o3), i3);
             return t3.isGeneratorFunction(r3) ? a3 : a3.next().then(function(t4) {
               return t4.done ? t4.value : a3.next();
             });
@@ -36099,7 +36099,7 @@ if (cid) {
       }(x = { exports: {} }), x.exports);
       var _ = c(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
       var j = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var E = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
+      var E = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
       var k = function(t2) {
         function e2(r2) {
           var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
@@ -36123,7 +36123,7 @@ if (cid) {
                 case 0:
                   return r2 = [], t3.next = 3, Promise.allSettled(e2);
                 case 3:
-                  for (n2 = w(t3.sent); !(o2 = n2()).done; )
+                  for (n2 = b(t3.sent); !(o2 = n2()).done; )
                     (i2 = o2.value).status === "fulfilled" ? r2.push(i2.value) : i2.status === "rejected" && r2.push(null);
                   return t3.abrupt("return", r2);
                 case 6:
@@ -36139,7 +36139,7 @@ if (cid) {
         }
         return h(e2, t2), e2;
       }(k);
-      function A(t2, e2) {
+      function R(t2, e2) {
         e2 === void 0 && (e2 = "/");
         try {
           L(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
@@ -36149,7 +36149,7 @@ if (cid) {
           throw new P(e3 + " - " + t2);
         }
       }
-      function C(t2, e2) {
+      function A(t2, e2) {
         var r2 = j.test(t2);
         if (r2 || t2.startsWith("http"))
           return { uri: t2, isOnChain: r2, isEncoded: r2 };
@@ -36162,10 +36162,10 @@ if (cid) {
           }
         }(c2) ? { uri: u(n2, "/ipfs/", c2, f2), isOnChain: false, isEncoded: false } : { uri: t2.replace(E, ""), isOnChain: true, isEncoded: false } : { uri: u(n2, "/ipns/", c2, f2), isOnChain: false, isEncoded: false };
       }
-      function R(t2) {
+      function C(t2) {
         var e2 = t2.metadata, n2 = t2.customGateway, i2 = t2.jsdomWindow, u2 = e2.image || e2.image_url || e2.image_data;
         L(u2, "Image is not available");
-        var c2 = C(u2, n2).uri;
+        var c2 = A(u2, n2).uri;
         return c2.startsWith("data:") || c2.startsWith("http") ? c2 : a(c2) ? "data:image/svg+xml;base64," + function(t3, e3) {
           var n3;
           try {
@@ -36200,7 +36200,7 @@ if (cid) {
                   case 0:
                     return u2 = a2.startsWith("https://api.opensea.io") ? a2 : a2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(i2, D, n2), t5.next = 4, Promise.all([c2.uri(a2), o2 && c2.balanceOf(o2, a2)]);
                   case 4:
-                    if (f2 = (s2 = t5.sent)[0], l2 = s2[1], h2 = !(!o2 || !l2.gt(0)), d2 = C(f2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
+                    if (f2 = (s2 = t5.sent)[0], l2 = s2[1], h2 = !(!o2 || !l2.gt(0)), d2 = A(f2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
                       t5.next = 13;
                       break;
                     }
@@ -36228,25 +36228,25 @@ if (cid) {
         }
         return t2.prototype.getMetadata = function() {
           var t3 = f(O.mark(function t4(n2, o2, i2, a2) {
-            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2;
+            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2, m2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return u2 = new e.Contract(i2, W, n2), t5.next = 3, Promise.all([u2.tokenURI(a2), o2 && u2.ownerOf(a2)]);
                   case 3:
-                    if (s2 = (c2 = t5.sent)[0], f2 = c2[1], l2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), h2 = C(s2), v2 = h2.isEncoded, y2 = d2 = h2.uri, !h2.isOnChain) {
-                      t5.next = 12;
+                    if (s2 = (c2 = t5.sent)[0], f2 = c2[1], l2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), h2 = A(s2), v2 = h2.isEncoded, y2 = d2 = h2.uri, !h2.isOnChain) {
+                      t5.next = 13;
                       break;
                     }
-                    return v2 && (y2 = r.Buffer.from(d2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(y2));
-                  case 12:
-                    return t5.next = 14, T(d2.replace(/(?:0x)?{id}/, a2));
-                  case 14:
-                    return g2 = t5.sent, t5.next = 17, g2 == null ? void 0 : g2.data;
-                  case 17:
+                    return v2 && (y2 = r.Buffer.from(d2.replace("data:application/json;base64,", ""), "base64").toString()), g2 = JSON.parse(decodeURI(y2)), t5.abrupt("return", p({}, g2, { is_owner: l2 }));
+                  case 13:
+                    return t5.next = 15, T(d2.replace(/(?:0x)?{id}/, a2));
+                  case 15:
+                    return m2 = t5.sent, t5.next = 18, m2 == null ? void 0 : m2.data;
+                  case 18:
                     return t5.abrupt("return", p({}, t5.sent, { is_owner: l2 }));
-                  case 19:
+                  case 20:
                   case "end":
                     return t5.stop();
                 }
@@ -36267,7 +36267,7 @@ if (cid) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    if (r2 = C(e2), n2 = r2.uri, !r2.isOnChain) {
+                    if (r2 = A(e2), n2 = r2.uri, !r2.isOnChain) {
                       t5.next = 3;
                       break;
                     }
@@ -36364,7 +36364,7 @@ if (cid) {
                   case 16:
                     return t5.abrupt("return", p({ uri: e3 }, t5.sent));
                   case 18:
-                    if (u2 = A(i2), c2 = u2.chainID, f2 = u2.contractAddress, l2 = u2.tokenID, h2 = B[s2 = u2.namespace]) {
+                    if (u2 = R(i2), c2 = u2.chainID, f2 = u2.contractAddress, l2 = u2.tokenID, h2 = B[s2 = u2.namespace]) {
                       t5.next = 22;
                       break;
                     }
@@ -36397,7 +36397,7 @@ if (cid) {
                     }
                     return t5.abrupt("return", null);
                   case 5:
-                    return t5.abrupt("return", R({ metadata: o2, customGateway: (n2 = this.options) == null ? void 0 : n2.ipfs, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
+                    return t5.abrupt("return", C({ metadata: o2, customGateway: (n2 = this.options) == null ? void 0 : n2.ipfs, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
                   case 6:
                   case "end":
                     return t5.stop();
@@ -36409,7 +36409,7 @@ if (cid) {
           };
         }(), t2;
       }();
-      var J = { getImageURI: R, parseNFT: A, resolveURI: C };
+      var J = { getImageURI: C, parseNFT: R, resolveURI: A };
       exports.AvatarResolver = Z, exports.UnsupportedNamespace = z, exports.specs = B, exports.utils = J;
     }
   });
@@ -37130,7 +37130,7 @@ if (cid) {
         subtarget: 5
       });
       var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
+      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
       var BaseError = /* @__PURE__ */ function(_Error) {
         _inheritsLoose(BaseError2, _Error);
         function BaseError2(message) {
@@ -37363,7 +37363,7 @@ if (cid) {
         var _proto = ERC7212.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
           var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
-            var contract, _yield$Promise$all, tokenURI, owner, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response, metadata;
+            var contract, _yield$Promise$all, tokenURI, owner, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, _metadata, response, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
@@ -37379,26 +37379,29 @@ if (cid) {
                     _resolveURI = resolveURI(tokenURI), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
                     _resolvedUri = resolvedURI;
                     if (!isOnChain) {
-                      _context.next = 12;
+                      _context.next = 13;
                       break;
                     }
                     if (isEncoded) {
                       _resolvedUri = _.Buffer.from(resolvedURI.replace("data:application/json;base64,", ""), "base64").toString();
                     }
-                    return _context.abrupt("return", JSON.parse(_resolvedUri));
-                  case 12:
-                    _context.next = 14;
+                    _metadata = JSON.parse(decodeURI(_resolvedUri));
+                    return _context.abrupt("return", _extends({}, _metadata, {
+                      is_owner: isOwner
+                    }));
+                  case 13:
+                    _context.next = 15;
                     return fetch2(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
-                  case 14:
+                  case 15:
                     response = _context.sent;
-                    _context.next = 17;
+                    _context.next = 18;
                     return response == null ? void 0 : response.data;
-                  case 17:
+                  case 18:
                     metadata = _context.sent;
                     return _context.abrupt("return", _extends({}, metadata, {
                       is_owner: isOwner
                     }));
-                  case 19:
+                  case 20:
                   case "end":
                     return _context.stop();
                 }
