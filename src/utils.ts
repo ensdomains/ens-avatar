@@ -97,12 +97,21 @@ type Gateways = {
 
 export function resolveURI(
   uri: string,
-  gateways?: Gateways
+  gateways?: Gateways,
+  customGateway?: string
 ): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
   const isEncoded = base64Regex.test(uri);
   if (isEncoded || uri.startsWith('http')) {
     return { uri, isOnChain: isEncoded, isEncoded };
+  }
+
+  // customGateway option will be depreciated after 2 more version bump
+  if (!gateways?.ipfs && !!customGateway) {
+    console.warn(
+      "'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"
+    );
+    gateways = { ...gateways, ipfs: customGateway };
   }
 
   const ipfsGateway = gateways?.ipfs || 'https://ipfs.io';
@@ -158,17 +167,23 @@ function _sanitize(data: string, jsDomWindow?: any): Buffer {
 
 export interface ImageURIOpts {
   metadata: any;
+  customGateway?: string;
   gateways?: Gateways;
   jsdomWindow?: any;
 }
 
-export function getImageURI({ metadata, gateways, jsdomWindow }: ImageURIOpts) {
+export function getImageURI({
+  metadata,
+  customGateway,
+  gateways,
+  jsdomWindow,
+}: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
   const { image, image_url, image_data } = metadata;
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
-  const { uri: parsedURI } = resolveURI(_image, gateways);
+  const { uri: parsedURI } = resolveURI(_image, gateways, customGateway);
 
   if (parsedURI.startsWith('data:') || parsedURI.startsWith('http')) {
     return parsedURI;
