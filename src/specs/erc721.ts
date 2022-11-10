@@ -34,7 +34,8 @@ export default class ERC721 {
           'base64'
         ).toString();
       }
-      return JSON.parse(_resolvedUri);
+      const metadata = JSON.parse(decodeURI(_resolvedUri));
+      return { ...metadata, is_owner: isOwner };
     }
     const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
     const metadata = await response?.data;
