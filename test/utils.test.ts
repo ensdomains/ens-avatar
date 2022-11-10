@@ -47,7 +47,6 @@ describe('resolve ipfs', () => {
   it('resolve different arweave uri cases', () => {
     for (let uri of arweaveCases) {
       const { uri: resolvedURI } = resolveURI(uri);
-      console.log('resolvedURI', resolvedURI);
       expect(resolvedURI).toMatch(/^https:\/\/arweave.net\/?/);
     }
   });
