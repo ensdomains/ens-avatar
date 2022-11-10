@@ -12,7 +12,7 @@ if (!ensName) {
   process.exit(1);
 }
 const provider = new StaticJsonRpcProvider(
-  `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
+  `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`
 );
 const avt = new AvatarResolver(provider);
 avt
@@ -24,7 +24,9 @@ avt
     }
     const avatar = avtUtils.getImageURI({
       metadata,
-      customGateway: 'https://dweb.link',
+      gateways: {
+        ipfs: 'https://dweb.link',
+      },
       jsdomWindow: jsdom,
     });
     console.log(avatar);

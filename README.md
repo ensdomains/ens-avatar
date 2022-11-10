@@ -70,6 +70,11 @@ const avt = new AvatarResolver(provider, { cache: 300 }); // 5 min response cach
 const avt = new AvatarResolver(provider, { ipfs: 'https://dweb.link' });
 ```
 
+### Custom Arweave Gateway _(Default: https://arweave.net)_
+```js
+const avt = new AvatarResolver(provider, { arweave: 'https://arweave.net' });
+```
+
 ## Demo
 - Create .env file with INFURA_KEY env variable
 - Build the library

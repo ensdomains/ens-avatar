@@ -25,6 +25,12 @@ describe('resolve ipfs', () => {
     '/ipns/github.com',
   ];
 
+  const arweaveCases = [
+    'ar://rgW4h3ffQQzOD8ynnwdl3_YlHxtssqV3aXOregPr7yI/1',
+    'ar://rgW4h3ffQQzOD8ynnwdl3_YlHxtssqV3aXOregPr7yI/1.json',
+    'ar://tnLgkAg70wsn9fSr1sxJKG_qcka1gJtmUwXm_3_lDaI/1.png',
+  ];
+
   const httpOrDataCases = [
     'https://i.imgur.com/yed5Zfk.gif',
     'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
@@ -35,6 +41,13 @@ describe('resolve ipfs', () => {
     for (let uri of ipfsCases) {
       const { uri: resolvedURI } = resolveURI(uri);
       expect(resolvedURI).toMatch(/^https:\/\/ipfs.io\/?/);
+    }
+  });
+
+  it('resolve different arweave uri cases', () => {
+    for (let uri of arweaveCases) {
+      const { uri: resolvedURI } = resolveURI(uri);
+      expect(resolvedURI).toMatch(/^https:\/\/arweave.net\/?/);
     }
   });
 
