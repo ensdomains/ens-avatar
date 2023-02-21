@@ -35714,7 +35714,7 @@ if (cid) {
         }
         u2.done ? e2(c2) : Promise.resolve(c2).then(n2, o2);
       }
-      function f(t2) {
+      function p(t2) {
         return function() {
           var e2 = this, r2 = arguments;
           return new Promise(function(n2, o2) {
@@ -35729,8 +35729,8 @@ if (cid) {
           });
         };
       }
-      function p() {
-        return (p = Object.assign || function(t2) {
+      function f() {
+        return (f = Object.assign || function(t2) {
           for (var e2 = 1; e2 < arguments.length; e2++) {
             var r2 = arguments[e2];
             for (var n2 in r2)
@@ -35797,22 +35797,22 @@ if (cid) {
           return r2.prototype = Object.create(t3.prototype, { constructor: { value: r2, enumerable: false, writable: true, configurable: true } }), v(r2, t3);
         })(t2);
       }
-      function b(t2, e2) {
+      function w(t2, e2) {
         (e2 == null || e2 > t2.length) && (e2 = t2.length);
         for (var r2 = 0, n2 = new Array(e2); r2 < e2; r2++)
           n2[r2] = t2[r2];
         return n2;
       }
-      function w(t2, e2) {
+      function b(t2, e2) {
         var r2 = typeof Symbol != "undefined" && t2[Symbol.iterator] || t2["@@iterator"];
         if (r2)
           return (r2 = r2.call(t2)).next.bind(r2);
         if (Array.isArray(t2) || (r2 = function(t3, e3) {
           if (t3) {
             if (typeof t3 == "string")
-              return b(t3, void 0);
+              return w(t3, void 0);
             var r3 = Object.prototype.toString.call(t3).slice(8, -1);
-            return r3 === "Object" && t3.constructor && (r3 = t3.constructor.name), r3 === "Map" || r3 === "Set" ? Array.from(t3) : r3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r3) ? b(t3, void 0) : void 0;
+            return r3 === "Object" && t3.constructor && (r3 = t3.constructor.name), r3 === "Map" || r3 === "Set" ? Array.from(t3) : r3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r3) ? w(t3, void 0) : void 0;
           }
         }(t2)) || e2 && t2 && typeof t2.length == "number") {
           r2 && (t2 = r2);
@@ -35838,7 +35838,7 @@ if (cid) {
             };
           }
           function c2(t4, e4, r3, n3) {
-            var o3 = Object.create((e4 && e4.prototype instanceof p2 ? e4 : p2).prototype), i3 = new _2(n3 || []);
+            var o3 = Object.create((e4 && e4.prototype instanceof f2 ? e4 : f2).prototype), i3 = new _2(n3 || []);
             return o3._invoke = function(t5, e5, r4) {
               var n4 = "suspendedStart";
               return function(o4, i4) {
@@ -35852,9 +35852,9 @@ if (cid) {
                 for (r4.method = o4, r4.arg = i4; ; ) {
                   var a3 = r4.delegate;
                   if (a3) {
-                    var u3 = w2(a3, r4);
+                    var u3 = b2(a3, r4);
                     if (u3) {
-                      if (u3 === f2)
+                      if (u3 === p2)
                         continue;
                       return u3;
                     }
@@ -35870,7 +35870,7 @@ if (cid) {
                   n4 = "executing";
                   var c3 = s2(t5, e5, r4);
                   if (c3.type === "normal") {
-                    if (n4 = r4.done ? "completed" : "suspendedYield", c3.arg === f2)
+                    if (n4 = r4.done ? "completed" : "suspendedYield", c3.arg === p2)
                       continue;
                     return { value: c3.arg, done: r4.done };
                   }
@@ -35887,8 +35887,8 @@ if (cid) {
             }
           }
           t3.wrap = c2;
-          var f2 = {};
-          function p2() {
+          var p2 = {};
+          function f2() {
           }
           function l2() {
           }
@@ -35898,9 +35898,9 @@ if (cid) {
           u2(d2, o2, function() {
             return this;
           });
-          var v2 = Object.getPrototypeOf, y2 = v2 && v2(v2(j2([])));
+          var v2 = Object.getPrototypeOf, y2 = v2 && v2(v2(E2([])));
           y2 && y2 !== e3 && r2.call(y2, o2) && (d2 = y2);
-          var g2 = h2.prototype = p2.prototype = Object.create(d2);
+          var g2 = h2.prototype = f2.prototype = Object.create(d2);
           function m2(t4) {
             ["next", "throw", "return"].forEach(function(e4) {
               u2(t4, e4, function(t5) {
@@ -35908,7 +35908,7 @@ if (cid) {
               });
             });
           }
-          function b2(t4, e4) {
+          function w2(t4, e4) {
             var n3;
             this._invoke = function(o3, i3) {
               function a3() {
@@ -35916,13 +35916,13 @@ if (cid) {
                   !function n5(o4, i4, a5, u3) {
                     var c3 = s2(t4[o4], t4, i4);
                     if (c3.type !== "throw") {
-                      var f3 = c3.arg, p3 = f3.value;
-                      return p3 && typeof p3 == "object" && r2.call(p3, "__await") ? e4.resolve(p3.__await).then(function(t5) {
+                      var p3 = c3.arg, f3 = p3.value;
+                      return f3 && typeof f3 == "object" && r2.call(f3, "__await") ? e4.resolve(f3.__await).then(function(t5) {
                         n5("next", t5, a5, u3);
                       }, function(t5) {
                         n5("throw", t5, a5, u3);
-                      }) : e4.resolve(p3).then(function(t5) {
-                        f3.value = t5, a5(f3);
+                      }) : e4.resolve(f3).then(function(t5) {
+                        p3.value = t5, a5(p3);
                       }, function(t5) {
                         return n5("throw", t5, a5, u3);
                       });
@@ -35934,21 +35934,21 @@ if (cid) {
               return n3 = n3 ? n3.then(a3, a3) : a3();
             };
           }
-          function w2(t4, e4) {
+          function b2(t4, e4) {
             var r3 = t4.iterator[e4.method];
             if (r3 === void 0) {
               if (e4.delegate = null, e4.method === "throw") {
-                if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, w2(t4, e4), e4.method === "throw"))
-                  return f2;
+                if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, b2(t4, e4), e4.method === "throw"))
+                  return p2;
                 e4.method = "throw", e4.arg = new TypeError("The iterator does not provide a 'throw' method");
               }
-              return f2;
+              return p2;
             }
             var n3 = s2(r3, t4.iterator, e4.arg);
             if (n3.type === "throw")
-              return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, f2;
+              return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, p2;
             var o3 = n3.arg;
-            return o3 ? o3.done ? (e4[t4.resultName] = o3.value, e4.next = t4.nextLoc, e4.method !== "return" && (e4.method = "next", e4.arg = void 0), e4.delegate = null, f2) : o3 : (e4.method = "throw", e4.arg = new TypeError("iterator result is not an object"), e4.delegate = null, f2);
+            return o3 ? o3.done ? (e4[t4.resultName] = o3.value, e4.next = t4.nextLoc, e4.method !== "return" && (e4.method = "next", e4.arg = void 0), e4.delegate = null, p2) : o3 : (e4.method = "throw", e4.arg = new TypeError("iterator result is not an object"), e4.delegate = null, p2);
           }
           function x2(t4) {
             var e4 = { tryLoc: t4[0] };
@@ -35961,7 +35961,7 @@ if (cid) {
           function _2(t4) {
             this.tryEntries = [{ tryLoc: "root" }], t4.forEach(x2, this), this.reset(true);
           }
-          function j2(t4) {
+          function E2(t4) {
             if (t4) {
               var e4 = t4[o2];
               if (e4)
@@ -35978,9 +35978,9 @@ if (cid) {
                 return i3.next = i3;
               }
             }
-            return { next: E2 };
+            return { next: j2 };
           }
-          function E2() {
+          function j2() {
             return { value: void 0, done: true };
           }
           return l2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", l2), l2.displayName = u2(h2, a2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
@@ -35990,11 +35990,11 @@ if (cid) {
             return Object.setPrototypeOf ? Object.setPrototypeOf(t4, h2) : (t4.__proto__ = h2, u2(t4, a2, "GeneratorFunction")), t4.prototype = Object.create(g2), t4;
           }, t3.awrap = function(t4) {
             return { __await: t4 };
-          }, m2(b2.prototype), u2(b2.prototype, i2, function() {
+          }, m2(w2.prototype), u2(w2.prototype, i2, function() {
             return this;
-          }), t3.AsyncIterator = b2, t3.async = function(e4, r3, n3, o3, i3) {
+          }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, i3) {
             i3 === void 0 && (i3 = Promise);
-            var a3 = new b2(c2(e4, r3, n3, o3), i3);
+            var a3 = new w2(c2(e4, r3, n3, o3), i3);
             return t3.isGeneratorFunction(r3) ? a3 : a3.next().then(function(t4) {
               return t4.done ? t4.value : a3.next();
             });
@@ -36014,7 +36014,7 @@ if (cid) {
               }
               return r4.done = true, r4;
             };
-          }, t3.values = j2, _2.prototype = { constructor: _2, reset: function(t4) {
+          }, t3.values = E2, _2.prototype = { constructor: _2, reset: function(t4) {
             if (this.prev = 0, this.next = 0, this.sent = this._sent = void 0, this.done = false, this.delegate = null, this.method = "next", this.arg = void 0, this.tryEntries.forEach(O2), !t4)
               for (var e4 in this)
                 e4.charAt(0) === "t" && r2.call(this, e4) && !isNaN(+e4.slice(1)) && (this[e4] = void 0);
@@ -36063,16 +36063,16 @@ if (cid) {
             }
             i3 && (t4 === "break" || t4 === "continue") && i3.tryLoc <= e4 && e4 <= i3.finallyLoc && (i3 = null);
             var a3 = i3 ? i3.completion : {};
-            return a3.type = t4, a3.arg = e4, i3 ? (this.method = "next", this.next = i3.finallyLoc, f2) : this.complete(a3);
+            return a3.type = t4, a3.arg = e4, i3 ? (this.method = "next", this.next = i3.finallyLoc, p2) : this.complete(a3);
           }, complete: function(t4, e4) {
             if (t4.type === "throw")
               throw t4.arg;
-            return t4.type === "break" || t4.type === "continue" ? this.next = t4.arg : t4.type === "return" ? (this.rval = this.arg = t4.arg, this.method = "return", this.next = "end") : t4.type === "normal" && e4 && (this.next = e4), f2;
+            return t4.type === "break" || t4.type === "continue" ? this.next = t4.arg : t4.type === "return" ? (this.rval = this.arg = t4.arg, this.method = "return", this.next = "end") : t4.type === "normal" && e4 && (this.next = e4), p2;
           }, finish: function(t4) {
             for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
               var r3 = this.tryEntries[e4];
               if (r3.finallyLoc === t4)
-                return this.complete(r3.completion, r3.afterLoc), O2(r3), f2;
+                return this.complete(r3.completion, r3.afterLoc), O2(r3), p2;
             }
           }, catch: function(t4) {
             for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
@@ -36088,7 +36088,7 @@ if (cid) {
             }
             throw new Error("illegal catch attempt");
           }, delegateYield: function(t4, e4, r3) {
-            return this.delegate = { iterator: j2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), f2;
+            return this.delegate = { iterator: E2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), p2;
           } }, t3;
         }(t2.exports);
         try {
@@ -36097,9 +36097,9 @@ if (cid) {
           typeof globalThis == "object" ? globalThis.regeneratorRuntime = e2 : Function("r", "regeneratorRuntime = r")(e2);
         }
       }(x = { exports: {} }), x.exports);
-      var _ = c(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
-      var j = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var E = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
+      var _ = c(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
+      var E = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var j = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
       var k = function(t2) {
         function e2(r2) {
           var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
@@ -36115,7 +36115,7 @@ if (cid) {
         return S.apply(this, arguments);
       }
       function S() {
-        return (S = f(O.mark(function t2(e2) {
+        return (S = p(O.mark(function t2(e2) {
           var r2, n2, o2, i2;
           return O.wrap(function(t3) {
             for (; ; )
@@ -36123,7 +36123,7 @@ if (cid) {
                 case 0:
                   return r2 = [], t3.next = 3, Promise.allSettled(e2);
                 case 3:
-                  for (n2 = w(t3.sent); !(o2 = n2()).done; )
+                  for (n2 = b(t3.sent); !(o2 = n2()).done; )
                     (i2 = o2.value).status === "fulfilled" ? r2.push(i2.value) : i2.status === "rejected" && r2.push(null);
                   return t3.abrupt("return", r2);
                 case 6:
@@ -36143,30 +36143,31 @@ if (cid) {
         e2 === void 0 && (e2 = "/");
         try {
           L(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
-          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], i2 = r2[0].split(":"), a2 = i2[0], u2 = i2[1], c2 = n2.split(":"), s2 = c2[0], f2 = c2[1];
-          return L(a2 && a2.toLowerCase() === "eip155", "Only EIP-155 is supported"), L(u2, "chainID not found"), L(f2, "contractAddress not found"), L(s2, "erc namespace not found"), L(o2, "tokenID not found"), { chainID: Number(u2), namespace: s2.toLowerCase(), contractAddress: f2, tokenID: o2 };
+          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], i2 = r2[0].split(":"), a2 = i2[0], u2 = i2[1], c2 = n2.split(":"), s2 = c2[0], p2 = c2[1];
+          return L(a2 && a2.toLowerCase() === "eip155", "Only EIP-155 is supported"), L(u2, "chainID not found"), L(p2, "contractAddress not found"), L(s2, "erc namespace not found"), L(o2, "tokenID not found"), { chainID: Number(u2), namespace: s2.toLowerCase(), contractAddress: p2, tokenID: o2 };
         } catch (e3) {
           throw new P(e3 + " - " + t2);
         }
       }
-      function C(t2, e2) {
-        var r2 = j.test(t2);
-        if (r2 || t2.startsWith("http"))
-          return { uri: t2, isOnChain: r2, isEncoded: r2 };
-        var n2 = e2 || "https://ipfs.io", o2 = t2.match(_), a2 = (o2 == null ? void 0 : o2.groups) || {}, c2 = a2.target, s2 = a2.subtarget, f2 = s2 === void 0 ? "" : s2;
-        return a2.protocol !== "ipns:/" && a2.subpath !== "ipns/" || !c2 ? function(t3) {
+      function R(t2, e2, r2) {
+        var n2, o2, a2, c2 = E.test(t2);
+        if (c2 || t2.startsWith("http"))
+          return { uri: t2, isOnChain: c2, isEncoded: c2 };
+        (n2 = e2) != null && n2.ipfs || !r2 || (console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"), e2 = f({}, e2, { ipfs: r2 }));
+        var s2 = ((o2 = e2) == null ? void 0 : o2.ipfs) || "https://ipfs.io", p2 = ((a2 = e2) == null ? void 0 : a2.arweave) || "https://arweave.net", l2 = t2.match(_), h2 = (l2 == null ? void 0 : l2.groups) || {}, d2 = h2.protocol, v2 = h2.target, y2 = h2.subtarget, g2 = y2 === void 0 ? "" : y2;
+        return d2 !== "ipns:/" && h2.subpath !== "ipns/" || !v2 ? function(t3) {
           try {
             return typeof t3 == "string" ? Boolean(i.CID.parse(t3)) : Boolean(i.CID.asCID(t3));
           } catch (t4) {
             return false;
           }
-        }(c2) ? { uri: u(n2, "/ipfs/", c2, f2), isOnChain: false, isEncoded: false } : { uri: t2.replace(E, ""), isOnChain: true, isEncoded: false } : { uri: u(n2, "/ipns/", c2, f2), isOnChain: false, isEncoded: false };
+        }(v2) ? { uri: u(s2, "/ipfs/", v2, g2), isOnChain: false, isEncoded: false } : d2 === "ar:/" && v2 ? { uri: u(p2, v2, g2 || ""), isOnChain: false, isEncoded: false } : { uri: t2.replace(j, ""), isOnChain: true, isEncoded: false } : { uri: u(s2, "/ipns/", v2, g2), isOnChain: false, isEncoded: false };
       }
-      function R(t2) {
-        var e2 = t2.metadata, n2 = t2.customGateway, i2 = t2.jsdomWindow, u2 = e2.image || e2.image_url || e2.image_data;
-        L(u2, "Image is not available");
-        var c2 = C(u2, n2).uri;
-        return c2.startsWith("data:") || c2.startsWith("http") ? c2 : a(c2) ? "data:image/svg+xml;base64," + function(t3, e3) {
+      function C(t2) {
+        var e2 = t2.metadata, n2 = t2.customGateway, i2 = t2.gateways, u2 = t2.jsdomWindow, c2 = e2.image || e2.image_url || e2.image_data;
+        L(c2, "Image is not available");
+        var s2 = R(c2, i2, n2).uri;
+        return s2.startsWith("data:") || s2.startsWith("http") ? s2 : a(s2) ? "data:image/svg+xml;base64," + function(t3, e3) {
           var n3;
           try {
             n3 = window;
@@ -36177,40 +36178,40 @@ if (cid) {
           }
           var i3 = o(n3).sanitize(t3);
           return r.Buffer.from(i3);
-        }(c2, i2).toString("base64") : null;
+        }(s2, u2).toString("base64") : null;
       }
       function N(t2, e2) {
         (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
       }
-      function M(t2) {
-        var e2 = t2.ttl, r2 = n.create();
+      function T(t2) {
+        var e2 = t2.ttl, r2 = n.create({ proxy: false });
         return e2 && e2 > 0 && N(r2, e2), r2;
       }
-      var T = M({});
+      var M = T({});
       var D = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
       var G = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(n2, o2, i2, a2) {
-            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2, m2;
+          var t3 = p(O.mark(function t4(n2, o2, i2, a2) {
+            var u2, c2, s2, p2, l2, h2, d2, v2, y2, g2, m2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return u2 = a2.startsWith("https://api.opensea.io") ? a2 : a2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(i2, D, n2), t5.next = 4, Promise.all([c2.uri(a2), o2 && c2.balanceOf(o2, a2)]);
                   case 4:
-                    if (f2 = (s2 = t5.sent)[0], l2 = s2[1], h2 = !(!o2 || !l2.gt(0)), d2 = C(f2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
+                    if (p2 = (s2 = t5.sent)[0], l2 = s2[1], h2 = !(!o2 || !l2.gt(0)), d2 = R(p2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
                       t5.next = 13;
                       break;
                     }
                     return y2 && (g2 = r.Buffer.from(v2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(g2));
                   case 13:
-                    return t5.next = 15, T(v2.replace(/(?:0x)?{id}/, u2));
+                    return t5.next = 15, M(v2.replace(/(?:0x)?{id}/, u2));
                   case 15:
                     return m2 = t5.sent, t5.next = 18, m2 == null ? void 0 : m2.data;
                   case 18:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: h2 }));
+                    return t5.abrupt("return", f({}, t5.sent, { is_owner: h2 }));
                   case 20:
                   case "end":
                     return t5.stop();
@@ -36223,30 +36224,30 @@ if (cid) {
         }(), t2;
       }();
       var W = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
-      var q = function() {
+      var F = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(n2, o2, i2, a2) {
-            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2;
+          var t3 = p(O.mark(function t4(n2, o2, i2, a2) {
+            var u2, c2, s2, p2, l2, h2, d2, v2, y2, g2, m2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return u2 = new e.Contract(i2, W, n2), t5.next = 3, Promise.all([u2.tokenURI(a2), o2 && u2.ownerOf(a2)]);
                   case 3:
-                    if (s2 = (c2 = t5.sent)[0], f2 = c2[1], l2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), h2 = C(s2), v2 = h2.isEncoded, y2 = d2 = h2.uri, !h2.isOnChain) {
-                      t5.next = 12;
+                    if (s2 = (c2 = t5.sent)[0], p2 = c2[1], l2 = !(!o2 || p2.toLowerCase() !== o2.toLowerCase()), h2 = R(s2), v2 = h2.isEncoded, y2 = d2 = h2.uri, !h2.isOnChain) {
+                      t5.next = 13;
                       break;
                     }
-                    return v2 && (y2 = r.Buffer.from(d2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(y2));
-                  case 12:
-                    return t5.next = 14, T(d2.replace(/(?:0x)?{id}/, a2));
-                  case 14:
-                    return g2 = t5.sent, t5.next = 17, g2 == null ? void 0 : g2.data;
-                  case 17:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: l2 }));
-                  case 19:
+                    return v2 && (y2 = r.Buffer.from(d2.replace("data:application/json;base64,", ""), "base64").toString()), g2 = JSON.parse(decodeURI(y2)), t5.abrupt("return", f({}, g2, { is_owner: l2 }));
+                  case 13:
+                    return t5.next = 15, M(d2.replace(/(?:0x)?{id}/, a2));
+                  case 15:
+                    return m2 = t5.sent, t5.next = 18, m2 == null ? void 0 : m2.data;
+                  case 18:
+                    return t5.abrupt("return", f({}, t5.sent, { is_owner: l2 }));
+                  case 20:
                   case "end":
                     return t5.stop();
                 }
@@ -36257,23 +36258,23 @@ if (cid) {
           };
         }(), t2;
       }();
-      var F = function() {
+      var U = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(e2) {
+          var t3 = p(O.mark(function t4(e2) {
             var r2, n2, o2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    if (r2 = C(e2), n2 = r2.uri, !r2.isOnChain) {
+                    if (r2 = R(e2), n2 = r2.uri, !r2.isOnChain) {
                       t5.next = 3;
                       break;
                     }
                     return t5.abrupt("return", n2);
                   case 3:
-                    return t5.next = 5, U(n2);
+                    return t5.next = 5, q(n2);
                   case 5:
                     if (!t5.sent) {
                       t5.next = 8;
@@ -36281,7 +36282,7 @@ if (cid) {
                     }
                     return t5.abrupt("return", { image: n2 });
                   case 8:
-                    return t5.next = 10, T(n2);
+                    return t5.next = 10, M(n2);
                   case 10:
                     return o2 = t5.sent, t5.next = 13, o2 == null ? void 0 : o2.data;
                   case 13:
@@ -36297,9 +36298,9 @@ if (cid) {
           };
         }(), t2;
       }();
-      function U(t2) {
+      function q(t2) {
         return new Promise(function(e2) {
-          T({ url: t2, method: "HEAD" }).then(function(t3) {
+          M({ url: t2, method: "HEAD" }).then(function(t3) {
             if (t3.status === 200) {
               var r2 = t3.headers["content-type"];
               e2(r2 == null ? void 0 : r2.startsWith("image/"));
@@ -36321,21 +36322,21 @@ if (cid) {
           });
         });
       }
-      var B = Object.freeze({ erc721: q, erc1155: G });
+      var B = Object.freeze({ erc721: F, erc1155: G });
       var z = function(t2) {
         function e2() {
           return t2.apply(this, arguments) || this;
         }
         return h(e2, t2), e2;
       }(k);
-      var Z = function() {
+      var Y = function() {
         function t2(t3, e3) {
-          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && N(T, e3 == null ? void 0 : e3.cache);
+          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && N(M, e3 == null ? void 0 : e3.cache);
         }
         var e2 = t2.prototype;
         return e2.getMetadata = function() {
-          var t3 = f(O.mark(function t4(e3) {
-            var r2, n2, o2, i2, a2, u2, c2, s2, f2, l2, h2, d2, v2;
+          var t3 = p(O.mark(function t4(e3) {
+            var r2, n2, o2, i2, a2, u2, c2, s2, p2, l2, h2, d2, v2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
@@ -36360,19 +36361,19 @@ if (cid) {
                       t5.next = 18;
                       break;
                     }
-                    return a2 = new F(), t5.next = 16, a2.getMetadata(i2);
+                    return a2 = new U(), t5.next = 16, a2.getMetadata(i2);
                   case 16:
-                    return t5.abrupt("return", p({ uri: e3 }, t5.sent));
+                    return t5.abrupt("return", f({ uri: e3 }, t5.sent));
                   case 18:
-                    if (u2 = A(i2), c2 = u2.chainID, f2 = u2.contractAddress, l2 = u2.tokenID, h2 = B[s2 = u2.namespace]) {
+                    if (u2 = A(i2), c2 = u2.chainID, p2 = u2.contractAddress, l2 = u2.tokenID, h2 = B[s2 = u2.namespace]) {
                       t5.next = 22;
                       break;
                     }
                     throw new z("Unsupported namespace: " + s2);
                   case 22:
-                    return d2 = new h2(), v2 = { chain_id: c2, namespace: s2, contract_address: f2, token_id: l2, reference_url: "https://opensea.io/assets/" + f2 + "/" + l2 }, t5.next = 26, d2.getMetadata(this.provider, n2, f2, l2);
+                    return d2 = new h2(), v2 = { chain_id: c2, namespace: s2, contract_address: p2, token_id: l2, reference_url: "https://opensea.io/assets/" + p2 + "/" + l2 }, t5.next = 26, d2.getMetadata(this.provider, n2, p2, l2);
                   case 26:
-                    return t5.abrupt("return", p({ uri: e3, host_meta: v2 }, t5.sent));
+                    return t5.abrupt("return", f({ uri: e3, host_meta: v2 }, t5.sent));
                   case 28:
                   case "end":
                     return t5.stop();
@@ -36383,21 +36384,21 @@ if (cid) {
             return t3.apply(this, arguments);
           };
         }(), e2.getAvatar = function() {
-          var t3 = f(O.mark(function t4(e3, r2) {
-            var n2, o2;
+          var t3 = p(O.mark(function t4(e3, r2) {
+            var n2, o2, i2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return t5.next = 2, this.getMetadata(e3);
                   case 2:
-                    if (o2 = t5.sent) {
+                    if (i2 = t5.sent) {
                       t5.next = 5;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 5:
-                    return t5.abrupt("return", R({ metadata: o2, customGateway: (n2 = this.options) == null ? void 0 : n2.ipfs, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
+                    return t5.abrupt("return", C({ metadata: i2, gateways: { ipfs: (n2 = this.options) == null ? void 0 : n2.ipfs, arweave: (o2 = this.options) == null ? void 0 : o2.arweave }, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
                   case 6:
                   case "end":
                     return t5.stop();
@@ -36409,8 +36410,8 @@ if (cid) {
           };
         }(), t2;
       }();
-      var J = { getImageURI: R, parseNFT: A, resolveURI: C };
-      exports.AvatarResolver = Z, exports.UnsupportedNamespace = z, exports.specs = B, exports.utils = J;
+      var Z = { getImageURI: C, parseNFT: A, resolveURI: R };
+      exports.AvatarResolver = Y, exports.UnsupportedNamespace = z, exports.specs = B, exports.utils = Z;
     }
   });
 
@@ -37122,7 +37123,7 @@ if (cid) {
       });
       var IPFS_SUBPATH = "/ipfs/";
       var IPNS_SUBPATH = "/ipns/";
-      var ipfsRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
+      var networkRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
         protocol: 1,
         root: 2,
         subpath: 3,
@@ -37130,7 +37131,7 @@ if (cid) {
         subtarget: 5
       });
       var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*)?(,)/;
+      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
       var BaseError = /* @__PURE__ */ function(_Error) {
         _inheritsLoose(BaseError2, _Error);
         function BaseError2(message) {
@@ -37223,7 +37224,8 @@ if (cid) {
           throw new NFTURIParsingError(error + " - " + uri);
         }
       }
-      function resolveURI(uri, customGateway) {
+      function resolveURI(uri, gateways, customGateway) {
+        var _gateways, _gateways2, _gateways3;
         var isEncoded = base64Regex.test(uri);
         if (isEncoded || uri.startsWith("http")) {
           return {
@@ -37232,9 +37234,16 @@ if (cid) {
             isEncoded
           };
         }
-        var ipfsGateway = customGateway || "https://ipfs.io";
-        var ipfsRegexpResult = uri.match(ipfsRegex);
-        var _ref = (ipfsRegexpResult == null ? void 0 : ipfsRegexpResult.groups) || {}, protocol = _ref.protocol, subpath = _ref.subpath, target = _ref.target, _ref$subtarget = _ref.subtarget, subtarget = _ref$subtarget === void 0 ? "" : _ref$subtarget;
+        if (!((_gateways = gateways) != null && _gateways.ipfs) && !!customGateway) {
+          console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead");
+          gateways = _extends({}, gateways, {
+            ipfs: customGateway
+          });
+        }
+        var ipfsGateway = ((_gateways2 = gateways) == null ? void 0 : _gateways2.ipfs) || "https://ipfs.io";
+        var arGateway = ((_gateways3 = gateways) == null ? void 0 : _gateways3.arweave) || "https://arweave.net";
+        var networkRegexResult = uri.match(networkRegex);
+        var _ref = (networkRegexResult == null ? void 0 : networkRegexResult.groups) || {}, protocol = _ref.protocol, subpath = _ref.subpath, target = _ref.target, _ref$subtarget = _ref.subtarget, subtarget = _ref$subtarget === void 0 ? "" : _ref$subtarget;
         if ((protocol === "ipns:/" || subpath === "ipns/") && target) {
           return {
             uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
@@ -37244,6 +37253,12 @@ if (cid) {
         } else if (isCID(target)) {
           return {
             uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
+            isOnChain: false,
+            isEncoded: false
+          };
+        } else if (protocol === "ar:/" && target) {
+          return {
+            uri: urlJoin(arGateway, target, subtarget || ""),
             isOnChain: false,
             isEncoded: false
           };
@@ -37270,11 +37285,11 @@ if (cid) {
         return _.Buffer.from(cleanDOM);
       }
       function getImageURI(_ref2) {
-        var metadata = _ref2.metadata, customGateway = _ref2.customGateway, jsdomWindow = _ref2.jsdomWindow;
+        var metadata = _ref2.metadata, customGateway = _ref2.customGateway, gateways = _ref2.gateways, jsdomWindow = _ref2.jsdomWindow;
         var image = metadata.image, image_url = metadata.image_url, image_data = metadata.image_data;
         var _image = image || image_url || image_data;
         assert(_image, "Image is not available");
-        var _resolveURI = resolveURI(_image, customGateway), parsedURI = _resolveURI.uri;
+        var _resolveURI = resolveURI(_image, gateways, customGateway), parsedURI = _resolveURI.uri;
         if (parsedURI.startsWith("data:") || parsedURI.startsWith("http")) {
           return parsedURI;
         }
@@ -37292,7 +37307,9 @@ if (cid) {
       }
       function createFetcher(_ref3) {
         var ttl = _ref3.ttl;
-        var _fetch = axios.create();
+        var _fetch = axios.create({
+          proxy: false
+        });
         if (ttl && ttl > 0) {
           createCacheAdapter(_fetch, ttl);
         }
@@ -37363,7 +37380,7 @@ if (cid) {
         var _proto = ERC7212.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
           var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
-            var contract, _yield$Promise$all, tokenURI, owner, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response, metadata;
+            var contract, _yield$Promise$all, tokenURI, owner, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, _metadata, response, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
@@ -37379,26 +37396,29 @@ if (cid) {
                     _resolveURI = resolveURI(tokenURI), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
                     _resolvedUri = resolvedURI;
                     if (!isOnChain) {
-                      _context.next = 12;
+                      _context.next = 13;
                       break;
                     }
                     if (isEncoded) {
                       _resolvedUri = _.Buffer.from(resolvedURI.replace("data:application/json;base64,", ""), "base64").toString();
                     }
-                    return _context.abrupt("return", JSON.parse(_resolvedUri));
-                  case 12:
-                    _context.next = 14;
+                    _metadata = JSON.parse(decodeURI(_resolvedUri));
+                    return _context.abrupt("return", _extends({}, _metadata, {
+                      is_owner: isOwner
+                    }));
+                  case 13:
+                    _context.next = 15;
                     return fetch2(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
-                  case 14:
+                  case 15:
                     response = _context.sent;
-                    _context.next = 17;
+                    _context.next = 18;
                     return response == null ? void 0 : response.data;
-                  case 17:
+                  case 18:
                     metadata = _context.sent;
                     return _context.abrupt("return", _extends({}, metadata, {
                       is_owner: isOwner
                     }));
-                  case 19:
+                  case 20:
                   case "end":
                     return _context.stop();
                 }
@@ -37596,7 +37616,7 @@ if (cid) {
         }();
         _proto.getAvatar = /* @__PURE__ */ function() {
           var _getAvatar = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee2(ens, data) {
-            var _this$options;
+            var _this$options, _this$options2;
             var metadata;
             return runtime_1.wrap(function _callee2$(_context2) {
               while (1) {
@@ -37614,7 +37634,10 @@ if (cid) {
                   case 5:
                     return _context2.abrupt("return", getImageURI({
                       metadata,
-                      customGateway: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
+                      gateways: {
+                        ipfs: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
+                        arweave: (_this$options2 = this.options) == null ? void 0 : _this$options2.arweave
+                      },
                       jsdomWindow: data == null ? void 0 : data.jsdomWindow
                     }));
                   case 6:

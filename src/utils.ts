@@ -116,9 +116,9 @@ export function resolveURI(
 
   const ipfsGateway = gateways?.ipfs || 'https://ipfs.io';
   const arGateway = gateways?.arweave || 'https://arweave.net';
-  const ipfsRegexpResult = uri.match(networkRegex);
+  const networkRegexResult = uri.match(networkRegex);
   const { protocol, subpath, target, subtarget = '' } =
-    ipfsRegexpResult?.groups || {};
+    networkRegexResult?.groups || {};
   if ((protocol === 'ipns:/' || subpath === 'ipns/') && target) {
     return {
       uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
@@ -132,9 +132,9 @@ export function resolveURI(
       isOnChain: false,
       isEncoded: false,
     };
-  } else if (protocol === 'ar:/' && target && subtarget) {
+  } else if (protocol === 'ar:/' && target) {
     return {
-      uri: urlJoin(arGateway, target, subtarget),
+      uri: urlJoin(arGateway, target, subtarget || ''),
       isOnChain: false,
       isEncoded: false,
     };
