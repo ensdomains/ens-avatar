@@ -23,7 +23,7 @@ yarn add @ensdomains/ens-avatar
 
 ```js
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
-import { AvatarResolver, utils: avtUtils } from '@ensdomains/ens-avatar';
+import { AvatarResolver, utils as avtUtils } from '@ensdomains/ens-avatar';
 
 // const { JSDOM } = require('jsdom'); on nodejs
 // const jsdom = new JSDOM().window; on nodejs
