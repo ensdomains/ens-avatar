@@ -17,7 +17,8 @@ export interface Spec {
     provider: BaseProvider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
-    tokenID: string
+    tokenID: string,
+    options?: AvatarResolverOpts
   ) => Promise<any>;
 }
 
@@ -33,7 +34,7 @@ interface AvatarRequestOpts {
   jsdomWindow?: any;
 }
 
-interface AvatarResolverOpts {
+export interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
   arweave?: string;
@@ -70,7 +71,7 @@ export class AvatarResolver implements AvatarResolver {
     // test case-insensitive in case of uppercase records
     if (!/eip155:/i.test(avatarURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(avatarURI);
+      const metadata = await uriSpec.getMetadata(avatarURI, this.options);
       return { uri: ens, ...metadata };
     }
 
@@ -98,7 +99,8 @@ export class AvatarResolver implements AvatarResolver {
       this.provider,
       resolvedAddress,
       contractAddress,
-      tokenID
+      tokenID,
+      this.options
     );
     return { uri: ens, host_meta, ...metadata };
   }

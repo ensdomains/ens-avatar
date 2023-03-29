@@ -11,10 +11,11 @@ if (!ensName) {
   );
   process.exit(1);
 }
+const IPFS = 'https://cf-ipfs.com';
 const provider = new StaticJsonRpcProvider(
-  `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`
+  `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
-const avt = new AvatarResolver(provider);
+const avt = new AvatarResolver(provider, { ipfs: IPFS});
 avt
   .getMetadata(ensName)
   .then(metadata => {
@@ -25,7 +26,7 @@ avt
     const avatar = avtUtils.getImageURI({
       metadata,
       gateways: {
-        ipfs: 'https://dweb.link',
+        ipfs: IPFS,
       },
       jsdomWindow: jsdom,
     });

@@ -1,8 +1,9 @@
+import { AvatarResolverOpts } from '..';
 import { fetch, resolveURI } from '../utils';
 
 export default class URI {
-  async getMetadata(uri: string) {
-    const { uri: resolvedURI, isOnChain } = resolveURI(uri);
+  async getMetadata(uri: string, options?: AvatarResolverOpts) {
+    const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);
     if (isOnChain) {
       return resolvedURI;
     }

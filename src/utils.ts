@@ -103,6 +103,8 @@ export function resolveURI(
   // resolves uri based on its' protocol
   const isEncoded = base64Regex.test(uri);
   if (isEncoded || uri.startsWith('http')) {
+    uri = _replaceGateway(uri, 'https://ipfs.io/', gateways?.ipfs);
+    uri = _replaceGateway(uri, 'https://arweave.net/', gateways?.arweave);
     return { uri, isOnChain: isEncoded, isEncoded };
   }
 
@@ -163,6 +165,19 @@ function _sanitize(data: string, jsDomWindow?: any): Buffer {
   // purges malicious scripting from svg content
   const cleanDOM = DOMPurify.sanitize(data);
   return Buffer.from(cleanDOM);
+}
+
+function _replaceGateway(uri: string, source: string, target?: string) {
+  if (uri.startsWith(source) && target) {
+    try {
+      let _uri = new URL(uri);
+      _uri.hostname = new URL(target).hostname;
+      return _uri.toString();
+    } catch (_error) {
+      return uri;
+    }
+  }
+  return uri;
 }
 
 export interface ImageURIOpts {
