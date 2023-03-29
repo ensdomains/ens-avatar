@@ -2,6 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
+import { AvatarResolverOpts } from '..';
 
 const abi = [
   'function tokenURI(uint256 tokenId) external view returns (string memory)',
@@ -13,7 +14,8 @@ export default class ERC721 {
     provider: BaseProvider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
-    tokenID: string
+    tokenID: string,
+    options?: AvatarResolverOpts
   ) {
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
@@ -25,7 +27,7 @@ export default class ERC721 {
       ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, options);
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
