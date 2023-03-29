@@ -27,7 +27,10 @@ export default class ERC721 {
       ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, options);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
+      tokenURI,
+      options
+    );
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {

@@ -29,7 +29,10 @@ export default class ERC1155 {
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance.gt(0));
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, options);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
+      tokenURI,
+      options
+    );
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
