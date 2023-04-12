@@ -7,6 +7,7 @@ import {
   fetch,
   getImageURI,
   handleSettled,
+  isImageURI,
   parseNFT,
   resolveURI,
 } from './utils';
@@ -111,7 +112,7 @@ export class AvatarResolver implements AvatarResolver {
   ): Promise<string | null> {
     const metadata = await this.getMetadata(ens);
     if (!metadata) return null;
-    return getImageURI({
+    const imageURI = getImageURI({
       metadata,
       gateways: {
         ipfs: this.options?.ipfs,
@@ -119,7 +120,12 @@ export class AvatarResolver implements AvatarResolver {
       },
       jsdomWindow: data?.jsdomWindow,
     });
+    if (imageURI?.startsWith('http')) {
+      const isImage = await isImageURI(imageURI);
+      return isImage ? imageURI : null;
+    }
+    return imageURI;
   }
 }
 
-export const utils = { getImageURI, parseNFT, resolveURI };
+export const utils = { getImageURI, parseNFT, resolveURI, isImageURI };
