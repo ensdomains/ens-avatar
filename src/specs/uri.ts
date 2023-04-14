@@ -1,5 +1,5 @@
 import { AvatarResolverOpts } from '..';
-import { fetch, resolveURI } from '../utils';
+import { fetch, isImageURI, resolveURI } from '../utils';
 
 export default class URI {
   async getMetadata(uri: string, options?: AvatarResolverOpts) {
@@ -18,40 +18,4 @@ export default class URI {
     const response = await fetch(resolvedURI);
     return await response?.data;
   }
-}
-
-function isImageURI(url: string) {
-  return new Promise(resolve => {
-    fetch({ url, method: 'HEAD' })
-      .then(result => {
-        if (result.status === 200) {
-          // retrieve content type header to check if content is image
-          const contentType = result.headers['content-type'];
-          resolve(contentType?.startsWith('image/'));
-        } else {
-          resolve(false);
-        }
-      })
-      .catch(error => {
-        // if error is not cors related then fail
-        if (typeof error.response !== 'undefined') {
-          // in case of cors, use image api to validate if given url is an actual image
-          resolve(false);
-          return;
-        }
-        if (!globalThis.hasOwnProperty('Image')) {
-          // fail in NodeJS, since the error is not cors but any other network issue
-          resolve(false);
-          return;
-        }
-        const img = new Image();
-        img.onload = () => {
-          resolve(true);
-        };
-        img.onerror = () => {
-          resolve(false);
-        };
-        img.src = url;
-      });
-  });
 }

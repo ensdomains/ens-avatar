@@ -55,6 +55,42 @@ export function isCID(hash: any) {
   }
 }
 
+export function isImageURI(url: string) {
+  return new Promise(resolve => {
+    fetch({ url, method: 'HEAD' })
+      .then(result => {
+        if (result.status === 200) {
+          // retrieve content type header to check if content is image
+          const contentType = result.headers['content-type'];
+          resolve(contentType?.startsWith('image/'));
+        } else {
+          resolve(false);
+        }
+      })
+      .catch(error => {
+        // if error is not cors related then fail
+        if (typeof error.response !== 'undefined') {
+          // in case of cors, use image api to validate if given url is an actual image
+          resolve(false);
+          return;
+        }
+        if (!globalThis.hasOwnProperty('Image')) {
+          // fail in NodeJS, since the error is not cors but any other network issue
+          resolve(false);
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          resolve(true);
+        };
+        img.onerror = () => {
+          resolve(false);
+        };
+        img.src = url;
+      });
+  });
+}
+
 export function parseNFT(uri: string, seperator: string = '/') {
   // parse valid nft spec (CAIP-22/CAIP-29)
   // @see: https://github.com/ChainAgnostic/CAIPs/tree/master/CAIPs
@@ -200,16 +236,64 @@ export function getImageURI({
   assert(_image, 'Image is not available');
   const { uri: parsedURI } = resolveURI(_image, gateways, customGateway);
 
-  if (parsedURI.startsWith('data:') || parsedURI.startsWith('http')) {
+  if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
+    // svg - image_data
+    const rawSVG = convertToRawSVG(parsedURI);
+    if (!rawSVG) return null;
+
+    const data = _sanitize(rawSVG, jsdomWindow);
+    return `data:image/svg+xml;base64,${data.toString('base64')}`;
+  }
+
+  if (isImageDataUri(parsedURI) || parsedURI.startsWith('http')) {
     return parsedURI;
   }
 
-  if (isSVG(parsedURI)) {
-    // svg - image_data
-    const data = _sanitize(parsedURI, jsdomWindow);
-    return `data:image/svg+xml;base64,${data.toString('base64')}`;
-  }
   return null;
+}
+
+function isImageDataUri(uri: string): boolean {
+  const imageFormats = ['jpeg', 'png', 'gif', 'bmp', 'webp'];
+  const dataUriPattern = /^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/;
+
+  const match = uri.match(dataUriPattern);
+  if (!match || match.length < 2) {
+    return false;
+  }
+
+  const format = match[1].toLowerCase();
+  return imageFormats.includes(format);
+}
+
+function isSVGDataUri(uri: string): boolean {
+  const svgDataUriPrefix = 'data:image/svg+xml';
+  return uri.startsWith(svgDataUriPrefix);
+}
+
+export function convertToRawSVG(input: string): string | null {
+  const base64Prefix = 'data:image/svg+xml;base64,';
+  const encodedPrefix = 'data:image/svg+xml,';
+
+  if (input.startsWith(base64Prefix)) {
+    const base64Data = input.substring(base64Prefix.length);
+    try {
+      return Buffer.from(base64Data, 'base64').toString();
+    } catch (error) {
+      console.error('Invalid base64 encoded SVG');
+      return null;
+    }
+  } else if (input.startsWith(encodedPrefix)) {
+    const encodedData = input.substring(encodedPrefix.length);
+    try {
+      return decodeURIComponent(encodedData);
+    } catch (error) {
+      console.error('Invalid URL encoded SVG');
+      return null;
+    }
+  } else {
+    // The input is already a raw SVG (or another format if not used with isSVGDataUri)
+    return input;
+  }
 }
 
 export function createCacheAdapter(fetch: Axios, ttl: number) {

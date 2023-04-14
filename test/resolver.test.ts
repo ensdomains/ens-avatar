@@ -203,6 +203,9 @@ describe('get avatar', () => {
     const MANIFEST_URI_BRANTLY = new URL(
       'https://wrappedpunks.com:3000/api/punks/metadata/2430'
     );
+    const NFT_URI_BRANTLY = new URL(
+      'https://api.wrappedpunks.com/images/punks/2430.png'
+    );
     nock(MANIFEST_URI_BRANTLY.origin)
       .get(MANIFEST_URI_BRANTLY.pathname)
       .reply(
@@ -217,6 +220,12 @@ describe('get avatar', () => {
         },
         CORS_HEADERS as any
       );
+    nock(NFT_URI_BRANTLY.origin)
+      .head(NFT_URI_BRANTLY.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
     expect(await avt.getAvatar('brantly.eth')).toEqual(
       'https://api.wrappedpunks.com/images/punks/2430.png'
     );

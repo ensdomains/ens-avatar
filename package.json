@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -73,7 +73,7 @@
     "axios": "^0.25.0",
     "axios-cache-interceptor": "^0.9.3",
     "buffer": "^6.0.3",
-    "dompurify": "^2.3.5",
+    "dompurify": "^3.0.1",
     "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"
