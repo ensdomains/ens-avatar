@@ -23,7 +23,7 @@ yarn add @ensdomains/ens-avatar
 
 ```js
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
-import { AvatarResolver, utils: avtUtils } from '@ensdomains/ens-avatar';
+import { AvatarResolver, utils as avtUtils } from '@ensdomains/ens-avatar';
 
 // const { JSDOM } = require('jsdom'); on nodejs
 // const jsdom = new JSDOM().window; on nodejs
@@ -68,6 +68,11 @@ const avt = new AvatarResolver(provider, { cache: 300 }); // 5 min response cach
 ### Custom IPFS Gateway _(Default: https://ipfs.io)_
 ```js
 const avt = new AvatarResolver(provider, { ipfs: 'https://dweb.link' });
+```
+
+### Custom Arweave Gateway _(Default: https://arweave.net)_
+```js
+const avt = new AvatarResolver(provider, { arweave: 'https://arweave.net' });
 ```
 
 ## Demo

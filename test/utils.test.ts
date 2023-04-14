@@ -6,6 +6,7 @@ import {
   parseNFT,
   resolveURI,
   getImageURI,
+  convertToRawSVG,
 } from '../src/utils';
 
 describe('resolve ipfs', () => {
@@ -25,6 +26,13 @@ describe('resolve ipfs', () => {
     '/ipns/github.com',
   ];
 
+  const arweaveCases = [
+    'ar://rgW4h3ffQQzOD8ynnwdl3_YlHxtssqV3aXOregPr7yI',
+    'ar://rgW4h3ffQQzOD8ynnwdl3_YlHxtssqV3aXOregPr7yI/1',
+    'ar://rgW4h3ffQQzOD8ynnwdl3_YlHxtssqV3aXOregPr7yI/1.json',
+    'ar://tnLgkAg70wsn9fSr1sxJKG_qcka1gJtmUwXm_3_lDaI/1.png',
+  ];
+
   const httpOrDataCases = [
     'https://i.imgur.com/yed5Zfk.gif',
     'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
@@ -35,6 +43,13 @@ describe('resolve ipfs', () => {
     for (let uri of ipfsCases) {
       const { uri: resolvedURI } = resolveURI(uri);
       expect(resolvedURI).toMatch(/^https:\/\/ipfs.io\/?/);
+    }
+  });
+
+  it('resolve different arweave uri cases', () => {
+    for (let uri of arweaveCases) {
+      const { uri: resolvedURI } = resolveURI(uri);
+      expect(resolvedURI).toMatch(/^https:\/\/arweave.net\/?/);
     }
   });
 
@@ -124,5 +139,35 @@ describe('resolve ipfs', () => {
     };
     const uri = getImageURI({ metadata });
     expect(uri).toBe(`https://ipfs.io/ipfs/${ipfsCases[2]}`);
+  });
+});
+
+describe('convertToRawSvg', () => {
+  const rawSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"></rect></svg>';
+
+  it('base64 encoded SVG', () => {
+    const base64EncodedSvg =
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSJyZWQiPjwvcmVjdD48L3N2Zz4=';
+    const result = convertToRawSVG(base64EncodedSvg);
+    expect(result).toBe(rawSvg);
+  });
+
+  it('URL encoded SVG', () => {
+    const urlEncodedSvg =
+      'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22red%22%3E%3C%2Frect%3E%3C%2Fsvg%3E';
+    const result = convertToRawSVG(urlEncodedSvg);
+    expect(result).toBe(rawSvg);
+  });
+
+  it('raw SVG', () => {
+    const result = convertToRawSVG(rawSvg);
+    expect(result).toBe(rawSvg);
+  });
+
+  it('invalid input', () => {
+    const invalidInput = 'invalid data';
+    const result = convertToRawSVG(invalidInput);
+    expect(result).toBe(invalidInput);
   });
 });

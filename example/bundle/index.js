@@ -32176,20 +32176,182 @@
     "node_modules/dompurify/dist/purify.js"(exports, module) {
       init_define_process();
       (function(global2, factory) {
-        typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = global2 || self, global2.DOMPurify = factory());
+        typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.DOMPurify = factory());
       })(exports, function() {
         "use strict";
-        function _toConsumableArray(arr) {
-          if (Array.isArray(arr)) {
-            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-              arr2[i] = arr[i];
-            }
-            return arr2;
-          } else {
-            return Array.from(arr);
+        function _typeof(obj) {
+          "@babel/helpers - typeof";
+          return _typeof = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(obj2) {
+            return typeof obj2;
+          } : function(obj2) {
+            return obj2 && typeof Symbol == "function" && obj2.constructor === Symbol && obj2 !== Symbol.prototype ? "symbol" : typeof obj2;
+          }, _typeof(obj);
+        }
+        function _setPrototypeOf(o, p) {
+          _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf2(o2, p2) {
+            o2.__proto__ = p2;
+            return o2;
+          };
+          return _setPrototypeOf(o, p);
+        }
+        function _isNativeReflectConstruct() {
+          if (typeof Reflect === "undefined" || !Reflect.construct)
+            return false;
+          if (Reflect.construct.sham)
+            return false;
+          if (typeof Proxy === "function")
+            return true;
+          try {
+            Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
+            }));
+            return true;
+          } catch (e) {
+            return false;
           }
         }
-        var hasOwnProperty = Object.hasOwnProperty, setPrototypeOf = Object.setPrototypeOf, isFrozen = Object.isFrozen, getPrototypeOf = Object.getPrototypeOf, getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+        function _construct(Parent, args, Class) {
+          if (_isNativeReflectConstruct()) {
+            _construct = Reflect.construct;
+          } else {
+            _construct = function _construct2(Parent2, args2, Class2) {
+              var a = [null];
+              a.push.apply(a, args2);
+              var Constructor = Function.bind.apply(Parent2, a);
+              var instance = new Constructor();
+              if (Class2)
+                _setPrototypeOf(instance, Class2.prototype);
+              return instance;
+            };
+          }
+          return _construct.apply(null, arguments);
+        }
+        function _slicedToArray(arr, i) {
+          return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+        }
+        function _toConsumableArray(arr) {
+          return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+        }
+        function _arrayWithoutHoles(arr) {
+          if (Array.isArray(arr))
+            return _arrayLikeToArray(arr);
+        }
+        function _arrayWithHoles(arr) {
+          if (Array.isArray(arr))
+            return arr;
+        }
+        function _iterableToArray(iter) {
+          if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null)
+            return Array.from(iter);
+        }
+        function _iterableToArrayLimit(arr, i) {
+          var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+          if (_i == null)
+            return;
+          var _arr = [];
+          var _n = true;
+          var _d = false;
+          var _s, _e;
+          try {
+            for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+              _arr.push(_s.value);
+              if (i && _arr.length === i)
+                break;
+            }
+          } catch (err) {
+            _d = true;
+            _e = err;
+          } finally {
+            try {
+              if (!_n && _i["return"] != null)
+                _i["return"]();
+            } finally {
+              if (_d)
+                throw _e;
+            }
+          }
+          return _arr;
+        }
+        function _unsupportedIterableToArray(o, minLen) {
+          if (!o)
+            return;
+          if (typeof o === "string")
+            return _arrayLikeToArray(o, minLen);
+          var n = Object.prototype.toString.call(o).slice(8, -1);
+          if (n === "Object" && o.constructor)
+            n = o.constructor.name;
+          if (n === "Map" || n === "Set")
+            return Array.from(o);
+          if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n))
+            return _arrayLikeToArray(o, minLen);
+        }
+        function _arrayLikeToArray(arr, len) {
+          if (len == null || len > arr.length)
+            len = arr.length;
+          for (var i = 0, arr2 = new Array(len); i < len; i++)
+            arr2[i] = arr[i];
+          return arr2;
+        }
+        function _nonIterableSpread() {
+          throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+        }
+        function _nonIterableRest() {
+          throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+        }
+        function _createForOfIteratorHelper(o, allowArrayLike) {
+          var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+          if (!it) {
+            if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+              if (it)
+                o = it;
+              var i = 0;
+              var F = function() {
+              };
+              return {
+                s: F,
+                n: function() {
+                  if (i >= o.length)
+                    return {
+                      done: true
+                    };
+                  return {
+                    done: false,
+                    value: o[i++]
+                  };
+                },
+                e: function(e) {
+                  throw e;
+                },
+                f: F
+              };
+            }
+            throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+          }
+          var normalCompletion = true, didErr = false, err;
+          return {
+            s: function() {
+              it = it.call(o);
+            },
+            n: function() {
+              var step = it.next();
+              normalCompletion = step.done;
+              return step;
+            },
+            e: function(e) {
+              didErr = true;
+              err = e;
+            },
+            f: function() {
+              try {
+                if (!normalCompletion && it.return != null)
+                  it.return();
+              } finally {
+                if (didErr)
+                  throw err;
+              }
+            }
+          };
+        }
+        var entries = Object.entries, setPrototypeOf = Object.setPrototypeOf, isFrozen = Object.isFrozen, getPrototypeOf = Object.getPrototypeOf, getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
         var freeze = Object.freeze, seal = Object.seal, create2 = Object.create;
         var _ref = typeof Reflect !== "undefined" && Reflect, apply = _ref.apply, construct = _ref.construct;
         if (!apply) {
@@ -32209,13 +32371,14 @@
         }
         if (!construct) {
           construct = function construct2(Func, args) {
-            return new (Function.prototype.bind.apply(Func, [null].concat(_toConsumableArray(args))))();
+            return _construct(Func, _toConsumableArray(args));
           };
         }
         var arrayForEach = unapply(Array.prototype.forEach);
         var arrayPop = unapply(Array.prototype.pop);
         var arrayPush = unapply(Array.prototype.push);
         var stringToLowerCase = unapply(String.prototype.toLowerCase);
+        var stringToString = unapply(String.prototype.toString);
         var stringMatch = unapply(String.prototype.match);
         var stringReplace = unapply(String.prototype.replace);
         var stringIndexOf = unapply(String.prototype.indexOf);
@@ -32224,7 +32387,7 @@
         var typeErrorCreate = unconstruct(TypeError);
         function unapply(func) {
           return function(thisArg) {
-            for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
               args[_key - 1] = arguments[_key];
             }
             return apply(func, thisArg, args);
@@ -32232,13 +32395,14 @@
         }
         function unconstruct(func) {
           return function() {
-            for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+            for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
               args[_key2] = arguments[_key2];
             }
             return construct(func, args);
           };
         }
-        function addToSet(set, array) {
+        function addToSet(set, array, transformCaseFunc) {
+          transformCaseFunc = transformCaseFunc ? transformCaseFunc : stringToLowerCase;
           if (setPrototypeOf) {
             setPrototypeOf(set, null);
           }
@@ -32246,7 +32410,7 @@
           while (l--) {
             var element = array[l];
             if (typeof element === "string") {
-              var lcElement = stringToLowerCase(element);
+              var lcElement = transformCaseFunc(element);
               if (lcElement !== element) {
                 if (!isFrozen(array)) {
                   array[l] = lcElement;
@@ -32260,11 +32424,16 @@
         }
         function clone(object) {
           var newObject = create2(null);
-          var property = void 0;
-          for (property in object) {
-            if (apply(hasOwnProperty, object, [property])) {
-              newObject[property] = object[property];
+          var _iterator = _createForOfIteratorHelper(entries(object)), _step;
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done; ) {
+              var _step$value = _slicedToArray(_step.value, 2), property = _step$value[0], value = _step$value[1];
+              newObject[property] = value;
             }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
           }
           return newObject;
         }
@@ -32287,45 +32456,31 @@
           }
           return fallbackValue;
         }
-        var html = freeze(["a", "abbr", "acronym", "address", "area", "article", "aside", "audio", "b", "bdi", "bdo", "big", "blink", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "content", "data", "datalist", "dd", "decorator", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "element", "em", "fieldset", "figcaption", "figure", "font", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "img", "input", "ins", "kbd", "label", "legend", "li", "main", "map", "mark", "marquee", "menu", "menuitem", "meter", "nav", "nobr", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "shadow", "small", "source", "spacer", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"]);
-        var svg = freeze(["svg", "a", "altglyph", "altglyphdef", "altglyphitem", "animatecolor", "animatemotion", "animatetransform", "circle", "clippath", "defs", "desc", "ellipse", "filter", "font", "g", "glyph", "glyphref", "hkern", "image", "line", "lineargradient", "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline", "radialgradient", "rect", "stop", "style", "switch", "symbol", "text", "textpath", "title", "tref", "tspan", "view", "vkern"]);
+        var html$1 = freeze(["a", "abbr", "acronym", "address", "area", "article", "aside", "audio", "b", "bdi", "bdo", "big", "blink", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "content", "data", "datalist", "dd", "decorator", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "element", "em", "fieldset", "figcaption", "figure", "font", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "img", "input", "ins", "kbd", "label", "legend", "li", "main", "map", "mark", "marquee", "menu", "menuitem", "meter", "nav", "nobr", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "shadow", "small", "source", "spacer", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"]);
+        var svg$1 = freeze(["svg", "a", "altglyph", "altglyphdef", "altglyphitem", "animatecolor", "animatemotion", "animatetransform", "circle", "clippath", "defs", "desc", "ellipse", "filter", "font", "g", "glyph", "glyphref", "hkern", "image", "line", "lineargradient", "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline", "radialgradient", "rect", "stop", "style", "switch", "symbol", "text", "textpath", "title", "tref", "tspan", "view", "vkern"]);
         var svgFilters = freeze(["feBlend", "feColorMatrix", "feComponentTransfer", "feComposite", "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge", "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight", "feTile", "feTurbulence"]);
         var svgDisallowed = freeze(["animate", "color-profile", "cursor", "discard", "fedropshadow", "font-face", "font-face-format", "font-face-name", "font-face-src", "font-face-uri", "foreignobject", "hatch", "hatchpath", "mesh", "meshgradient", "meshpatch", "meshrow", "missing-glyph", "script", "set", "solidcolor", "unknown", "use"]);
-        var mathMl = freeze(["math", "menclose", "merror", "mfenced", "mfrac", "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo", "mover", "mpadded", "mphantom", "mroot", "mrow", "ms", "mspace", "msqrt", "mstyle", "msub", "msup", "msubsup", "mtable", "mtd", "mtext", "mtr", "munder", "munderover"]);
+        var mathMl$1 = freeze(["math", "menclose", "merror", "mfenced", "mfrac", "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo", "mover", "mpadded", "mphantom", "mroot", "mrow", "ms", "mspace", "msqrt", "mstyle", "msub", "msup", "msubsup", "mtable", "mtd", "mtext", "mtr", "munder", "munderover"]);
         var mathMlDisallowed = freeze(["maction", "maligngroup", "malignmark", "mlongdiv", "mscarries", "mscarry", "msgroup", "mstack", "msline", "msrow", "semantics", "annotation", "annotation-xml", "mprescripts", "none"]);
         var text = freeze(["#text"]);
-        var html$1 = freeze(["accept", "action", "align", "alt", "autocapitalize", "autocomplete", "autopictureinpicture", "autoplay", "background", "bgcolor", "border", "capture", "cellpadding", "cellspacing", "checked", "cite", "class", "clear", "color", "cols", "colspan", "controls", "controlslist", "coords", "crossorigin", "datetime", "decoding", "default", "dir", "disabled", "disablepictureinpicture", "disableremoteplayback", "download", "draggable", "enctype", "enterkeyhint", "face", "for", "headers", "height", "hidden", "high", "href", "hreflang", "id", "inputmode", "integrity", "ismap", "kind", "label", "lang", "list", "loading", "loop", "low", "max", "maxlength", "media", "method", "min", "minlength", "multiple", "muted", "name", "nonce", "noshade", "novalidate", "nowrap", "open", "optimum", "pattern", "placeholder", "playsinline", "poster", "preload", "pubdate", "radiogroup", "readonly", "rel", "required", "rev", "reversed", "role", "rows", "rowspan", "spellcheck", "scope", "selected", "shape", "size", "sizes", "span", "srclang", "start", "src", "srcset", "step", "style", "summary", "tabindex", "title", "translate", "type", "usemap", "valign", "value", "width", "xmlns", "slot"]);
-        var svg$1 = freeze(["accent-height", "accumulate", "additive", "alignment-baseline", "ascent", "attributename", "attributetype", "azimuth", "basefrequency", "baseline-shift", "begin", "bias", "by", "class", "clip", "clippathunits", "clip-path", "clip-rule", "color", "color-interpolation", "color-interpolation-filters", "color-profile", "color-rendering", "cx", "cy", "d", "dx", "dy", "diffuseconstant", "direction", "display", "divisor", "dur", "edgemode", "elevation", "end", "fill", "fill-opacity", "fill-rule", "filter", "filterunits", "flood-color", "flood-opacity", "font-family", "font-size", "font-size-adjust", "font-stretch", "font-style", "font-variant", "font-weight", "fx", "fy", "g1", "g2", "glyph-name", "glyphref", "gradientunits", "gradienttransform", "height", "href", "id", "image-rendering", "in", "in2", "k", "k1", "k2", "k3", "k4", "kerning", "keypoints", "keysplines", "keytimes", "lang", "lengthadjust", "letter-spacing", "kernelmatrix", "kernelunitlength", "lighting-color", "local", "marker-end", "marker-mid", "marker-start", "markerheight", "markerunits", "markerwidth", "maskcontentunits", "maskunits", "max", "mask", "media", "method", "mode", "min", "name", "numoctaves", "offset", "operator", "opacity", "order", "orient", "orientation", "origin", "overflow", "paint-order", "path", "pathlength", "patterncontentunits", "patterntransform", "patternunits", "points", "preservealpha", "preserveaspectratio", "primitiveunits", "r", "rx", "ry", "radius", "refx", "refy", "repeatcount", "repeatdur", "restart", "result", "rotate", "scale", "seed", "shape-rendering", "specularconstant", "specularexponent", "spreadmethod", "startoffset", "stddeviation", "stitchtiles", "stop-color", "stop-opacity", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke", "stroke-width", "style", "surfacescale", "systemlanguage", "tabindex", "targetx", "targety", "transform", "transform-origin", "text-anchor", "text-decoration", "text-rendering", "textlength", "type", "u1", "u2", "unicode", "values", "viewbox", "visibility", "version", "vert-adv-y", "vert-origin-x", "vert-origin-y", "width", "word-spacing", "wrap", "writing-mode", "xchannelselector", "ychannelselector", "x", "x1", "x2", "xmlns", "y", "y1", "y2", "z", "zoomandpan"]);
-        var mathMl$1 = freeze(["accent", "accentunder", "align", "bevelled", "close", "columnsalign", "columnlines", "columnspan", "denomalign", "depth", "dir", "display", "displaystyle", "encoding", "fence", "frame", "height", "href", "id", "largeop", "length", "linethickness", "lspace", "lquote", "mathbackground", "mathcolor", "mathsize", "mathvariant", "maxsize", "minsize", "movablelimits", "notation", "numalign", "open", "rowalign", "rowlines", "rowspacing", "rowspan", "rspace", "rquote", "scriptlevel", "scriptminsize", "scriptsizemultiplier", "selection", "separator", "separators", "stretchy", "subscriptshift", "supscriptshift", "symmetric", "voffset", "width", "xmlns"]);
+        var html = freeze(["accept", "action", "align", "alt", "autocapitalize", "autocomplete", "autopictureinpicture", "autoplay", "background", "bgcolor", "border", "capture", "cellpadding", "cellspacing", "checked", "cite", "class", "clear", "color", "cols", "colspan", "controls", "controlslist", "coords", "crossorigin", "datetime", "decoding", "default", "dir", "disabled", "disablepictureinpicture", "disableremoteplayback", "download", "draggable", "enctype", "enterkeyhint", "face", "for", "headers", "height", "hidden", "high", "href", "hreflang", "id", "inputmode", "integrity", "ismap", "kind", "label", "lang", "list", "loading", "loop", "low", "max", "maxlength", "media", "method", "min", "minlength", "multiple", "muted", "name", "nonce", "noshade", "novalidate", "nowrap", "open", "optimum", "pattern", "placeholder", "playsinline", "poster", "preload", "pubdate", "radiogroup", "readonly", "rel", "required", "rev", "reversed", "role", "rows", "rowspan", "spellcheck", "scope", "selected", "shape", "size", "sizes", "span", "srclang", "start", "src", "srcset", "step", "style", "summary", "tabindex", "title", "translate", "type", "usemap", "valign", "value", "width", "xmlns", "slot"]);
+        var svg = freeze(["accent-height", "accumulate", "additive", "alignment-baseline", "ascent", "attributename", "attributetype", "azimuth", "basefrequency", "baseline-shift", "begin", "bias", "by", "class", "clip", "clippathunits", "clip-path", "clip-rule", "color", "color-interpolation", "color-interpolation-filters", "color-profile", "color-rendering", "cx", "cy", "d", "dx", "dy", "diffuseconstant", "direction", "display", "divisor", "dur", "edgemode", "elevation", "end", "fill", "fill-opacity", "fill-rule", "filter", "filterunits", "flood-color", "flood-opacity", "font-family", "font-size", "font-size-adjust", "font-stretch", "font-style", "font-variant", "font-weight", "fx", "fy", "g1", "g2", "glyph-name", "glyphref", "gradientunits", "gradienttransform", "height", "href", "id", "image-rendering", "in", "in2", "k", "k1", "k2", "k3", "k4", "kerning", "keypoints", "keysplines", "keytimes", "lang", "lengthadjust", "letter-spacing", "kernelmatrix", "kernelunitlength", "lighting-color", "local", "marker-end", "marker-mid", "marker-start", "markerheight", "markerunits", "markerwidth", "maskcontentunits", "maskunits", "max", "mask", "media", "method", "mode", "min", "name", "numoctaves", "offset", "operator", "opacity", "order", "orient", "orientation", "origin", "overflow", "paint-order", "path", "pathlength", "patterncontentunits", "patterntransform", "patternunits", "points", "preservealpha", "preserveaspectratio", "primitiveunits", "r", "rx", "ry", "radius", "refx", "refy", "repeatcount", "repeatdur", "restart", "result", "rotate", "scale", "seed", "shape-rendering", "specularconstant", "specularexponent", "spreadmethod", "startoffset", "stddeviation", "stitchtiles", "stop-color", "stop-opacity", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke", "stroke-width", "style", "surfacescale", "systemlanguage", "tabindex", "targetx", "targety", "transform", "transform-origin", "text-anchor", "text-decoration", "text-rendering", "textlength", "type", "u1", "u2", "unicode", "values", "viewbox", "visibility", "version", "vert-adv-y", "vert-origin-x", "vert-origin-y", "width", "word-spacing", "wrap", "writing-mode", "xchannelselector", "ychannelselector", "x", "x1", "x2", "xmlns", "y", "y1", "y2", "z", "zoomandpan"]);
+        var mathMl = freeze(["accent", "accentunder", "align", "bevelled", "close", "columnsalign", "columnlines", "columnspan", "denomalign", "depth", "dir", "display", "displaystyle", "encoding", "fence", "frame", "height", "href", "id", "largeop", "length", "linethickness", "lspace", "lquote", "mathbackground", "mathcolor", "mathsize", "mathvariant", "maxsize", "minsize", "movablelimits", "notation", "numalign", "open", "rowalign", "rowlines", "rowspacing", "rowspan", "rspace", "rquote", "scriptlevel", "scriptminsize", "scriptsizemultiplier", "selection", "separator", "separators", "stretchy", "subscriptshift", "supscriptshift", "symmetric", "voffset", "width", "xmlns"]);
         var xml = freeze(["xlink:href", "xml:id", "xlink:title", "xml:space", "xmlns:xlink"]);
-        var MUSTACHE_EXPR = seal(/\{\{[\s\S]*|[\s\S]*\}\}/gm);
-        var ERB_EXPR = seal(/<%[\s\S]*|[\s\S]*%>/gm);
+        var MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm);
+        var ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
+        var TMPLIT_EXPR = seal(/\${[\w\W]*}/gm);
         var DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]/);
         var ARIA_ATTR = seal(/^aria-[\-\w]+$/);
         var IS_ALLOWED_URI = seal(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i);
         var IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
         var ATTR_WHITESPACE = seal(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g);
         var DOCTYPE_NAME = seal(/^html$/i);
-        var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function(obj) {
-          return typeof obj;
-        } : function(obj) {
-          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-        };
-        function _toConsumableArray$1(arr) {
-          if (Array.isArray(arr)) {
-            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-              arr2[i] = arr[i];
-            }
-            return arr2;
-          } else {
-            return Array.from(arr);
-          }
-        }
         var getGlobal = function getGlobal2() {
           return typeof window === "undefined" ? null : window;
         };
         var _createTrustedTypesPolicy = function _createTrustedTypesPolicy2(trustedTypes, document2) {
-          if ((typeof trustedTypes === "undefined" ? "undefined" : _typeof(trustedTypes)) !== "object" || typeof trustedTypes.createPolicy !== "function") {
+          if (_typeof(trustedTypes) !== "object" || typeof trustedTypes.createPolicy !== "function") {
             return null;
           }
           var suffix = null;
@@ -32336,8 +32491,11 @@
           var policyName = "dompurify" + (suffix ? "#" + suffix : "");
           try {
             return trustedTypes.createPolicy(policyName, {
-              createHTML: function createHTML(html$$1) {
-                return html$$1;
+              createHTML: function createHTML(html2) {
+                return html2;
+              },
+              createScriptURL: function createScriptURL(scriptUrl) {
+                return scriptUrl;
               }
             });
           } catch (_) {
@@ -32350,7 +32508,7 @@
           var DOMPurify = function DOMPurify2(root) {
             return createDOMPurify(root);
           };
-          DOMPurify.version = "2.3.6";
+          DOMPurify.version = "3.0.1";
           DOMPurify.removed = [];
           if (!window2 || !window2.document || window2.document.nodeType !== 9) {
             DOMPurify.isSupported = false;
@@ -32374,19 +32532,14 @@
           var emptyHTML = trustedTypesPolicy ? trustedTypesPolicy.createHTML("") : "";
           var _document = document2, implementation = _document.implementation, createNodeIterator = _document.createNodeIterator, createDocumentFragment = _document.createDocumentFragment, getElementsByTagName = _document.getElementsByTagName;
           var importNode = originalDocument.importNode;
-          var documentMode = {};
-          try {
-            documentMode = clone(document2).documentMode ? document2.documentMode : {};
-          } catch (_) {
-          }
           var hooks = {};
-          DOMPurify.isSupported = typeof getParentNode === "function" && implementation && typeof implementation.createHTMLDocument !== "undefined" && documentMode !== 9;
-          var MUSTACHE_EXPR$$1 = MUSTACHE_EXPR, ERB_EXPR$$1 = ERB_EXPR, DATA_ATTR$$1 = DATA_ATTR, ARIA_ATTR$$1 = ARIA_ATTR, IS_SCRIPT_OR_DATA$$1 = IS_SCRIPT_OR_DATA, ATTR_WHITESPACE$$1 = ATTR_WHITESPACE;
-          var IS_ALLOWED_URI$$1 = IS_ALLOWED_URI;
+          DOMPurify.isSupported = typeof entries === "function" && typeof getParentNode === "function" && implementation && typeof implementation.createHTMLDocument !== "undefined";
+          var MUSTACHE_EXPR$1 = MUSTACHE_EXPR, ERB_EXPR$1 = ERB_EXPR, TMPLIT_EXPR$1 = TMPLIT_EXPR, DATA_ATTR$1 = DATA_ATTR, ARIA_ATTR$1 = ARIA_ATTR, IS_SCRIPT_OR_DATA$1 = IS_SCRIPT_OR_DATA, ATTR_WHITESPACE$1 = ATTR_WHITESPACE;
+          var IS_ALLOWED_URI$1 = IS_ALLOWED_URI;
           var ALLOWED_TAGS = null;
-          var DEFAULT_ALLOWED_TAGS = addToSet({}, [].concat(_toConsumableArray$1(html), _toConsumableArray$1(svg), _toConsumableArray$1(svgFilters), _toConsumableArray$1(mathMl), _toConsumableArray$1(text)));
+          var DEFAULT_ALLOWED_TAGS = addToSet({}, [].concat(_toConsumableArray(html$1), _toConsumableArray(svg$1), _toConsumableArray(svgFilters), _toConsumableArray(mathMl$1), _toConsumableArray(text)));
           var ALLOWED_ATTR = null;
-          var DEFAULT_ALLOWED_ATTR = addToSet({}, [].concat(_toConsumableArray$1(html$1), _toConsumableArray$1(svg$1), _toConsumableArray$1(mathMl$1), _toConsumableArray$1(xml)));
+          var DEFAULT_ALLOWED_ATTR = addToSet({}, [].concat(_toConsumableArray(html), _toConsumableArray(svg), _toConsumableArray(mathMl), _toConsumableArray(xml)));
           var CUSTOM_ELEMENT_HANDLING = Object.seal(Object.create(null, {
             tagNameCheck: {
               writable: true,
@@ -32412,6 +32565,7 @@
           var ALLOW_ARIA_ATTR = true;
           var ALLOW_DATA_ATTR = true;
           var ALLOW_UNKNOWN_PROTOCOLS = false;
+          var ALLOW_SELF_CLOSE_IN_ATTR = true;
           var SAFE_FOR_TEMPLATES = false;
           var WHOLE_DOCUMENT = false;
           var SET_CONFIG = false;
@@ -32420,6 +32574,8 @@
           var RETURN_DOM_FRAGMENT = false;
           var RETURN_TRUSTED_TYPE = false;
           var SANITIZE_DOM = true;
+          var SANITIZE_NAMED_PROPS = false;
+          var SANITIZE_NAMED_PROPS_PREFIX = "user-content-";
           var KEEP_CONTENT = true;
           var IN_PLACE = false;
           var USE_PROFILES = {};
@@ -32434,10 +32590,12 @@
           var HTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
           var NAMESPACE = HTML_NAMESPACE;
           var IS_EMPTY_INPUT = false;
-          var PARSER_MEDIA_TYPE = void 0;
+          var ALLOWED_NAMESPACES = null;
+          var DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
+          var PARSER_MEDIA_TYPE;
           var SUPPORTED_PARSER_MEDIA_TYPES = ["application/xhtml+xml", "text/html"];
           var DEFAULT_PARSER_MEDIA_TYPE = "text/html";
-          var transformCaseFunc = void 0;
+          var transformCaseFunc;
           var CONFIG = null;
           var formElement = document2.createElement("form");
           var isRegexOrFunction = function isRegexOrFunction2(testValue) {
@@ -32447,21 +32605,25 @@
             if (CONFIG && CONFIG === cfg) {
               return;
             }
-            if (!cfg || (typeof cfg === "undefined" ? "undefined" : _typeof(cfg)) !== "object") {
+            if (!cfg || _typeof(cfg) !== "object") {
               cfg = {};
             }
             cfg = clone(cfg);
-            ALLOWED_TAGS = "ALLOWED_TAGS" in cfg ? addToSet({}, cfg.ALLOWED_TAGS) : DEFAULT_ALLOWED_TAGS;
-            ALLOWED_ATTR = "ALLOWED_ATTR" in cfg ? addToSet({}, cfg.ALLOWED_ATTR) : DEFAULT_ALLOWED_ATTR;
-            URI_SAFE_ATTRIBUTES = "ADD_URI_SAFE_ATTR" in cfg ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES), cfg.ADD_URI_SAFE_ATTR) : DEFAULT_URI_SAFE_ATTRIBUTES;
-            DATA_URI_TAGS = "ADD_DATA_URI_TAGS" in cfg ? addToSet(clone(DEFAULT_DATA_URI_TAGS), cfg.ADD_DATA_URI_TAGS) : DEFAULT_DATA_URI_TAGS;
-            FORBID_CONTENTS = "FORBID_CONTENTS" in cfg ? addToSet({}, cfg.FORBID_CONTENTS) : DEFAULT_FORBID_CONTENTS;
-            FORBID_TAGS = "FORBID_TAGS" in cfg ? addToSet({}, cfg.FORBID_TAGS) : {};
-            FORBID_ATTR = "FORBID_ATTR" in cfg ? addToSet({}, cfg.FORBID_ATTR) : {};
+            PARSER_MEDIA_TYPE = SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? PARSER_MEDIA_TYPE = DEFAULT_PARSER_MEDIA_TYPE : PARSER_MEDIA_TYPE = cfg.PARSER_MEDIA_TYPE;
+            transformCaseFunc = PARSER_MEDIA_TYPE === "application/xhtml+xml" ? stringToString : stringToLowerCase;
+            ALLOWED_TAGS = "ALLOWED_TAGS" in cfg ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
+            ALLOWED_ATTR = "ALLOWED_ATTR" in cfg ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
+            ALLOWED_NAMESPACES = "ALLOWED_NAMESPACES" in cfg ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
+            URI_SAFE_ATTRIBUTES = "ADD_URI_SAFE_ATTR" in cfg ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES), cfg.ADD_URI_SAFE_ATTR, transformCaseFunc) : DEFAULT_URI_SAFE_ATTRIBUTES;
+            DATA_URI_TAGS = "ADD_DATA_URI_TAGS" in cfg ? addToSet(clone(DEFAULT_DATA_URI_TAGS), cfg.ADD_DATA_URI_TAGS, transformCaseFunc) : DEFAULT_DATA_URI_TAGS;
+            FORBID_CONTENTS = "FORBID_CONTENTS" in cfg ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
+            FORBID_TAGS = "FORBID_TAGS" in cfg ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : {};
+            FORBID_ATTR = "FORBID_ATTR" in cfg ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : {};
             USE_PROFILES = "USE_PROFILES" in cfg ? cfg.USE_PROFILES : false;
             ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false;
             ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false;
             ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false;
+            ALLOW_SELF_CLOSE_IN_ATTR = cfg.ALLOW_SELF_CLOSE_IN_ATTR !== false;
             SAFE_FOR_TEMPLATES = cfg.SAFE_FOR_TEMPLATES || false;
             WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false;
             RETURN_DOM = cfg.RETURN_DOM || false;
@@ -32469,10 +32631,12 @@
             RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false;
             FORCE_BODY = cfg.FORCE_BODY || false;
             SANITIZE_DOM = cfg.SANITIZE_DOM !== false;
+            SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false;
             KEEP_CONTENT = cfg.KEEP_CONTENT !== false;
             IN_PLACE = cfg.IN_PLACE || false;
-            IS_ALLOWED_URI$$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI$$1;
+            IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI$1;
             NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
+            CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
             if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
               CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
             }
@@ -32482,10 +32646,6 @@
             if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === "boolean") {
               CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
             }
-            PARSER_MEDIA_TYPE = SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? PARSER_MEDIA_TYPE = DEFAULT_PARSER_MEDIA_TYPE : PARSER_MEDIA_TYPE = cfg.PARSER_MEDIA_TYPE;
-            transformCaseFunc = PARSER_MEDIA_TYPE === "application/xhtml+xml" ? function(x) {
-              return x;
-            } : stringToLowerCase;
             if (SAFE_FOR_TEMPLATES) {
               ALLOW_DATA_ATTR = false;
             }
@@ -32493,25 +32653,25 @@
               RETURN_DOM = true;
             }
             if (USE_PROFILES) {
-              ALLOWED_TAGS = addToSet({}, [].concat(_toConsumableArray$1(text)));
+              ALLOWED_TAGS = addToSet({}, _toConsumableArray(text));
               ALLOWED_ATTR = [];
               if (USE_PROFILES.html === true) {
-                addToSet(ALLOWED_TAGS, html);
-                addToSet(ALLOWED_ATTR, html$1);
+                addToSet(ALLOWED_TAGS, html$1);
+                addToSet(ALLOWED_ATTR, html);
               }
               if (USE_PROFILES.svg === true) {
-                addToSet(ALLOWED_TAGS, svg);
-                addToSet(ALLOWED_ATTR, svg$1);
+                addToSet(ALLOWED_TAGS, svg$1);
+                addToSet(ALLOWED_ATTR, svg);
                 addToSet(ALLOWED_ATTR, xml);
               }
               if (USE_PROFILES.svgFilters === true) {
                 addToSet(ALLOWED_TAGS, svgFilters);
-                addToSet(ALLOWED_ATTR, svg$1);
+                addToSet(ALLOWED_ATTR, svg);
                 addToSet(ALLOWED_ATTR, xml);
               }
               if (USE_PROFILES.mathMl === true) {
-                addToSet(ALLOWED_TAGS, mathMl);
-                addToSet(ALLOWED_ATTR, mathMl$1);
+                addToSet(ALLOWED_TAGS, mathMl$1);
+                addToSet(ALLOWED_ATTR, mathMl);
                 addToSet(ALLOWED_ATTR, xml);
               }
             }
@@ -32519,22 +32679,22 @@
               if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
                 ALLOWED_TAGS = clone(ALLOWED_TAGS);
               }
-              addToSet(ALLOWED_TAGS, cfg.ADD_TAGS);
+              addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
             }
             if (cfg.ADD_ATTR) {
               if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
                 ALLOWED_ATTR = clone(ALLOWED_ATTR);
               }
-              addToSet(ALLOWED_ATTR, cfg.ADD_ATTR);
+              addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
             }
             if (cfg.ADD_URI_SAFE_ATTR) {
-              addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR);
+              addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
             }
             if (cfg.FORBID_CONTENTS) {
               if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
                 FORBID_CONTENTS = clone(FORBID_CONTENTS);
               }
-              addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS);
+              addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
             }
             if (KEEP_CONTENT) {
               ALLOWED_TAGS["#text"] = true;
@@ -32553,21 +32713,25 @@
           };
           var MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ["mi", "mo", "mn", "ms", "mtext"]);
           var HTML_INTEGRATION_POINTS = addToSet({}, ["foreignobject", "desc", "title", "annotation-xml"]);
-          var ALL_SVG_TAGS = addToSet({}, svg);
+          var COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ["title", "style", "font", "a", "script"]);
+          var ALL_SVG_TAGS = addToSet({}, svg$1);
           addToSet(ALL_SVG_TAGS, svgFilters);
           addToSet(ALL_SVG_TAGS, svgDisallowed);
-          var ALL_MATHML_TAGS = addToSet({}, mathMl);
+          var ALL_MATHML_TAGS = addToSet({}, mathMl$1);
           addToSet(ALL_MATHML_TAGS, mathMlDisallowed);
           var _checkValidNamespace = function _checkValidNamespace2(element) {
             var parent = getParentNode(element);
             if (!parent || !parent.tagName) {
               parent = {
-                namespaceURI: HTML_NAMESPACE,
+                namespaceURI: NAMESPACE,
                 tagName: "template"
               };
             }
             var tagName = stringToLowerCase(element.tagName);
             var parentTagName = stringToLowerCase(parent.tagName);
+            if (!ALLOWED_NAMESPACES[element.namespaceURI]) {
+              return false;
+            }
             if (element.namespaceURI === SVG_NAMESPACE) {
               if (parent.namespaceURI === HTML_NAMESPACE) {
                 return tagName === "svg";
@@ -32593,21 +32757,21 @@
               if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
                 return false;
               }
-              var commonSvgAndHTMLElements = addToSet({}, ["title", "style", "font", "a", "script"]);
-              return !ALL_MATHML_TAGS[tagName] && (commonSvgAndHTMLElements[tagName] || !ALL_SVG_TAGS[tagName]);
+              return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
+            }
+            if (PARSER_MEDIA_TYPE === "application/xhtml+xml" && ALLOWED_NAMESPACES[element.namespaceURI]) {
+              return true;
             }
             return false;
           };
           var _forceRemove = function _forceRemove2(node) {
-            arrayPush(DOMPurify.removed, { element: node });
+            arrayPush(DOMPurify.removed, {
+              element: node
+            });
             try {
               node.parentNode.removeChild(node);
             } catch (_) {
-              try {
-                node.outerHTML = emptyHTML;
-              } catch (_2) {
-                node.remove();
-              }
+              node.remove();
             }
           };
           var _removeAttribute = function _removeAttribute2(name, node) {
@@ -32638,15 +32802,15 @@
             }
           };
           var _initDocument = function _initDocument2(dirty) {
-            var doc = void 0;
-            var leadingWhitespace = void 0;
+            var doc;
+            var leadingWhitespace;
             if (FORCE_BODY) {
               dirty = "<remove></remove>" + dirty;
             } else {
               var matches = stringMatch(dirty, /^[\r\n\t ]+/);
               leadingWhitespace = matches && matches[0];
             }
-            if (PARSER_MEDIA_TYPE === "application/xhtml+xml") {
+            if (PARSER_MEDIA_TYPE === "application/xhtml+xml" && NAMESPACE === HTML_NAMESPACE) {
               dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + "</body></html>";
             }
             var dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
@@ -32659,7 +32823,7 @@
             if (!doc || !doc.documentElement) {
               doc = implementation.createDocument(NAMESPACE, "template", null);
               try {
-                doc.documentElement.innerHTML = IS_EMPTY_INPUT ? "" : dirtyPayload;
+                doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
               } catch (_) {
               }
             }
@@ -32676,10 +32840,10 @@
             return createNodeIterator.call(root.ownerDocument || root, root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT, null, false);
           };
           var _isClobbered = function _isClobbered2(elm) {
-            return elm instanceof HTMLFormElement && (typeof elm.nodeName !== "string" || typeof elm.textContent !== "string" || typeof elm.removeChild !== "function" || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== "function" || typeof elm.setAttribute !== "function" || typeof elm.namespaceURI !== "string" || typeof elm.insertBefore !== "function");
+            return elm instanceof HTMLFormElement && (typeof elm.nodeName !== "string" || typeof elm.textContent !== "string" || typeof elm.removeChild !== "function" || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== "function" || typeof elm.setAttribute !== "function" || typeof elm.namespaceURI !== "string" || typeof elm.insertBefore !== "function" || typeof elm.hasChildNodes !== "function");
           };
           var _isNode = function _isNode2(object) {
-            return (typeof Node === "undefined" ? "undefined" : _typeof(Node)) === "object" ? object instanceof Node : object && (typeof object === "undefined" ? "undefined" : _typeof(object)) === "object" && typeof object.nodeType === "number" && typeof object.nodeName === "string";
+            return _typeof(Node) === "object" ? object instanceof Node : object && _typeof(object) === "object" && typeof object.nodeType === "number" && typeof object.nodeName === "string";
           };
           var _executeHook = function _executeHook2(entryPoint, currentNode, data) {
             if (!hooks[entryPoint]) {
@@ -32690,13 +32854,9 @@
             });
           };
           var _sanitizeElements = function _sanitizeElements2(currentNode) {
-            var content = void 0;
+            var content;
             _executeHook("beforeSanitizeElements", currentNode, null);
             if (_isClobbered(currentNode)) {
-              _forceRemove(currentNode);
-              return true;
-            }
-            if (stringMatch(currentNode.nodeName, /[\u0080-\uFFFF]/)) {
               _forceRemove(currentNode);
               return true;
             }
@@ -32705,11 +32865,7 @@
               tagName,
               allowedTags: ALLOWED_TAGS
             });
-            if (!_isNode(currentNode.firstElementChild) && (!_isNode(currentNode.content) || !_isNode(currentNode.content.firstElementChild)) && regExpTest(/<[/\w]/g, currentNode.innerHTML) && regExpTest(/<[/\w]/g, currentNode.textContent)) {
-              _forceRemove(currentNode);
-              return true;
-            }
-            if (tagName === "select" && regExpTest(/<template/i, currentNode.innerHTML)) {
+            if (currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && (!_isNode(currentNode.content) || !_isNode(currentNode.content.firstElementChild)) && regExpTest(/<[/\w]/g, currentNode.innerHTML) && regExpTest(/<[/\w]/g, currentNode.textContent)) {
               _forceRemove(currentNode);
               return true;
             }
@@ -32743,10 +32899,13 @@
             }
             if (SAFE_FOR_TEMPLATES && currentNode.nodeType === 3) {
               content = currentNode.textContent;
-              content = stringReplace(content, MUSTACHE_EXPR$$1, " ");
-              content = stringReplace(content, ERB_EXPR$$1, " ");
+              content = stringReplace(content, MUSTACHE_EXPR$1, " ");
+              content = stringReplace(content, ERB_EXPR$1, " ");
+              content = stringReplace(content, TMPLIT_EXPR$1, " ");
               if (currentNode.textContent !== content) {
-                arrayPush(DOMPurify.removed, { element: currentNode.cloneNode() });
+                arrayPush(DOMPurify.removed, {
+                  element: currentNode.cloneNode()
+                });
                 currentNode.textContent = content;
               }
             }
@@ -32757,9 +32916,9 @@
             if (SANITIZE_DOM && (lcName === "id" || lcName === "name") && (value in document2 || value in formElement)) {
               return false;
             }
-            if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR$$1, lcName))
+            if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR$1, lcName))
               ;
-            else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR$$1, lcName))
+            else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR$1, lcName))
               ;
             else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
               if (_basicCustomElementTest(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName)) || lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value)))
@@ -32769,11 +32928,11 @@
               }
             } else if (URI_SAFE_ATTRIBUTES[lcName])
               ;
-            else if (regExpTest(IS_ALLOWED_URI$$1, stringReplace(value, ATTR_WHITESPACE$$1, "")))
+            else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE$1, "")))
               ;
             else if ((lcName === "src" || lcName === "xlink:href" || lcName === "href") && lcTag !== "script" && stringIndexOf(value, "data:") === 0 && DATA_URI_TAGS[lcTag])
               ;
-            else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA$$1, stringReplace(value, ATTR_WHITESPACE$$1, "")))
+            else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA$1, stringReplace(value, ATTR_WHITESPACE$1, "")))
               ;
             else if (!value)
               ;
@@ -32786,10 +32945,10 @@
             return tagName.indexOf("-") > 0;
           };
           var _sanitizeAttributes = function _sanitizeAttributes2(currentNode) {
-            var attr = void 0;
-            var value = void 0;
-            var lcName = void 0;
-            var l = void 0;
+            var attr;
+            var value;
+            var lcName;
+            var l;
             _executeHook("beforeSanitizeAttributes", currentNode, null);
             var attributes = currentNode.attributes;
             if (!attributes) {
@@ -32805,7 +32964,7 @@
             while (l--) {
               attr = attributes[l];
               var _attr = attr, name = _attr.name, namespaceURI = _attr.namespaceURI;
-              value = stringTrim(attr.value);
+              value = name === "value" ? attr.value : stringTrim(attr.value);
               lcName = transformCaseFunc(name);
               hookEvent.attrName = lcName;
               hookEvent.attrValue = value;
@@ -32820,17 +32979,36 @@
               if (!hookEvent.keepAttr) {
                 continue;
               }
-              if (regExpTest(/\/>/i, value)) {
+              if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
                 _removeAttribute(name, currentNode);
                 continue;
               }
               if (SAFE_FOR_TEMPLATES) {
-                value = stringReplace(value, MUSTACHE_EXPR$$1, " ");
-                value = stringReplace(value, ERB_EXPR$$1, " ");
+                value = stringReplace(value, MUSTACHE_EXPR$1, " ");
+                value = stringReplace(value, ERB_EXPR$1, " ");
+                value = stringReplace(value, TMPLIT_EXPR$1, " ");
               }
               var lcTag = transformCaseFunc(currentNode.nodeName);
               if (!_isValidAttribute(lcTag, lcName, value)) {
                 continue;
+              }
+              if (SANITIZE_NAMED_PROPS && (lcName === "id" || lcName === "name")) {
+                _removeAttribute(name, currentNode);
+                value = SANITIZE_NAMED_PROPS_PREFIX + value;
+              }
+              if (trustedTypesPolicy && _typeof(trustedTypes) === "object" && typeof trustedTypes.getAttributeType === "function") {
+                if (namespaceURI)
+                  ;
+                else {
+                  switch (trustedTypes.getAttributeType(lcTag, lcName)) {
+                    case "TrustedHTML":
+                      value = trustedTypesPolicy.createHTML(value);
+                      break;
+                    case "TrustedScriptURL":
+                      value = trustedTypesPolicy.createScriptURL(value);
+                      break;
+                  }
+                }
               }
               try {
                 if (namespaceURI) {
@@ -32845,7 +33023,7 @@
             _executeHook("afterSanitizeAttributes", currentNode, null);
           };
           var _sanitizeShadowDOM = function _sanitizeShadowDOM2(fragment) {
-            var shadowNode = void 0;
+            var shadowNode;
             var shadowIterator = _createIterator(fragment);
             _executeHook("beforeSanitizeShadowDOM", fragment, null);
             while (shadowNode = shadowIterator.nextNode()) {
@@ -32860,12 +33038,12 @@
             }
             _executeHook("afterSanitizeShadowDOM", fragment, null);
           };
-          DOMPurify.sanitize = function(dirty, cfg) {
-            var body = void 0;
-            var importedNode = void 0;
-            var currentNode = void 0;
-            var oldNode = void 0;
-            var returnNode = void 0;
+          DOMPurify.sanitize = function(dirty) {
+            var cfg = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+            var body;
+            var importedNode;
+            var currentNode;
+            var returnNode;
             IS_EMPTY_INPUT = !dirty;
             if (IS_EMPTY_INPUT) {
               dirty = "<!-->";
@@ -32881,14 +33059,6 @@
               }
             }
             if (!DOMPurify.isSupported) {
-              if (_typeof(window2.toStaticHTML) === "object" || typeof window2.toStaticHTML === "function") {
-                if (typeof dirty === "string") {
-                  return window2.toStaticHTML(dirty);
-                }
-                if (_isNode(dirty)) {
-                  return window2.toStaticHTML(dirty.outerHTML);
-                }
-              }
               return dirty;
             }
             if (!SET_CONFIG) {
@@ -32929,9 +33099,6 @@
             }
             var nodeIterator = _createIterator(IN_PLACE ? dirty : body);
             while (currentNode = nodeIterator.nextNode()) {
-              if (currentNode.nodeType === 3 && currentNode === oldNode) {
-                continue;
-              }
               if (_sanitizeElements(currentNode)) {
                 continue;
               }
@@ -32939,9 +33106,7 @@
                 _sanitizeShadowDOM(currentNode.content);
               }
               _sanitizeAttributes(currentNode);
-              oldNode = currentNode;
             }
-            oldNode = null;
             if (IN_PLACE) {
               return dirty;
             }
@@ -32954,7 +33119,7 @@
               } else {
                 returnNode = body;
               }
-              if (ALLOWED_ATTR.shadowroot) {
+              if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmod) {
                 returnNode = importNode.call(originalDocument, returnNode, true);
               }
               return returnNode;
@@ -32964,8 +33129,9 @@
               serializedHTML = "<!DOCTYPE " + body.ownerDocument.doctype.name + ">\n" + serializedHTML;
             }
             if (SAFE_FOR_TEMPLATES) {
-              serializedHTML = stringReplace(serializedHTML, MUSTACHE_EXPR$$1, " ");
-              serializedHTML = stringReplace(serializedHTML, ERB_EXPR$$1, " ");
+              serializedHTML = stringReplace(serializedHTML, MUSTACHE_EXPR$1, " ");
+              serializedHTML = stringReplace(serializedHTML, ERB_EXPR$1, " ");
+              serializedHTML = stringReplace(serializedHTML, TMPLIT_EXPR$1, " ");
             }
             return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
           };
@@ -32994,7 +33160,7 @@
           };
           DOMPurify.removeHook = function(entryPoint) {
             if (hooks[entryPoint]) {
-              arrayPop(hooks[entryPoint]);
+              return arrayPop(hooks[entryPoint]);
             }
           };
           DOMPurify.removeHooks = function(entryPoint) {
@@ -35668,8 +35834,8 @@ if (cid) {
       var r = require_buffer2();
       var n = t(require_axios2());
       var o = t(require_purify());
-      var i = (init_src(), __toCommonJS(src_exports));
-      var a = t(require_is_svg());
+      var a = (init_src(), __toCommonJS(src_exports));
+      var i = t(require_is_svg());
       var u = t(require_url_join());
       function c() {
         c = function(t3, e3) {
@@ -35677,8 +35843,8 @@ if (cid) {
         };
         var t2 = RegExp.prototype, e2 = /* @__PURE__ */ new WeakMap();
         function r2(t3, n3, o2) {
-          var i2 = new RegExp(t3, n3);
-          return e2.set(i2, o2 || e2.get(t3)), v(i2, r2.prototype);
+          var a2 = new RegExp(t3, n3);
+          return e2.set(a2, o2 || e2.get(t3)), v(a2, r2.prototype);
         }
         function n2(t3, r3) {
           var n3 = e2.get(r3);
@@ -35686,46 +35852,46 @@ if (cid) {
             return e3[r4] = t3[n3[r4]], e3;
           }, /* @__PURE__ */ Object.create(null));
         }
-        return l(r2, RegExp), r2.prototype.exec = function(e3) {
+        return f(r2, RegExp), r2.prototype.exec = function(e3) {
           var r3 = t2.exec.call(this, e3);
           return r3 && (r3.groups = n2(r3, this)), r3;
         }, r2.prototype[Symbol.replace] = function(r3, o2) {
           if (typeof o2 == "string") {
-            var i2 = e2.get(this);
+            var a2 = e2.get(this);
             return t2[Symbol.replace].call(this, r3, o2.replace(/\$<([^>]+)>/g, function(t3, e3) {
-              return "$" + i2[e3];
+              return "$" + a2[e3];
             }));
           }
           if (typeof o2 == "function") {
-            var a2 = this;
+            var i2 = this;
             return t2[Symbol.replace].call(this, r3, function() {
               var t3 = arguments;
-              return typeof t3[t3.length - 1] != "object" && (t3 = [].slice.call(t3)).push(n2(t3, a2)), o2.apply(this, t3);
+              return typeof t3[t3.length - 1] != "object" && (t3 = [].slice.call(t3)).push(n2(t3, i2)), o2.apply(this, t3);
             });
           }
           return t2[Symbol.replace].call(this, r3, o2);
         }, c.apply(this, arguments);
       }
-      function s(t2, e2, r2, n2, o2, i2, a2) {
+      function s(t2, e2, r2, n2, o2, a2, i2) {
         try {
-          var u2 = t2[i2](a2), c2 = u2.value;
+          var u2 = t2[a2](i2), c2 = u2.value;
         } catch (t3) {
           return void r2(t3);
         }
         u2.done ? e2(c2) : Promise.resolve(c2).then(n2, o2);
       }
-      function f(t2) {
+      function l(t2) {
         return function() {
           var e2 = this, r2 = arguments;
           return new Promise(function(n2, o2) {
-            var i2 = t2.apply(e2, r2);
-            function a2(t3) {
-              s(i2, n2, o2, a2, u2, "next", t3);
+            var a2 = t2.apply(e2, r2);
+            function i2(t3) {
+              s(a2, n2, o2, i2, u2, "next", t3);
             }
             function u2(t3) {
-              s(i2, n2, o2, a2, u2, "throw", t3);
+              s(a2, n2, o2, i2, u2, "throw", t3);
             }
-            a2(void 0);
+            i2(void 0);
           });
         };
       }
@@ -35739,7 +35905,7 @@ if (cid) {
           return t2;
         }).apply(this, arguments);
       }
-      function l(t2, e2) {
+      function f(t2, e2) {
         if (typeof e2 != "function" && e2 !== null)
           throw new TypeError("Super expression must either be null or a function");
         t2.prototype = Object.create(e2 && e2.prototype, { constructor: { value: t2, writable: true, configurable: true } }), Object.defineProperty(t2, "prototype", { writable: false }), e2 && v(t2, e2);
@@ -35826,7 +35992,7 @@ if (cid) {
       var x;
       var O = (function(t2) {
         var e2 = function(t3) {
-          var e3 = Object.prototype, r2 = e3.hasOwnProperty, n2 = typeof Symbol == "function" ? Symbol : {}, o2 = n2.iterator || "@@iterator", i2 = n2.asyncIterator || "@@asyncIterator", a2 = n2.toStringTag || "@@toStringTag";
+          var e3 = Object.prototype, r2 = e3.hasOwnProperty, n2 = typeof Symbol == "function" ? Symbol : {}, o2 = n2.iterator || "@@iterator", a2 = n2.asyncIterator || "@@asyncIterator", i2 = n2.toStringTag || "@@toStringTag";
           function u2(t4, e4, r3) {
             return Object.defineProperty(t4, e4, { value: r3, enumerable: true, configurable: true, writable: true }), t4[e4];
           }
@@ -35838,23 +36004,23 @@ if (cid) {
             };
           }
           function c2(t4, e4, r3, n3) {
-            var o3 = Object.create((e4 && e4.prototype instanceof p2 ? e4 : p2).prototype), i3 = new _2(n3 || []);
+            var o3 = Object.create((e4 && e4.prototype instanceof p2 ? e4 : p2).prototype), a3 = new _2(n3 || []);
             return o3._invoke = function(t5, e5, r4) {
               var n4 = "suspendedStart";
-              return function(o4, i4) {
+              return function(o4, a4) {
                 if (n4 === "executing")
                   throw new Error("Generator is already running");
                 if (n4 === "completed") {
                   if (o4 === "throw")
-                    throw i4;
+                    throw a4;
                   return { value: void 0, done: true };
                 }
-                for (r4.method = o4, r4.arg = i4; ; ) {
-                  var a3 = r4.delegate;
-                  if (a3) {
-                    var u3 = b2(a3, r4);
+                for (r4.method = o4, r4.arg = a4; ; ) {
+                  var i3 = r4.delegate;
+                  if (i3) {
+                    var u3 = b2(i3, r4);
                     if (u3) {
-                      if (u3 === f2)
+                      if (u3 === l2)
                         continue;
                       return u3;
                     }
@@ -35870,14 +36036,14 @@ if (cid) {
                   n4 = "executing";
                   var c3 = s2(t5, e5, r4);
                   if (c3.type === "normal") {
-                    if (n4 = r4.done ? "completed" : "suspendedYield", c3.arg === f2)
+                    if (n4 = r4.done ? "completed" : "suspendedYield", c3.arg === l2)
                       continue;
                     return { value: c3.arg, done: r4.done };
                   }
                   c3.type === "throw" && (n4 = "completed", r4.method = "throw", r4.arg = c3.arg);
                 }
               };
-            }(t4, r3, i3), o3;
+            }(t4, r3, a3), o3;
           }
           function s2(t4, e4, r3) {
             try {
@@ -35887,10 +36053,10 @@ if (cid) {
             }
           }
           t3.wrap = c2;
-          var f2 = {};
+          var l2 = {};
           function p2() {
           }
-          function l2() {
+          function f2() {
           }
           function h2() {
           }
@@ -35910,28 +36076,28 @@ if (cid) {
           }
           function w2(t4, e4) {
             var n3;
-            this._invoke = function(o3, i3) {
-              function a3() {
-                return new e4(function(n4, a4) {
-                  !function n5(o4, i4, a5, u3) {
-                    var c3 = s2(t4[o4], t4, i4);
+            this._invoke = function(o3, a3) {
+              function i3() {
+                return new e4(function(n4, i4) {
+                  !function n5(o4, a4, i5, u3) {
+                    var c3 = s2(t4[o4], t4, a4);
                     if (c3.type !== "throw") {
-                      var f3 = c3.arg, p3 = f3.value;
+                      var l3 = c3.arg, p3 = l3.value;
                       return p3 && typeof p3 == "object" && r2.call(p3, "__await") ? e4.resolve(p3.__await).then(function(t5) {
-                        n5("next", t5, a5, u3);
+                        n5("next", t5, i5, u3);
                       }, function(t5) {
-                        n5("throw", t5, a5, u3);
+                        n5("throw", t5, i5, u3);
                       }) : e4.resolve(p3).then(function(t5) {
-                        f3.value = t5, a5(f3);
+                        l3.value = t5, i5(l3);
                       }, function(t5) {
-                        return n5("throw", t5, a5, u3);
+                        return n5("throw", t5, i5, u3);
                       });
                     }
                     u3(c3.arg);
-                  }(o3, i3, n4, a4);
+                  }(o3, a3, n4, i4);
                 });
               }
-              return n3 = n3 ? n3.then(a3, a3) : a3();
+              return n3 = n3 ? n3.then(i3, i3) : i3();
             };
           }
           function b2(t4, e4) {
@@ -35939,16 +36105,16 @@ if (cid) {
             if (r3 === void 0) {
               if (e4.delegate = null, e4.method === "throw") {
                 if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, b2(t4, e4), e4.method === "throw"))
-                  return f2;
+                  return l2;
                 e4.method = "throw", e4.arg = new TypeError("The iterator does not provide a 'throw' method");
               }
-              return f2;
+              return l2;
             }
             var n3 = s2(r3, t4.iterator, e4.arg);
             if (n3.type === "throw")
-              return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, f2;
+              return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, l2;
             var o3 = n3.arg;
-            return o3 ? o3.done ? (e4[t4.resultName] = o3.value, e4.next = t4.nextLoc, e4.method !== "return" && (e4.method = "next", e4.arg = void 0), e4.delegate = null, f2) : o3 : (e4.method = "throw", e4.arg = new TypeError("iterator result is not an object"), e4.delegate = null, f2);
+            return o3 ? o3.done ? (e4[t4.resultName] = o3.value, e4.next = t4.nextLoc, e4.method !== "return" && (e4.method = "next", e4.arg = void 0), e4.delegate = null, l2) : o3 : (e4.method = "throw", e4.arg = new TypeError("iterator result is not an object"), e4.delegate = null, l2);
           }
           function x2(t4) {
             var e4 = { tryLoc: t4[0] };
@@ -35969,13 +36135,13 @@ if (cid) {
               if (typeof t4.next == "function")
                 return t4;
               if (!isNaN(t4.length)) {
-                var n3 = -1, i3 = function e5() {
+                var n3 = -1, a3 = function e5() {
                   for (; ++n3 < t4.length; )
                     if (r2.call(t4, n3))
                       return e5.value = t4[n3], e5.done = false, e5;
                   return e5.value = void 0, e5.done = true, e5;
                 };
-                return i3.next = i3;
+                return a3.next = a3;
               }
             }
             return { next: E2 };
@@ -35983,22 +36149,22 @@ if (cid) {
           function E2() {
             return { value: void 0, done: true };
           }
-          return l2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", l2), l2.displayName = u2(h2, a2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
+          return f2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", f2), f2.displayName = u2(h2, i2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
             var e4 = typeof t4 == "function" && t4.constructor;
-            return !!e4 && (e4 === l2 || (e4.displayName || e4.name) === "GeneratorFunction");
+            return !!e4 && (e4 === f2 || (e4.displayName || e4.name) === "GeneratorFunction");
           }, t3.mark = function(t4) {
-            return Object.setPrototypeOf ? Object.setPrototypeOf(t4, h2) : (t4.__proto__ = h2, u2(t4, a2, "GeneratorFunction")), t4.prototype = Object.create(g2), t4;
+            return Object.setPrototypeOf ? Object.setPrototypeOf(t4, h2) : (t4.__proto__ = h2, u2(t4, i2, "GeneratorFunction")), t4.prototype = Object.create(g2), t4;
           }, t3.awrap = function(t4) {
             return { __await: t4 };
-          }, m2(w2.prototype), u2(w2.prototype, i2, function() {
+          }, m2(w2.prototype), u2(w2.prototype, a2, function() {
             return this;
-          }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, i3) {
-            i3 === void 0 && (i3 = Promise);
-            var a3 = new w2(c2(e4, r3, n3, o3), i3);
-            return t3.isGeneratorFunction(r3) ? a3 : a3.next().then(function(t4) {
-              return t4.done ? t4.value : a3.next();
+          }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, a3) {
+            a3 === void 0 && (a3 = Promise);
+            var i3 = new w2(c2(e4, r3, n3, o3), a3);
+            return t3.isGeneratorFunction(r3) ? i3 : i3.next().then(function(t4) {
+              return t4.done ? t4.value : i3.next();
             });
-          }, m2(g2), u2(g2, a2, "Generator"), u2(g2, o2, function() {
+          }, m2(g2), u2(g2, i2, "Generator"), u2(g2, o2, function() {
             return this;
           }), u2(g2, "toString", function() {
             return "[object Generator]";
@@ -36029,27 +36195,27 @@ if (cid) {
               throw t4;
             var e4 = this;
             function n3(r3, n4) {
-              return a3.type = "throw", a3.arg = t4, e4.next = r3, n4 && (e4.method = "next", e4.arg = void 0), !!n4;
+              return i3.type = "throw", i3.arg = t4, e4.next = r3, n4 && (e4.method = "next", e4.arg = void 0), !!n4;
             }
             for (var o3 = this.tryEntries.length - 1; o3 >= 0; --o3) {
-              var i3 = this.tryEntries[o3], a3 = i3.completion;
-              if (i3.tryLoc === "root")
+              var a3 = this.tryEntries[o3], i3 = a3.completion;
+              if (a3.tryLoc === "root")
                 return n3("end");
-              if (i3.tryLoc <= this.prev) {
-                var u3 = r2.call(i3, "catchLoc"), c3 = r2.call(i3, "finallyLoc");
+              if (a3.tryLoc <= this.prev) {
+                var u3 = r2.call(a3, "catchLoc"), c3 = r2.call(a3, "finallyLoc");
                 if (u3 && c3) {
-                  if (this.prev < i3.catchLoc)
-                    return n3(i3.catchLoc, true);
-                  if (this.prev < i3.finallyLoc)
-                    return n3(i3.finallyLoc);
+                  if (this.prev < a3.catchLoc)
+                    return n3(a3.catchLoc, true);
+                  if (this.prev < a3.finallyLoc)
+                    return n3(a3.finallyLoc);
                 } else if (u3) {
-                  if (this.prev < i3.catchLoc)
-                    return n3(i3.catchLoc, true);
+                  if (this.prev < a3.catchLoc)
+                    return n3(a3.catchLoc, true);
                 } else {
                   if (!c3)
                     throw new Error("try statement without catch or finally");
-                  if (this.prev < i3.finallyLoc)
-                    return n3(i3.finallyLoc);
+                  if (this.prev < a3.finallyLoc)
+                    return n3(a3.finallyLoc);
                 }
               }
             }
@@ -36057,22 +36223,22 @@ if (cid) {
             for (var n3 = this.tryEntries.length - 1; n3 >= 0; --n3) {
               var o3 = this.tryEntries[n3];
               if (o3.tryLoc <= this.prev && r2.call(o3, "finallyLoc") && this.prev < o3.finallyLoc) {
-                var i3 = o3;
+                var a3 = o3;
                 break;
               }
             }
-            i3 && (t4 === "break" || t4 === "continue") && i3.tryLoc <= e4 && e4 <= i3.finallyLoc && (i3 = null);
-            var a3 = i3 ? i3.completion : {};
-            return a3.type = t4, a3.arg = e4, i3 ? (this.method = "next", this.next = i3.finallyLoc, f2) : this.complete(a3);
+            a3 && (t4 === "break" || t4 === "continue") && a3.tryLoc <= e4 && e4 <= a3.finallyLoc && (a3 = null);
+            var i3 = a3 ? a3.completion : {};
+            return i3.type = t4, i3.arg = e4, a3 ? (this.method = "next", this.next = a3.finallyLoc, l2) : this.complete(i3);
           }, complete: function(t4, e4) {
             if (t4.type === "throw")
               throw t4.arg;
-            return t4.type === "break" || t4.type === "continue" ? this.next = t4.arg : t4.type === "return" ? (this.rval = this.arg = t4.arg, this.method = "return", this.next = "end") : t4.type === "normal" && e4 && (this.next = e4), f2;
+            return t4.type === "break" || t4.type === "continue" ? this.next = t4.arg : t4.type === "return" ? (this.rval = this.arg = t4.arg, this.method = "return", this.next = "end") : t4.type === "normal" && e4 && (this.next = e4), l2;
           }, finish: function(t4) {
             for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
               var r3 = this.tryEntries[e4];
               if (r3.finallyLoc === t4)
-                return this.complete(r3.completion, r3.afterLoc), O2(r3), f2;
+                return this.complete(r3.completion, r3.afterLoc), O2(r3), l2;
             }
           }, catch: function(t4) {
             for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
@@ -36088,7 +36254,7 @@ if (cid) {
             }
             throw new Error("illegal catch attempt");
           }, delegateYield: function(t4, e4, r3) {
-            return this.delegate = { iterator: j2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), f2;
+            return this.delegate = { iterator: j2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), l2;
           } }, t3;
         }(t2.exports);
         try {
@@ -36097,26 +36263,26 @@ if (cid) {
           typeof globalThis == "object" ? globalThis.regeneratorRuntime = e2 : Function("r", "regeneratorRuntime = r")(e2);
         }
       }(x = { exports: {} }), x.exports);
-      var _ = c(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
+      var _ = c(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
       var j = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
       var E = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
-      var k = function(t2) {
+      var L = function(t2) {
         function e2(r2) {
           var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
           return (n2 = t2.call(this, r2) || this).__proto__ = o2, n2;
         }
         return h(e2, t2), e2;
       }(m(Error));
-      function L(t2, e2) {
+      function I(t2, e2) {
         if (!t2)
           throw e2;
       }
-      function I(t2) {
+      function k(t2) {
         return S.apply(this, arguments);
       }
       function S() {
-        return (S = f(O.mark(function t2(e2) {
-          var r2, n2, o2, i2;
+        return (S = l(O.mark(function t2(e2) {
+          var r2, n2, o2, a2;
           return O.wrap(function(t3) {
             for (; ; )
               switch (t3.prev = t3.next) {
@@ -36124,7 +36290,7 @@ if (cid) {
                   return r2 = [], t3.next = 3, Promise.allSettled(e2);
                 case 3:
                   for (n2 = b(t3.sent); !(o2 = n2()).done; )
-                    (i2 = o2.value).status === "fulfilled" ? r2.push(i2.value) : i2.status === "rejected" && r2.push(null);
+                    (a2 = o2.value).status === "fulfilled" ? r2.push(a2.value) : a2.status === "rejected" && r2.push(null);
                   return t3.abrupt("return", r2);
                 case 6:
                 case "end":
@@ -36133,173 +36299,15 @@ if (cid) {
           }, t2);
         }))).apply(this, arguments);
       }
-      var P = function(t2) {
+      var R = function(t2) {
         function e2() {
           return t2.apply(this, arguments) || this;
         }
         return h(e2, t2), e2;
-      }(k);
-      function R(t2, e2) {
-        e2 === void 0 && (e2 = "/");
-        try {
-          L(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
-          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], i2 = r2[0].split(":"), a2 = i2[0], u2 = i2[1], c2 = n2.split(":"), s2 = c2[0], f2 = c2[1];
-          return L(a2 && a2.toLowerCase() === "eip155", "Only EIP-155 is supported"), L(u2, "chainID not found"), L(f2, "contractAddress not found"), L(s2, "erc namespace not found"), L(o2, "tokenID not found"), { chainID: Number(u2), namespace: s2.toLowerCase(), contractAddress: f2, tokenID: o2 };
-        } catch (e3) {
-          throw new P(e3 + " - " + t2);
-        }
-      }
-      function A(t2, e2) {
-        var r2 = j.test(t2);
-        if (r2 || t2.startsWith("http"))
-          return { uri: t2, isOnChain: r2, isEncoded: r2 };
-        var n2 = e2 || "https://ipfs.io", o2 = t2.match(_), a2 = (o2 == null ? void 0 : o2.groups) || {}, c2 = a2.target, s2 = a2.subtarget, f2 = s2 === void 0 ? "" : s2;
-        return a2.protocol !== "ipns:/" && a2.subpath !== "ipns/" || !c2 ? function(t3) {
-          try {
-            return typeof t3 == "string" ? Boolean(i.CID.parse(t3)) : Boolean(i.CID.asCID(t3));
-          } catch (t4) {
-            return false;
-          }
-        }(c2) ? { uri: u(n2, "/ipfs/", c2, f2), isOnChain: false, isEncoded: false } : { uri: t2.replace(E, ""), isOnChain: true, isEncoded: false } : { uri: u(n2, "/ipns/", c2, f2), isOnChain: false, isEncoded: false };
-      }
-      function C(t2) {
-        var e2 = t2.metadata, n2 = t2.customGateway, i2 = t2.jsdomWindow, u2 = e2.image || e2.image_url || e2.image_data;
-        L(u2, "Image is not available");
-        var c2 = A(u2, n2).uri;
-        return c2.startsWith("data:") || c2.startsWith("http") ? c2 : a(c2) ? "data:image/svg+xml;base64," + function(t3, e3) {
-          var n3;
-          try {
-            n3 = window;
-          } catch (t4) {
-            if (!e3)
-              throw Error("In node environment JSDOM window is required");
-            n3 = e3;
-          }
-          var i3 = o(n3).sanitize(t3);
-          return r.Buffer.from(i3);
-        }(c2, i2).toString("base64") : null;
-      }
-      function N(t2, e2) {
-        (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
-      }
-      function M(t2) {
-        var e2 = t2.ttl, r2 = n.create();
-        return e2 && e2 > 0 && N(r2, e2), r2;
-      }
-      var T = M({});
-      var D = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
-      var G = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(n2, o2, i2, a2) {
-            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2, m2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return u2 = a2.startsWith("https://api.opensea.io") ? a2 : a2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(i2, D, n2), t5.next = 4, Promise.all([c2.uri(a2), o2 && c2.balanceOf(o2, a2)]);
-                  case 4:
-                    if (f2 = (s2 = t5.sent)[0], l2 = s2[1], h2 = !(!o2 || !l2.gt(0)), d2 = A(f2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
-                      t5.next = 13;
-                      break;
-                    }
-                    return y2 && (g2 = r.Buffer.from(v2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(g2));
-                  case 13:
-                    return t5.next = 15, T(v2.replace(/(?:0x)?{id}/, u2));
-                  case 15:
-                    return m2 = t5.sent, t5.next = 18, m2 == null ? void 0 : m2.data;
-                  case 18:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: h2 }));
-                  case 20:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2, r2, n2, o2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      var W = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
-      var q = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(n2, o2, i2, a2) {
-            var u2, c2, s2, f2, l2, h2, d2, v2, y2, g2, m2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return u2 = new e.Contract(i2, W, n2), t5.next = 3, Promise.all([u2.tokenURI(a2), o2 && u2.ownerOf(a2)]);
-                  case 3:
-                    if (s2 = (c2 = t5.sent)[0], f2 = c2[1], l2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), h2 = A(s2), v2 = h2.isEncoded, y2 = d2 = h2.uri, !h2.isOnChain) {
-                      t5.next = 13;
-                      break;
-                    }
-                    return v2 && (y2 = r.Buffer.from(d2.replace("data:application/json;base64,", ""), "base64").toString()), g2 = JSON.parse(decodeURI(y2)), t5.abrupt("return", p({}, g2, { is_owner: l2 }));
-                  case 13:
-                    return t5.next = 15, T(d2.replace(/(?:0x)?{id}/, a2));
-                  case 15:
-                    return m2 = t5.sent, t5.next = 18, m2 == null ? void 0 : m2.data;
-                  case 18:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: l2 }));
-                  case 20:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2, r2, n2, o2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      var F = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = f(O.mark(function t4(e2) {
-            var r2, n2, o2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    if (r2 = A(e2), n2 = r2.uri, !r2.isOnChain) {
-                      t5.next = 3;
-                      break;
-                    }
-                    return t5.abrupt("return", n2);
-                  case 3:
-                    return t5.next = 5, U(n2);
-                  case 5:
-                    if (!t5.sent) {
-                      t5.next = 8;
-                      break;
-                    }
-                    return t5.abrupt("return", { image: n2 });
-                  case 8:
-                    return t5.next = 10, T(n2);
-                  case 10:
-                    return o2 = t5.sent, t5.next = 13, o2 == null ? void 0 : o2.data;
-                  case 13:
-                    return t5.abrupt("return", t5.sent);
-                  case 14:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      function U(t2) {
+      }(L);
+      function P(t2) {
         return new Promise(function(e2) {
-          T({ url: t2, method: "HEAD" }).then(function(t3) {
+          G({ url: t2, method: "HEAD" }).then(function(t3) {
             if (t3.status === 200) {
               var r2 = t3.headers["content-type"];
               e2(r2 == null ? void 0 : r2.startsWith("image/"));
@@ -36321,26 +36329,223 @@ if (cid) {
           });
         });
       }
-      var B = Object.freeze({ erc721: q, erc1155: G });
-      var z = function(t2) {
-        function e2() {
-          return t2.apply(this, arguments) || this;
+      function A(t2, e2) {
+        e2 === void 0 && (e2 = "/");
+        try {
+          I(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
+          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], a2 = r2[0].split(":"), i2 = a2[0], u2 = a2[1], c2 = n2.split(":"), s2 = c2[0], l2 = c2[1];
+          return I(i2 && i2.toLowerCase() === "eip155", "Only EIP-155 is supported"), I(u2, "chainID not found"), I(l2, "contractAddress not found"), I(s2, "erc namespace not found"), I(o2, "tokenID not found"), { chainID: Number(u2), namespace: s2.toLowerCase(), contractAddress: l2, tokenID: o2 };
+        } catch (e3) {
+          throw new R(e3 + " - " + t2);
         }
-        return h(e2, t2), e2;
-      }(k);
-      var Z = function() {
-        function t2(t3, e3) {
-          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && N(T, e3 == null ? void 0 : e3.cache);
+      }
+      function C(t2, e2, r2) {
+        var n2, o2, i2, c2, s2, l2 = j.test(t2);
+        if (l2 || t2.startsWith("http"))
+          return t2 = U(t2, "https://ipfs.io/", (c2 = e2) == null ? void 0 : c2.ipfs), { uri: t2 = U(t2, "https://arweave.net/", (s2 = e2) == null ? void 0 : s2.arweave), isOnChain: l2, isEncoded: l2 };
+        (n2 = e2) != null && n2.ipfs || !r2 || (console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"), e2 = p({}, e2, { ipfs: r2 }));
+        var f2 = ((o2 = e2) == null ? void 0 : o2.ipfs) || "https://ipfs.io", h2 = ((i2 = e2) == null ? void 0 : i2.arweave) || "https://arweave.net", d2 = t2.match(_), v2 = (d2 == null ? void 0 : d2.groups) || {}, y2 = v2.protocol, g2 = v2.target, m2 = v2.subtarget, w2 = m2 === void 0 ? "" : m2;
+        return y2 !== "ipns:/" && v2.subpath !== "ipns/" || !g2 ? function(t3) {
+          try {
+            return typeof t3 == "string" ? Boolean(a.CID.parse(t3)) : Boolean(a.CID.asCID(t3));
+          } catch (t4) {
+            return false;
+          }
+        }(g2) ? { uri: u(f2, "/ipfs/", g2, w2), isOnChain: false, isEncoded: false } : y2 === "ar:/" && g2 ? { uri: u(h2, g2, w2 || ""), isOnChain: false, isEncoded: false } : { uri: t2.replace(E, ""), isOnChain: true, isEncoded: false } : { uri: u(f2, "/ipns/", g2, w2), isOnChain: false, isEncoded: false };
+      }
+      function U(t2, e2, r2) {
+        if (t2.startsWith(e2) && r2)
+          try {
+            var n2 = new URL(t2);
+            return n2.hostname = new URL(r2).hostname, n2.toString();
+          } catch (e3) {
+            return t2;
+          }
+        return t2;
+      }
+      function W(t2) {
+        var e2 = t2.metadata, n2 = t2.customGateway, a2 = t2.gateways, u2 = t2.jsdomWindow, c2 = e2.image || e2.image_url || e2.image_data;
+        I(c2, "Image is not available");
+        var s2 = C(c2, a2, n2).uri;
+        if (i(s2) || s2.startsWith("data:image/svg+xml")) {
+          var l2 = function(t3) {
+            if (t3.startsWith("data:image/svg+xml;base64,")) {
+              var e3 = t3.substring("data:image/svg+xml;base64,".length);
+              try {
+                return r.Buffer.from(e3, "base64").toString();
+              } catch (t4) {
+                return console.error("Invalid base64 encoded SVG"), null;
+              }
+            } else {
+              if (!t3.startsWith("data:image/svg+xml,"))
+                return t3;
+              var n3 = t3.substring("data:image/svg+xml,".length);
+              try {
+                return decodeURIComponent(n3);
+              } catch (t4) {
+                return console.error("Invalid URL encoded SVG"), null;
+              }
+            }
+          }(s2);
+          return l2 ? "data:image/svg+xml;base64," + function(t3, e3) {
+            var n3;
+            try {
+              n3 = window;
+            } catch (t4) {
+              if (!e3)
+                throw Error("In node environment JSDOM window is required");
+              n3 = e3;
+            }
+            var a3 = o(n3).sanitize(t3);
+            return r.Buffer.from(a3);
+          }(l2, u2).toString("base64") : null;
         }
-        var e2 = t2.prototype;
-        return e2.getMetadata = function() {
-          var t3 = f(O.mark(function t4(e3) {
-            var r2, n2, o2, i2, a2, u2, c2, s2, f2, l2, h2, d2, v2;
+        return function(t3) {
+          var e3 = t3.match(/^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/);
+          if (!e3 || e3.length < 2)
+            return false;
+          var r2 = e3[1].toLowerCase();
+          return ["jpeg", "png", "gif", "bmp", "webp"].includes(r2);
+        }(s2) || s2.startsWith("http") ? s2 : null;
+      }
+      function N(t2, e2) {
+        (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
+      }
+      function T(t2) {
+        var e2 = t2.ttl, r2 = n.create({ proxy: false });
+        return e2 && e2 > 0 && N(r2, e2), r2;
+      }
+      var G = T({});
+      var M = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
+      var D = function() {
+        function t2() {
+        }
+        return t2.prototype.getMetadata = function() {
+          var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
+            var c2, s2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return t5.next = 2, I([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
+                    return c2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), s2 = new e.Contract(a2, M, n2), t5.next = 4, Promise.all([s2.uri(i2), o2 && s2.balanceOf(o2, i2)]);
+                  case 4:
+                    if (f2 = (l2 = t5.sent)[0], h2 = l2[1], d2 = !(!o2 || !h2.gt(0)), v2 = C(f2, u2), g2 = v2.isEncoded, m2 = y2 = v2.uri, !v2.isOnChain) {
+                      t5.next = 13;
+                      break;
+                    }
+                    return g2 && (m2 = r.Buffer.from(y2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(m2));
+                  case 13:
+                    return t5.next = 15, G(y2.replace(/(?:0x)?{id}/, c2));
+                  case 15:
+                    return w2 = t5.sent, t5.next = 18, w2 == null ? void 0 : w2.data;
+                  case 18:
+                    return t5.abrupt("return", p({}, t5.sent, { is_owner: d2 }));
+                  case 20:
+                  case "end":
+                    return t5.stop();
+                }
+            }, t4);
+          }));
+          return function(e2, r2, n2, o2, a2) {
+            return t3.apply(this, arguments);
+          };
+        }(), t2;
+      }();
+      var F = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
+      var q = function() {
+        function t2() {
+        }
+        return t2.prototype.getMetadata = function() {
+          var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
+            var c2, s2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
+            return O.wrap(function(t5) {
+              for (; ; )
+                switch (t5.prev = t5.next) {
+                  case 0:
+                    return c2 = new e.Contract(a2, F, n2), t5.next = 3, Promise.all([c2.tokenURI(i2), o2 && c2.ownerOf(i2)]);
+                  case 3:
+                    if (l2 = (s2 = t5.sent)[0], f2 = s2[1], h2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), d2 = C(l2, u2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
+                      t5.next = 13;
+                      break;
+                    }
+                    return y2 && (g2 = r.Buffer.from(v2.replace("data:application/json;base64,", ""), "base64").toString()), m2 = JSON.parse(decodeURI(g2)), t5.abrupt("return", p({}, m2, { is_owner: h2 }));
+                  case 13:
+                    return t5.next = 15, G(v2.replace(/(?:0x)?{id}/, i2));
+                  case 15:
+                    return w2 = t5.sent, t5.next = 18, w2 == null ? void 0 : w2.data;
+                  case 18:
+                    return t5.abrupt("return", p({}, t5.sent, { is_owner: h2 }));
+                  case 20:
+                  case "end":
+                    return t5.stop();
+                }
+            }, t4);
+          }));
+          return function(e2, r2, n2, o2, a2) {
+            return t3.apply(this, arguments);
+          };
+        }(), t2;
+      }();
+      var B = function() {
+        function t2() {
+        }
+        return t2.prototype.getMetadata = function() {
+          var t3 = l(O.mark(function t4(e2, r2) {
+            var n2, o2, a2;
+            return O.wrap(function(t5) {
+              for (; ; )
+                switch (t5.prev = t5.next) {
+                  case 0:
+                    if (n2 = C(e2, r2), o2 = n2.uri, !n2.isOnChain) {
+                      t5.next = 3;
+                      break;
+                    }
+                    return t5.abrupt("return", o2);
+                  case 3:
+                    return t5.next = 5, P(o2);
+                  case 5:
+                    if (!t5.sent) {
+                      t5.next = 8;
+                      break;
+                    }
+                    return t5.abrupt("return", { image: o2 });
+                  case 8:
+                    return t5.next = 10, G(o2);
+                  case 10:
+                    return a2 = t5.sent, t5.next = 13, a2 == null ? void 0 : a2.data;
+                  case 13:
+                    return t5.abrupt("return", t5.sent);
+                  case 14:
+                  case "end":
+                    return t5.stop();
+                }
+            }, t4);
+          }));
+          return function(e2, r2) {
+            return t3.apply(this, arguments);
+          };
+        }(), t2;
+      }();
+      var z = Object.freeze({ erc721: q, erc1155: D });
+      var Z = function(t2) {
+        function e2() {
+          return t2.apply(this, arguments) || this;
+        }
+        return h(e2, t2), e2;
+      }(L);
+      var Y = function() {
+        function t2(t3, e3) {
+          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && N(G, e3 == null ? void 0 : e3.cache);
+        }
+        var e2 = t2.prototype;
+        return e2.getMetadata = function() {
+          var t3 = l(O.mark(function t4(e3) {
+            var r2, n2, o2, a2, i2, u2, c2, s2, l2, f2, h2, d2, v2;
+            return O.wrap(function(t5) {
+              for (; ; )
+                switch (t5.prev = t5.next) {
+                  case 0:
+                    return t5.next = 2, k([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
                   case 2:
                     if (n2 = (r2 = t5.sent)[0], o2 = r2[1]) {
                       t5.next = 7;
@@ -36350,27 +36555,27 @@ if (cid) {
                   case 7:
                     return t5.next = 9, o2.getText("avatar");
                   case 9:
-                    if (i2 = t5.sent) {
+                    if (a2 = t5.sent) {
                       t5.next = 12;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 12:
-                    if (/eip155:/i.test(i2)) {
+                    if (/eip155:/i.test(a2)) {
                       t5.next = 18;
                       break;
                     }
-                    return a2 = new F(), t5.next = 16, a2.getMetadata(i2);
+                    return i2 = new B(), t5.next = 16, i2.getMetadata(a2, this.options);
                   case 16:
                     return t5.abrupt("return", p({ uri: e3 }, t5.sent));
                   case 18:
-                    if (u2 = R(i2), c2 = u2.chainID, f2 = u2.contractAddress, l2 = u2.tokenID, h2 = B[s2 = u2.namespace]) {
+                    if (u2 = A(a2), c2 = u2.chainID, l2 = u2.contractAddress, f2 = u2.tokenID, h2 = z[s2 = u2.namespace]) {
                       t5.next = 22;
                       break;
                     }
-                    throw new z("Unsupported namespace: " + s2);
+                    throw new Z("Unsupported namespace: " + s2);
                   case 22:
-                    return d2 = new h2(), v2 = { chain_id: c2, namespace: s2, contract_address: f2, token_id: l2, reference_url: "https://opensea.io/assets/" + f2 + "/" + l2 }, t5.next = 26, d2.getMetadata(this.provider, n2, f2, l2);
+                    return d2 = new h2(), v2 = { chain_id: c2, namespace: s2, contract_address: l2, token_id: f2, reference_url: "https://opensea.io/assets/" + l2 + "/" + f2 }, t5.next = 26, d2.getMetadata(this.provider, n2, l2, f2, this.options);
                   case 26:
                     return t5.abrupt("return", p({ uri: e3, host_meta: v2 }, t5.sent));
                   case 28:
@@ -36383,22 +36588,30 @@ if (cid) {
             return t3.apply(this, arguments);
           };
         }(), e2.getAvatar = function() {
-          var t3 = f(O.mark(function t4(e3, r2) {
-            var n2, o2;
+          var t3 = l(O.mark(function t4(e3, r2) {
+            var n2, o2, a2, i2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
                     return t5.next = 2, this.getMetadata(e3);
                   case 2:
-                    if (o2 = t5.sent) {
+                    if (a2 = t5.sent) {
                       t5.next = 5;
                       break;
                     }
                     return t5.abrupt("return", null);
                   case 5:
-                    return t5.abrupt("return", C({ metadata: o2, customGateway: (n2 = this.options) == null ? void 0 : n2.ipfs, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }));
-                  case 6:
+                    if (i2 = W({ metadata: a2, gateways: { ipfs: (n2 = this.options) == null ? void 0 : n2.ipfs, arweave: (o2 = this.options) == null ? void 0 : o2.arweave }, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }), !a2.hasOwnProperty("host_meta") || i2 == null || !i2.startsWith("http")) {
+                      t5.next = 11;
+                      break;
+                    }
+                    return t5.next = 9, P(i2);
+                  case 9:
+                    return t5.abrupt("return", t5.sent ? i2 : null);
+                  case 11:
+                    return t5.abrupt("return", i2);
+                  case 12:
                   case "end":
                     return t5.stop();
                 }
@@ -36409,8 +36622,8 @@ if (cid) {
           };
         }(), t2;
       }();
-      var J = { getImageURI: C, parseNFT: R, resolveURI: A };
-      exports.AvatarResolver = Z, exports.UnsupportedNamespace = z, exports.specs = B, exports.utils = J;
+      var J = { getImageURI: W, parseNFT: A, resolveURI: C, isImageURI: P };
+      exports.AvatarResolver = Y, exports.UnsupportedNamespace = Z, exports.specs = z, exports.utils = J;
     }
   });
 
@@ -37122,7 +37335,7 @@ if (cid) {
       });
       var IPFS_SUBPATH = "/ipfs/";
       var IPNS_SUBPATH = "/ipns/";
-      var ipfsRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
+      var networkRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
         protocol: 1,
         root: 2,
         subpath: 3,
@@ -37196,6 +37409,38 @@ if (cid) {
           return false;
         }
       }
+      function isImageURI(url) {
+        return new Promise(function(resolve) {
+          fetch2({
+            url,
+            method: "HEAD"
+          }).then(function(result) {
+            if (result.status === 200) {
+              var contentType = result.headers["content-type"];
+              resolve(contentType == null ? void 0 : contentType.startsWith("image/"));
+            } else {
+              resolve(false);
+            }
+          })["catch"](function(error) {
+            if (typeof error.response !== "undefined") {
+              resolve(false);
+              return;
+            }
+            if (!globalThis.hasOwnProperty("Image")) {
+              resolve(false);
+              return;
+            }
+            var img = new Image();
+            img.onload = function() {
+              resolve(true);
+            };
+            img.onerror = function() {
+              resolve(false);
+            };
+            img.src = url;
+          });
+        });
+      }
       function parseNFT(uri, seperator) {
         if (seperator === void 0) {
           seperator = "/";
@@ -37223,18 +37468,29 @@ if (cid) {
           throw new NFTURIParsingError(error + " - " + uri);
         }
       }
-      function resolveURI(uri, customGateway) {
+      function resolveURI(uri, gateways, customGateway) {
+        var _gateways3, _gateways4, _gateways5;
         var isEncoded = base64Regex.test(uri);
         if (isEncoded || uri.startsWith("http")) {
+          var _gateways, _gateways2;
+          uri = _replaceGateway(uri, "https://ipfs.io/", (_gateways = gateways) == null ? void 0 : _gateways.ipfs);
+          uri = _replaceGateway(uri, "https://arweave.net/", (_gateways2 = gateways) == null ? void 0 : _gateways2.arweave);
           return {
             uri,
             isOnChain: isEncoded,
             isEncoded
           };
         }
-        var ipfsGateway = customGateway || "https://ipfs.io";
-        var ipfsRegexpResult = uri.match(ipfsRegex);
-        var _ref = (ipfsRegexpResult == null ? void 0 : ipfsRegexpResult.groups) || {}, protocol = _ref.protocol, subpath = _ref.subpath, target = _ref.target, _ref$subtarget = _ref.subtarget, subtarget = _ref$subtarget === void 0 ? "" : _ref$subtarget;
+        if (!((_gateways3 = gateways) != null && _gateways3.ipfs) && !!customGateway) {
+          console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead");
+          gateways = _extends({}, gateways, {
+            ipfs: customGateway
+          });
+        }
+        var ipfsGateway = ((_gateways4 = gateways) == null ? void 0 : _gateways4.ipfs) || "https://ipfs.io";
+        var arGateway = ((_gateways5 = gateways) == null ? void 0 : _gateways5.arweave) || "https://arweave.net";
+        var networkRegexResult = uri.match(networkRegex);
+        var _ref = (networkRegexResult == null ? void 0 : networkRegexResult.groups) || {}, protocol = _ref.protocol, subpath = _ref.subpath, target = _ref.target, _ref$subtarget = _ref.subtarget, subtarget = _ref$subtarget === void 0 ? "" : _ref$subtarget;
         if ((protocol === "ipns:/" || subpath === "ipns/") && target) {
           return {
             uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
@@ -37244,6 +37500,12 @@ if (cid) {
         } else if (isCID(target)) {
           return {
             uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
+            isOnChain: false,
+            isEncoded: false
+          };
+        } else if (protocol === "ar:/" && target) {
+          return {
+            uri: urlJoin(arGateway, target, subtarget || ""),
             isOnChain: false,
             isEncoded: false
           };
@@ -37269,20 +37531,72 @@ if (cid) {
         var cleanDOM = DOMPurify.sanitize(data);
         return _.Buffer.from(cleanDOM);
       }
+      function _replaceGateway(uri, source, target) {
+        if (uri.startsWith(source) && target) {
+          try {
+            var _uri = new URL(uri);
+            _uri.hostname = new URL(target).hostname;
+            return _uri.toString();
+          } catch (_error) {
+            return uri;
+          }
+        }
+        return uri;
+      }
       function getImageURI(_ref2) {
-        var metadata = _ref2.metadata, customGateway = _ref2.customGateway, jsdomWindow = _ref2.jsdomWindow;
+        var metadata = _ref2.metadata, customGateway = _ref2.customGateway, gateways = _ref2.gateways, jsdomWindow = _ref2.jsdomWindow;
         var image = metadata.image, image_url = metadata.image_url, image_data = metadata.image_data;
         var _image = image || image_url || image_data;
         assert(_image, "Image is not available");
-        var _resolveURI = resolveURI(_image, customGateway), parsedURI = _resolveURI.uri;
-        if (parsedURI.startsWith("data:") || parsedURI.startsWith("http")) {
-          return parsedURI;
-        }
-        if (isSVG(parsedURI)) {
-          var data = _sanitize(parsedURI, jsdomWindow);
+        var _resolveURI = resolveURI(_image, gateways, customGateway), parsedURI = _resolveURI.uri;
+        if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
+          var rawSVG = convertToRawSVG(parsedURI);
+          if (!rawSVG)
+            return null;
+          var data = _sanitize(rawSVG, jsdomWindow);
           return "data:image/svg+xml;base64," + data.toString("base64");
         }
+        if (isImageDataUri(parsedURI) || parsedURI.startsWith("http")) {
+          return parsedURI;
+        }
         return null;
+      }
+      function isImageDataUri(uri) {
+        var imageFormats = ["jpeg", "png", "gif", "bmp", "webp"];
+        var dataUriPattern = /^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/;
+        var match = uri.match(dataUriPattern);
+        if (!match || match.length < 2) {
+          return false;
+        }
+        var format = match[1].toLowerCase();
+        return imageFormats.includes(format);
+      }
+      function isSVGDataUri(uri) {
+        var svgDataUriPrefix = "data:image/svg+xml";
+        return uri.startsWith(svgDataUriPrefix);
+      }
+      function convertToRawSVG(input) {
+        var base64Prefix = "data:image/svg+xml;base64,";
+        var encodedPrefix = "data:image/svg+xml,";
+        if (input.startsWith(base64Prefix)) {
+          var base64Data = input.substring(base64Prefix.length);
+          try {
+            return _.Buffer.from(base64Data, "base64").toString();
+          } catch (error) {
+            console.error("Invalid base64 encoded SVG");
+            return null;
+          }
+        } else if (input.startsWith(encodedPrefix)) {
+          var encodedData = input.substring(encodedPrefix.length);
+          try {
+            return decodeURIComponent(encodedData);
+          } catch (error) {
+            console.error("Invalid URL encoded SVG");
+            return null;
+          }
+        } else {
+          return input;
+        }
       }
       function createCacheAdapter(fetch3, ttl) {
         var _require = require_cjs(), setupCache = _require.setupCache;
@@ -37292,7 +37606,9 @@ if (cid) {
       }
       function createFetcher(_ref3) {
         var ttl = _ref3.ttl;
-        var _fetch = axios.create();
+        var _fetch = axios.create({
+          proxy: false
+        });
         if (ttl && ttl > 0) {
           createCacheAdapter(_fetch, ttl);
         }
@@ -37305,7 +37621,7 @@ if (cid) {
         }
         var _proto = ERC11552.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID, options) {
             var tokenIDHex, contract, _yield$Promise$all, tokenURI, balance, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
@@ -37320,7 +37636,7 @@ if (cid) {
                     tokenURI = _yield$Promise$all[0];
                     balance = _yield$Promise$all[1];
                     isOwner = !!(ownerAddress && balance.gt(0));
-                    _resolveURI = resolveURI(tokenURI), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
+                    _resolveURI = resolveURI(tokenURI, options), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
                     _resolvedUri = resolvedURI;
                     if (!isOnChain) {
                       _context.next = 13;
@@ -37349,7 +37665,7 @@ if (cid) {
               }
             }, _callee);
           }));
-          function getMetadata(_x, _x2, _x3, _x4) {
+          function getMetadata(_x, _x2, _x3, _x4, _x5) {
             return _getMetadata.apply(this, arguments);
           }
           return getMetadata;
@@ -37362,7 +37678,7 @@ if (cid) {
         }
         var _proto = ERC7212.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID) {
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID, options) {
             var contract, _yield$Promise$all, tokenURI, owner, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, _metadata, response, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
@@ -37376,7 +37692,7 @@ if (cid) {
                     tokenURI = _yield$Promise$all[0];
                     owner = _yield$Promise$all[1];
                     isOwner = !!(ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase());
-                    _resolveURI = resolveURI(tokenURI), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
+                    _resolveURI = resolveURI(tokenURI, options), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain, isEncoded = _resolveURI.isEncoded;
                     _resolvedUri = resolvedURI;
                     if (!isOnChain) {
                       _context.next = 13;
@@ -37408,7 +37724,7 @@ if (cid) {
               }
             }, _callee);
           }));
-          function getMetadata(_x, _x2, _x3, _x4) {
+          function getMetadata(_x, _x2, _x3, _x4, _x5) {
             return _getMetadata.apply(this, arguments);
           }
           return getMetadata;
@@ -37420,13 +37736,13 @@ if (cid) {
         }
         var _proto = URI2.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
-          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(uri) {
+          var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(uri, options) {
             var _resolveURI, resolvedURI, isOnChain, isImage, response;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
                   case 0:
-                    _resolveURI = resolveURI(uri), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain;
+                    _resolveURI = resolveURI(uri, options), resolvedURI = _resolveURI.uri, isOnChain = _resolveURI.isOnChain;
                     if (!isOnChain) {
                       _context.next = 3;
                       break;
@@ -37460,45 +37776,13 @@ if (cid) {
               }
             }, _callee);
           }));
-          function getMetadata(_x) {
+          function getMetadata(_x, _x2) {
             return _getMetadata.apply(this, arguments);
           }
           return getMetadata;
         }();
         return URI2;
       }();
-      function isImageURI(url) {
-        return new Promise(function(resolve) {
-          fetch2({
-            url,
-            method: "HEAD"
-          }).then(function(result) {
-            if (result.status === 200) {
-              var contentType = result.headers["content-type"];
-              resolve(contentType == null ? void 0 : contentType.startsWith("image/"));
-            } else {
-              resolve(false);
-            }
-          })["catch"](function(error) {
-            if (typeof error.response !== "undefined") {
-              resolve(false);
-              return;
-            }
-            if (!globalThis.hasOwnProperty("Image")) {
-              resolve(false);
-              return;
-            }
-            var img = new Image();
-            img.onload = function() {
-              resolve(true);
-            };
-            img.onerror = function() {
-              resolve(false);
-            };
-            img.src = url;
-          });
-        });
-      }
       var specs = /* @__PURE__ */ Object.freeze({
         erc721: ERC721,
         erc1155: ERC1155
@@ -37554,7 +37838,7 @@ if (cid) {
                     }
                     uriSpec = new URI();
                     _context.next = 16;
-                    return uriSpec.getMetadata(avatarURI);
+                    return uriSpec.getMetadata(avatarURI, this.options);
                   case 16:
                     _metadata = _context.sent;
                     return _context.abrupt("return", _extends({
@@ -37578,7 +37862,7 @@ if (cid) {
                       reference_url: "https://opensea.io/assets/" + contractAddress + "/" + tokenID
                     };
                     _context.next = 26;
-                    return spec.getMetadata(this.provider, resolvedAddress, contractAddress, tokenID);
+                    return spec.getMetadata(this.provider, resolvedAddress, contractAddress, tokenID, this.options);
                   case 26:
                     metadata = _context.sent;
                     return _context.abrupt("return", _extends({
@@ -37599,8 +37883,8 @@ if (cid) {
         }();
         _proto.getAvatar = /* @__PURE__ */ function() {
           var _getAvatar = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee2(ens, data) {
-            var _this$options;
-            var metadata;
+            var _this$options, _this$options2;
+            var metadata, imageURI, isImage;
             return runtime_1.wrap(function _callee2$(_context2) {
               while (1) {
                 switch (_context2.prev = _context2.next) {
@@ -37615,12 +37899,26 @@ if (cid) {
                     }
                     return _context2.abrupt("return", null);
                   case 5:
-                    return _context2.abrupt("return", getImageURI({
+                    imageURI = getImageURI({
                       metadata,
-                      customGateway: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
+                      gateways: {
+                        ipfs: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
+                        arweave: (_this$options2 = this.options) == null ? void 0 : _this$options2.arweave
+                      },
                       jsdomWindow: data == null ? void 0 : data.jsdomWindow
-                    }));
-                  case 6:
+                    });
+                    if (!(metadata.hasOwnProperty("host_meta") && imageURI != null && imageURI.startsWith("http"))) {
+                      _context2.next = 11;
+                      break;
+                    }
+                    _context2.next = 9;
+                    return isImageURI(imageURI);
+                  case 9:
+                    isImage = _context2.sent;
+                    return _context2.abrupt("return", isImage ? imageURI : null);
+                  case 11:
+                    return _context2.abrupt("return", imageURI);
+                  case 12:
                   case "end":
                     return _context2.stop();
                 }
@@ -37637,7 +37935,8 @@ if (cid) {
       var utils = {
         getImageURI,
         parseNFT,
-        resolveURI
+        resolveURI,
+        isImageURI
       };
       exports.AvatarResolver = AvatarResolver2;
       exports.UnsupportedNamespace = UnsupportedNamespace;
@@ -37762,7 +38061,7 @@ if (cid) {
  * @author   Feross Aboukhadijeh <https://feross.org>
  * @license  MIT
  */
-/*! @license DOMPurify 2.3.6 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/2.3.6/LICENSE */
+/*! @license DOMPurify 3.0.1 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.0.1/LICENSE */
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /**
  * [js-sha3]{@link https://github.com/emn178/js-sha3}

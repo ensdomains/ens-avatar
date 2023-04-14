@@ -2,6 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
+import { AvatarResolverOpts } from '..';
 
 const abi = [
   'function uri(uint256 _id) public view returns (string memory)',
@@ -13,7 +14,8 @@ export default class ERC1155 {
     provider: BaseProvider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
-    tokenID: string
+    tokenID: string,
+    options?: AvatarResolverOpts
   ) {
     // exclude opensea api which does not follow erc1155 spec
     const tokenIDHex = !tokenID.startsWith('https://api.opensea.io')
@@ -27,7 +29,10 @@ export default class ERC1155 {
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance.gt(0));
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI);
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
+      tokenURI,
+      options
+    );
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {

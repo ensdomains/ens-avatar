@@ -7,6 +7,7 @@ import {
   fetch,
   getImageURI,
   handleSettled,
+  isImageURI,
   parseNFT,
   resolveURI,
 } from './utils';
@@ -17,7 +18,8 @@ export interface Spec {
     provider: BaseProvider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
-    tokenID: string
+    tokenID: string,
+    options?: AvatarResolverOpts
   ) => Promise<any>;
 }
 
@@ -33,9 +35,10 @@ interface AvatarRequestOpts {
   jsdomWindow?: any;
 }
 
-interface AvatarResolverOpts {
+export interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
+  arweave?: string;
 }
 
 export interface AvatarResolver {
@@ -69,7 +72,7 @@ export class AvatarResolver implements AvatarResolver {
     // test case-insensitive in case of uppercase records
     if (!/eip155:/i.test(avatarURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(avatarURI);
+      const metadata = await uriSpec.getMetadata(avatarURI, this.options);
       return { uri: ens, ...metadata };
     }
 
@@ -97,7 +100,8 @@ export class AvatarResolver implements AvatarResolver {
       this.provider,
       resolvedAddress,
       contractAddress,
-      tokenID
+      tokenID,
+      this.options
     );
     return { uri: ens, host_meta, ...metadata };
   }
@@ -108,12 +112,24 @@ export class AvatarResolver implements AvatarResolver {
   ): Promise<string | null> {
     const metadata = await this.getMetadata(ens);
     if (!metadata) return null;
-    return getImageURI({
+    const imageURI = getImageURI({
       metadata,
-      customGateway: this.options?.ipfs,
+      gateways: {
+        ipfs: this.options?.ipfs,
+        arweave: this.options?.arweave,
+      },
       jsdomWindow: data?.jsdomWindow,
     });
+    if (
+      // do check only NFTs since raw uri has this check built-in
+      metadata.hasOwnProperty('host_meta') &&
+      imageURI?.startsWith('http')
+    ) {
+      const isImage = await isImageURI(imageURI);
+      return isImage ? imageURI : null;
+    }
+    return imageURI;
   }
 }
 
-export const utils = { getImageURI, parseNFT, resolveURI };
+export const utils = { getImageURI, parseNFT, resolveURI, isImageURI };
