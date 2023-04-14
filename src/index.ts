@@ -122,7 +122,7 @@ export class AvatarResolver implements AvatarResolver {
     });
     if (
       // do check only NFTs since raw uri has this check built-in
-      metadata.hasOwnProperty('is_owner') &&
+      metadata.hasOwnProperty('host_meta') &&
       imageURI?.startsWith('http')
     ) {
       const isImage = await isImageURI(imageURI);
