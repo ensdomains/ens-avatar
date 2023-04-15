@@ -37985,10 +37985,15 @@ if (cid) {
   ];
   var notFoundImage = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzAwcHgiIGhlaWdodD0iMzAwcHgiIHZpZXdCb3g9IjAgMCAzMDAgMzAwIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPHRpdGxlPkdyb3VwPC90aXRsZT4KICAgIDxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJHcm91cCI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIGZpbGw9IiMwMDAwMDAiIHg9IjAiIHk9IjAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48L3JlY3Q+CiAgICAgICAgICAgIDx0ZXh0IGlkPSJDb3VsZC1ub3QtbG9hZC06KCIgZm9udC1mYW1pbHk9IlBsdXNKYWthcnRhU2Fucy1Cb2xkLCBQbHVzIEpha2FydGEgU2FucyIgZm9udC1zaXplPSIzMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNGRkZGRkYiPgogICAgICAgICAgICAgICAgPHRzcGFuIHg9IjEwNi4wMDUiIHk9IjEyNCI+Q291bGQgPC90c3Bhbj4KICAgICAgICAgICAgICAgIDx0c3BhbiB4PSIxMjUuMjgiIHk9IjE2MiI+bm90IDwvdHNwYW4+CiAgICAgICAgICAgICAgICA8dHNwYW4geD0iMTAzLjYzNSIgeT0iMjAwIj5sb2FkIDooPC90c3Bhbj4KICAgICAgICAgICAgPC90ZXh0PgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+";
   var provider = new StaticJsonRpcProvider(`https://mainnet.infura.io/v3/${define_process_default.env.INFURA_KEY}`);
-  var avt = new AvatarResolver(provider);
+  var avt = new AvatarResolver(provider, {
+    ipfs: "https://cloudflare-ipfs.com"
+  });
   for (let ens of ensNames) {
     avt.getMetadata(ens).then((metadata) => {
-      const avatar = avtUtils.getImageURI({ metadata });
+      const avatar = avtUtils.getImageURI({
+        metadata,
+        gateways: { ipfs: "https://cloudflare-ipfs.com" }
+      });
       createImage(ens, avatar);
     }).catch((error) => {
       console.warn(error);

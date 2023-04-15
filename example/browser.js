@@ -28,12 +28,17 @@ const notFoundImage =
 const provider = new StaticJsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
-const avt = new AvatarResolver(provider);
+const avt = new AvatarResolver(provider, {
+  ipfs: 'https://cloudflare-ipfs.com',
+});
 for (let ens of ensNames) {
   avt
     .getMetadata(ens)
     .then(metadata => {
-      const avatar = avtUtils.getImageURI({ metadata });
+      const avatar = avtUtils.getImageURI({
+        metadata,
+        gateways: { ipfs: 'https://cloudflare-ipfs.com' },
+      });
       createImage(ens, avatar);
     })
     .catch(error => {
