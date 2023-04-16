@@ -99,8 +99,7 @@ export function isImageURI(url: string) {
 
 async function isStreamAnImage(url: string) {
   try {
-    const CancelToken = axios.CancelToken;
-    const source = CancelToken.source();
+    const source = axios.CancelToken.source();
 
     const response = await fetch.get(url, {
       responseType: 'arraybuffer',
