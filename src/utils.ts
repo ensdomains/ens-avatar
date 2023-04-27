@@ -57,7 +57,7 @@ export function isCID(hash: any) {
 
 export function isImageURI(url: string) {
   return new Promise(resolve => {
-    fetch({ url, method: 'HEAD' })
+    fetch({ url: encodeURI(url), method: 'HEAD' })
       .then(result => {
         if (result.status === 200) {
           // retrieve content type header to check if content is image
