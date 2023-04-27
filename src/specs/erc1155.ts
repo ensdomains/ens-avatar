@@ -44,7 +44,7 @@ export default class ERC1155 {
       return JSON.parse(_resolvedUri);
     }
     const response = await fetch(
-      resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)
+      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex))
     );
     const metadata = await response?.data;
     return { ...metadata, is_owner: isOwner };

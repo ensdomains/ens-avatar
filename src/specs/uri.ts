@@ -15,7 +15,7 @@ export default class URI {
     }
 
     // if resolvedURI is not an image, try retrieve the data.
-    const response = await fetch(resolvedURI);
+    const response = await fetch(encodeURI(resolvedURI));
     return await response?.data;
   }
 }
