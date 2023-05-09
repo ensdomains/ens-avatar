@@ -30,12 +30,12 @@ async function isStreamAnImage(url: string) {
     }
 
     const imageSignatures = [
-      'ffd8ff',   // JPEG
+      'ffd8ff', // JPEG
       '89504e47', // PNG
       '47494638', // GIF
       '49492a00', // TIFF (little endian)
       '4d4d002a', // TIFF (big endian)
-      '424d',     // BMP
+      '424d', // BMP
     ];
 
     const isBinaryImage = imageSignatures.some(signature =>

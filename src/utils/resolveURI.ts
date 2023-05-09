@@ -9,7 +9,6 @@ const networkRegex = /(?<protocol>ipfs:\/|ipns:\/|ar:\/)?(?<root>\/)?(?<subpath>
 const base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
 const dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
 
-
 function _replaceGateway(uri: string, source: string, target?: string) {
   if (uri.startsWith(source) && target) {
     try {
