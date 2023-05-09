@@ -1,4 +1,4 @@
-import { AvatarResolverOpts } from '..';
+import { AvatarResolverOpts } from '../types';
 import { fetch, isImageURI, resolveURI } from '../utils';
 
 export default class URI {
@@ -6,6 +6,10 @@ export default class URI {
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);
     if (isOnChain) {
       return resolvedURI;
+    }
+
+    if (options?.urlDenyList?.includes(new URL(resolvedURI).hostname)) {
+      return { image: null };
     }
 
     // check if resolvedURI is an image, if it is return the url

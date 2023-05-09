@@ -2,7 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
-import { AvatarResolverOpts } from '..';
+import { AvatarResolverOpts } from '../types';
 
 const abi = [
   'function uri(uint256 _id) public view returns (string memory)',
