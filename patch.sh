@@ -30,5 +30,5 @@ do
 done
 
 # dist/index.esm.js replaced seperately
-$SEDCMD -i '' 's/\.\.\/_virtual/\.\/_virtual/g' "dist/index.esm.js"
-$SEDCMD -i '' 's/\.\.\/node_modules/\.\/node_modules/g' "dist/index.esm.js"
+$SEDCMD 's/\.\.\/_virtual/\.\/_virtual/g' "dist/index.esm.js"
+$SEDCMD 's/\.\.\/node_modules/\.\/node_modules/g' "dist/index.esm.js"
