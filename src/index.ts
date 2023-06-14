@@ -114,4 +114,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-export const utils = { getImageURI, parseNFT, resolveURI, isImageURI };
+export * from './utils';
