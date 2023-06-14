@@ -47,7 +47,7 @@
       ]
     },
     {
-      "path": "dist/ens-avatar.esm.js",
+      "path": "dist/index.esm.js",
       "limit": "150 KB",
       "ignore": [
         "jsdom"
