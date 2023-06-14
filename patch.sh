@@ -15,8 +15,8 @@ else
 fi
 
 modify_imports() {
-  $SEDCMD -i '' 's/\.\.\/\.\.\/_virtual/\.\.\/_virtual/g' "$1"
-  $SEDCMD -i '' 's/\.\.\/\.\.\/node_modules/\.\.\/node_modules/g' "$1"
+  $SEDCMD 's/\.\.\/\.\.\/_virtual/\.\.\/_virtual/g' "$1"
+  $SEDCMD 's/\.\.\/\.\.\/node_modules/\.\.\/node_modules/g' "$1"
 }
 
 files=("dist/specs/*.esm.js" "dist/utils/*.esm.js")
