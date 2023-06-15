@@ -10,7 +10,6 @@ import {
   handleSettled,
   isImageURI,
   parseNFT,
-  resolveURI,
 } from './utils';
 import { AvatarRequestOpts, AvatarResolverOpts, Spec } from './types';
 
@@ -114,4 +113,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-export * from './utils';
+export * as utils from './utils';
