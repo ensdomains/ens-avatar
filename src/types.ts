@@ -10,10 +10,16 @@ export interface Spec {
   ) => Promise<any>;
 }
 
+export type MARKETPLACES = 'opensea' | 'coinbase' | 'looksrare' | 'x2y2';
+export type MarketplaceAPIKey = Partial<{
+  [key in MARKETPLACES]: string;
+}>;
+
 export interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
   arweave?: string;
+  apiKey?: MarketplaceAPIKey;
   urlDenyList?: string[];
 }
 
