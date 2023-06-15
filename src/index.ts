@@ -113,4 +113,5 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
+// prettier-ignore
 export * as utils from './utils';
