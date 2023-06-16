@@ -7,6 +7,14 @@ require('esbuild')
     loader: {
       '.html': 'text',
     },
-    outfile: 'example/dist/index.js'
+    outfile: 'example/dist/index.js',
+    define: {
+      "process": `{
+        "env": {
+          "INFURA_KEY": '${process.env.INFURA_KEY}',
+          "OPENSEA_KEY": '${process.env.OPENSEA_KEY}'
+        },
+      }`,
+    },
   })
   .catch(() => process.exit(1));
