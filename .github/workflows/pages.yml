@@ -54,6 +54,8 @@ jobs:
         with:
           node-version: "16"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
+      - name: Setup yarn
+        run: npm install -g yarn
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
