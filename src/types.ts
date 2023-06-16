@@ -11,9 +11,11 @@ export interface Spec {
 }
 
 export type MARKETPLACES = 'opensea' | 'coinbase' | 'looksrare' | 'x2y2';
-export type MarketplaceAPIKey = Partial<{
-  [key in MARKETPLACES]: string;
-}>;
+export type MarketplaceAPIKey = Partial<
+  {
+    [key in MARKETPLACES]: string;
+  }
+>;
 
 export interface AvatarResolverOpts {
   cache?: number;
