@@ -1,8 +1,10 @@
 {
-  "version": "0.2.5",
+  "version": "0.3.0",
   "license": "MIT",
   "main": "dist/index.js",
+  "module": "dist/index.esm.js",
   "typings": "dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist",
     "src"
@@ -13,6 +15,7 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
+    "postbuild": "./patch.sh",
     "build:demo": "node ./example/build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
@@ -35,7 +38,6 @@
   },
   "name": "@ensdomains/ens-avatar",
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
-  "module": "dist/ens-avatar.esm.js",
   "size-limit": [
     {
       "path": "dist/ens-avatar.cjs.production.min.js",
@@ -45,7 +47,7 @@
       ]
     },
     {
-      "path": "dist/ens-avatar.esm.js",
+      "path": "dist/index.esm.js",
       "limit": "150 KB",
       "ignore": [
         "jsdom"

@@ -1,6 +1,8 @@
 import { BaseProvider } from '@ethersproject/providers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
+import URI from './specs/uri';
+import * as utils from './utils';
 import {
   BaseError,
   createCacheAdapter,
@@ -9,19 +11,8 @@ import {
   handleSettled,
   isImageURI,
   parseNFT,
-  resolveURI,
 } from './utils';
-import URI from './specs/uri';
-
-export interface Spec {
-  getMetadata: (
-    provider: BaseProvider,
-    ownerAddress: string | undefined | null,
-    contractAddress: string,
-    tokenID: string,
-    options?: AvatarResolverOpts
-  ) => Promise<any>;
-}
+import { AvatarRequestOpts, AvatarResolverOpts, Spec } from './types';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
@@ -30,16 +21,6 @@ export const specs: { [key: string]: new () => Spec } = Object.freeze({
 
 export interface UnsupportedNamespace {}
 export class UnsupportedNamespace extends BaseError {}
-
-interface AvatarRequestOpts {
-  jsdomWindow?: any;
-}
-
-export interface AvatarResolverOpts {
-  cache?: number;
-  ipfs?: string;
-  arweave?: string;
-}
 
 export interface AvatarResolver {
   provider: BaseProvider;
@@ -119,6 +100,7 @@ export class AvatarResolver implements AvatarResolver {
         arweave: this.options?.arweave,
       },
       jsdomWindow: data?.jsdomWindow,
+      urlDenyList: this.options?.urlDenyList,
     });
     if (
       // do check only NFTs since raw uri has this check built-in
@@ -132,4 +114,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-export const utils = { getImageURI, parseNFT, resolveURI, isImageURI };
+export { utils };
