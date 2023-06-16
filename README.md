@@ -75,6 +75,15 @@ const avt = new AvatarResolver(provider, { ipfs: 'https://dweb.link' });
 const avt = new AvatarResolver(provider, { arweave: 'https://arweave.net' });
 ```
 
+### Marketplace Api Keys _(Default: {})_
+```js
+const avt = new AvatarResolver(provider, { 
+    apiKey: {
+        opensea: 'YOUR_API_KEY'
+    }
+});
+```
+
 ### URL DenyList _(Default: [])_
 ```js
 const avt = new AvatarResolver(provider, { urlDenyList: ['https://maliciouswebsite.com'] });
