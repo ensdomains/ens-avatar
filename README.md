@@ -75,6 +75,11 @@ const avt = new AvatarResolver(provider, { ipfs: 'https://dweb.link' });
 const avt = new AvatarResolver(provider, { arweave: 'https://arweave.net' });
 ```
 
+### URL DenyList _(Default: [])_
+```js
+const avt = new AvatarResolver(provider, { urlDenyList: ['https://maliciouswebsite.com'] });
+```
+
 ## Demo
 - Create .env file with INFURA_KEY env variable
 - Build the library
