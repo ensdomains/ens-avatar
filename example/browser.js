@@ -37,7 +37,10 @@ for (let ens of ensNames) {
   avt
     .getMetadata(ens)
     .then(metadata => {
-      const avatar = avtUtils.getImageURI({ metadata });
+      const avatar = avtUtils.getImageURI({
+        metadata,
+        gateways: { ipfs: 'https://cloudflare-ipfs.com' },
+      });
       createImage(ens, avatar);
     })
     .catch(error => {

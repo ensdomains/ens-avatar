@@ -1,6 +1,7 @@
 name: CI
 env:
   INFURA_KEY: ${{ secrets.INFURA_KEY }}
+  OPENSEA_KEY: ${{ secrets.OPENSEA_KEY }}
 on: [push]
 jobs:
   build:
