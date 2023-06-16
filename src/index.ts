@@ -2,6 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
 import URI from './specs/uri';
+import * as utils from './utils';
 import {
   BaseError,
   createCacheAdapter,
@@ -113,5 +114,4 @@ export class AvatarResolver implements AvatarResolver {
   }
 }
 
-// prettier-ignore
-export * as utils from './utils';
+export { utils };
