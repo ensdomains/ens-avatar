@@ -28,30 +28,15 @@
     };
   })(typeof WeakMap !== "undefined" ? /* @__PURE__ */ new WeakMap() : 0);
 
-  // <define:process>
-  var env, define_process_default;
-  var init_define_process = __esm({
-    "<define:process>"() {
-      env = {
-        INFURA_KEY: "372375d582d843c48a4eaee6aa5c1b3a"
-      };
-      define_process_default = {
-        env
-      };
-    }
-  });
-
   // (disabled):node_modules/buffer/index.js
   var require_buffer = __commonJS({
     "(disabled):node_modules/buffer/index.js"() {
-      init_define_process();
     }
   });
 
   // node_modules/bn.js/lib/bn.js
   var require_bn = __commonJS({
     "node_modules/bn.js/lib/bn.js"(exports, module) {
-      init_define_process();
       (function(module2, exports2) {
         "use strict";
         function assert(val, msg) {
@@ -2970,7 +2955,6 @@
   var require_version = __commonJS({
     "node_modules/@ethersproject/logger/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "logger/5.7.0";
@@ -2981,7 +2965,6 @@
   var require_lib = __commonJS({
     "node_modules/@ethersproject/logger/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
       var _permanentCensorErrors = false;
@@ -3292,7 +3275,6 @@
   var require_version2 = __commonJS({
     "node_modules/@ethersproject/bytes/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "bytes/5.7.0";
@@ -3303,7 +3285,6 @@
   var require_lib2 = __commonJS({
     "node_modules/@ethersproject/bytes/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
       var logger_1 = require_lib();
@@ -3698,7 +3679,6 @@
   var require_version3 = __commonJS({
     "node_modules/@ethersproject/bignumber/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "bignumber/5.7.0";
@@ -3709,7 +3689,6 @@
   var require_bignumber = __commonJS({
     "node_modules/@ethersproject/bignumber/lib/bignumber.js"(exports) {
       "use strict";
-      init_define_process();
       var __importDefault = exports && exports.__importDefault || function(mod) {
         return mod && mod.__esModule ? mod : { "default": mod };
       };
@@ -3995,7 +3974,6 @@
   var require_fixednumber = __commonJS({
     "node_modules/@ethersproject/bignumber/lib/fixednumber.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.FixedNumber = exports.FixedFormat = exports.parseFixed = exports.formatFixed = void 0;
       var bytes_1 = require_lib2();
@@ -4353,7 +4331,6 @@
   var require_lib3 = __commonJS({
     "node_modules/@ethersproject/bignumber/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
       var bignumber_1 = require_bignumber();
@@ -4387,7 +4364,6 @@
   var require_version4 = __commonJS({
     "node_modules/@ethersproject/properties/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "properties/5.7.0";
@@ -4398,7 +4374,6 @@
   var require_lib4 = __commonJS({
     "node_modules/@ethersproject/properties/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
@@ -4638,7 +4613,6 @@
   var require_version5 = __commonJS({
     "node_modules/@ethersproject/abstract-provider/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "abstract-provider/5.7.0";
@@ -4649,7 +4623,6 @@
   var require_lib5 = __commonJS({
     "node_modules/@ethersproject/abstract-provider/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -4901,7 +4874,6 @@
   var require_version6 = __commonJS({
     "node_modules/@ethersproject/networks/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "networks/5.7.1";
@@ -4912,7 +4884,6 @@
   var require_lib6 = __commonJS({
     "node_modules/@ethersproject/networks/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.getNetwork = void 0;
       var logger_1 = require_lib();
@@ -5148,7 +5119,6 @@
   var require_browser_base64 = __commonJS({
     "node_modules/@ethersproject/base64/lib/browser-base64.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.encode = exports.decode = void 0;
       var bytes_1 = require_lib2();
@@ -5177,7 +5147,6 @@
   var require_lib7 = __commonJS({
     "node_modules/@ethersproject/base64/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.encode = exports.decode = void 0;
       var base64_1 = require_browser_base64();
@@ -5194,7 +5163,6 @@
   var require_lib8 = __commonJS({
     "node_modules/@ethersproject/basex/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Base58 = exports.Base32 = exports.BaseX = void 0;
       var bytes_1 = require_lib2();
@@ -5280,7 +5248,6 @@
   var require_addresses = __commonJS({
     "node_modules/@ethersproject/constants/lib/addresses.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.AddressZero = void 0;
       exports.AddressZero = "0x0000000000000000000000000000000000000000";
@@ -5291,7 +5258,6 @@
   var require_bignumbers = __commonJS({
     "node_modules/@ethersproject/constants/lib/bignumbers.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = void 0;
       var bignumber_1 = require_lib3();
@@ -5318,7 +5284,6 @@
   var require_hashes = __commonJS({
     "node_modules/@ethersproject/constants/lib/hashes.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.HashZero = void 0;
       exports.HashZero = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -5329,7 +5294,6 @@
   var require_strings = __commonJS({
     "node_modules/@ethersproject/constants/lib/strings.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.EtherSymbol = void 0;
       exports.EtherSymbol = "\u039E";
@@ -5340,7 +5304,6 @@
   var require_lib9 = __commonJS({
     "node_modules/@ethersproject/constants/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
       var addresses_1 = require_addresses();
@@ -5386,7 +5349,6 @@
   // node_modules/js-sha3/src/sha3.js
   var require_sha3 = __commonJS({
     "node_modules/js-sha3/src/sha3.js"(exports, module) {
-      init_define_process();
       (function() {
         "use strict";
         var INPUT_ERROR = "input is invalid type";
@@ -5397,7 +5359,7 @@
           WINDOW = false;
         }
         var WEB_WORKER = !WINDOW && typeof self === "object";
-        var NODE_JS = !root.JS_SHA3_NO_NODE_JS && typeof define_process_default === "object" && define_process_default.versions && define_process_default.versions.node;
+        var NODE_JS = !root.JS_SHA3_NO_NODE_JS && typeof process === "object" && process.versions && process.versions.node;
         if (NODE_JS) {
           root = global;
         } else if (WEB_WORKER) {
@@ -6037,7 +5999,6 @@
   var require_lib10 = __commonJS({
     "node_modules/@ethersproject/keccak256/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __importDefault = exports && exports.__importDefault || function(mod) {
         return mod && mod.__esModule ? mod : { "default": mod };
       };
@@ -6056,7 +6017,6 @@
   var require_version7 = __commonJS({
     "node_modules/@ethersproject/strings/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "strings/5.7.0";
@@ -6067,7 +6027,6 @@
   var require_utf8 = __commonJS({
     "node_modules/@ethersproject/strings/lib/utf8.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.toUtf8CodePoints = exports.toUtf8String = exports._toUtf8String = exports._toEscapedUtf8String = exports.toUtf8Bytes = exports.Utf8ErrorFuncs = exports.Utf8ErrorReason = exports.UnicodeNormalizationForm = void 0;
       var bytes_1 = require_lib2();
@@ -6288,7 +6247,6 @@
   var require_bytes32 = __commonJS({
     "node_modules/@ethersproject/strings/lib/bytes32.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.parseBytes32String = exports.formatBytes32String = void 0;
       var constants_1 = require_lib9();
@@ -6324,7 +6282,6 @@
   var require_idna = __commonJS({
     "node_modules/@ethersproject/strings/lib/idna.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.nameprep = exports._nameprepTableC = exports._nameprepTableB2 = exports._nameprepTableA1 = void 0;
       var utf8_1 = require_utf8();
@@ -6512,7 +6469,6 @@
   var require_lib11 = __commonJS({
     "node_modules/@ethersproject/strings/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.nameprep = exports.parseBytes32String = exports.formatBytes32String = exports.UnicodeNormalizationForm = exports.Utf8ErrorReason = exports.Utf8ErrorFuncs = exports.toUtf8String = exports.toUtf8CodePoints = exports.toUtf8Bytes = exports._toEscapedUtf8String = void 0;
       var bytes32_1 = require_bytes32();
@@ -6555,7 +6511,6 @@
   var require_id = __commonJS({
     "node_modules/@ethersproject/hash/lib/id.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.id = void 0;
       var keccak256_1 = require_lib10();
@@ -6571,7 +6526,6 @@
   var require_version8 = __commonJS({
     "node_modules/@ethersproject/hash/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "hash/5.7.0";
@@ -6582,7 +6536,6 @@
   var require_decoder = __commonJS({
     "node_modules/@ethersproject/hash/lib/ens-normalize/decoder.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.read_emoji_trie = exports.read_zero_terminated_array = exports.read_mapped_map = exports.read_member_array = exports.signed = exports.read_compressed_payload = exports.read_payload = exports.decode_arithmetic = void 0;
       function flat(array, depth) {
@@ -6833,7 +6786,6 @@
   var require_include = __commonJS({
     "node_modules/@ethersproject/hash/lib/ens-normalize/include.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.getData = void 0;
       var base64_1 = require_lib7();
@@ -6849,7 +6801,6 @@
   var require_lib12 = __commonJS({
     "node_modules/@ethersproject/hash/lib/ens-normalize/lib.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.ens_normalize = exports.ens_normalize_post_check = void 0;
       var strings_1 = require_lib11();
@@ -6976,7 +6927,6 @@
   var require_namehash = __commonJS({
     "node_modules/@ethersproject/hash/lib/namehash.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.dnsEncode = exports.namehash = exports.isValidName = exports.ensNormalize = void 0;
       var bytes_1 = require_lib2();
@@ -7059,7 +7009,6 @@
   var require_message = __commonJS({
     "node_modules/@ethersproject/hash/lib/message.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.hashMessage = exports.messagePrefix = void 0;
       var bytes_1 = require_lib2();
@@ -7084,7 +7033,6 @@
   var require_version9 = __commonJS({
     "node_modules/@ethersproject/rlp/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "rlp/5.7.0";
@@ -7095,7 +7043,6 @@
   var require_lib13 = __commonJS({
     "node_modules/@ethersproject/rlp/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.decode = exports.encode = void 0;
       var bytes_1 = require_lib2();
@@ -7218,7 +7165,6 @@
   var require_version10 = __commonJS({
     "node_modules/@ethersproject/address/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "address/5.7.0";
@@ -7229,7 +7175,6 @@
   var require_lib14 = __commonJS({
     "node_modules/@ethersproject/address/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.getCreate2Address = exports.getContractAddress = exports.getIcapAddress = exports.isAddress = exports.getAddress = void 0;
       var bytes_1 = require_lib2();
@@ -7366,7 +7311,6 @@
   var require_typed_data = __commonJS({
     "node_modules/@ethersproject/hash/lib/typed-data.js"(exports) {
       "use strict";
-      init_define_process();
       var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
@@ -7924,7 +7868,6 @@
   var require_lib15 = __commonJS({
     "node_modules/@ethersproject/hash/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports._TypedDataEncoder = exports.hashMessage = exports.messagePrefix = exports.ensNormalize = exports.isValidName = exports.namehash = exports.dnsEncode = exports.id = void 0;
       var id_1 = require_id();
@@ -7962,7 +7905,6 @@
   // node_modules/minimalistic-assert/index.js
   var require_minimalistic_assert = __commonJS({
     "node_modules/minimalistic-assert/index.js"(exports, module) {
-      init_define_process();
       module.exports = assert;
       function assert(val, msg) {
         if (!val)
@@ -7978,7 +7920,6 @@
   // node_modules/inherits/inherits_browser.js
   var require_inherits_browser = __commonJS({
     "node_modules/inherits/inherits_browser.js"(exports, module) {
-      init_define_process();
       if (typeof Object.create === "function") {
         module.exports = function inherits(ctor, superCtor) {
           if (superCtor) {
@@ -8012,7 +7953,6 @@
   var require_utils = __commonJS({
     "node_modules/hash.js/lib/hash/utils.js"(exports) {
       "use strict";
-      init_define_process();
       var assert = require_minimalistic_assert();
       var inherits = require_inherits_browser();
       exports.inherits = inherits;
@@ -8258,7 +8198,6 @@
   var require_common = __commonJS({
     "node_modules/hash.js/lib/hash/common.js"(exports) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var assert = require_minimalistic_assert();
       function BlockHash() {
@@ -8338,7 +8277,6 @@
   var require_common2 = __commonJS({
     "node_modules/hash.js/lib/hash/sha/common.js"(exports) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var rotr32 = utils.rotr32;
       function ft_1(s, x, y, z) {
@@ -8385,7 +8323,6 @@
   var require__ = __commonJS({
     "node_modules/hash.js/lib/hash/sha/1.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var common = require_common();
       var shaCommon = require_common2();
@@ -8458,7 +8395,6 @@
   var require__2 = __commonJS({
     "node_modules/hash.js/lib/hash/sha/256.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var common = require_common();
       var shaCommon = require_common2();
@@ -8611,7 +8547,6 @@
   var require__3 = __commonJS({
     "node_modules/hash.js/lib/hash/sha/224.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var SHA256 = require__2();
       function SHA224() {
@@ -8648,7 +8583,6 @@
   var require__4 = __commonJS({
     "node_modules/hash.js/lib/hash/sha/512.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var common = require_common();
       var assert = require_minimalistic_assert();
@@ -9048,7 +8982,6 @@
   var require__5 = __commonJS({
     "node_modules/hash.js/lib/hash/sha/384.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var SHA512 = require__4();
       function SHA384() {
@@ -9093,7 +9026,6 @@
   var require_sha = __commonJS({
     "node_modules/hash.js/lib/hash/sha.js"(exports) {
       "use strict";
-      init_define_process();
       exports.sha1 = require__();
       exports.sha224 = require__3();
       exports.sha256 = require__2();
@@ -9106,7 +9038,6 @@
   var require_ripemd = __commonJS({
     "node_modules/hash.js/lib/hash/ripemd.js"(exports) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var common = require_common();
       var rotl32 = utils.rotl32;
@@ -9536,7 +9467,6 @@
   var require_hmac = __commonJS({
     "node_modules/hash.js/lib/hash/hmac.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils();
       var assert = require_minimalistic_assert();
       function Hmac(hash, key, enc) {
@@ -9577,7 +9507,6 @@
   // node_modules/hash.js/lib/hash.js
   var require_hash = __commonJS({
     "node_modules/hash.js/lib/hash.js"(exports) {
-      init_define_process();
       var hash = exports;
       hash.utils = require_utils();
       hash.common = require_common();
@@ -9597,7 +9526,6 @@
   var require_types = __commonJS({
     "node_modules/@ethersproject/sha2/lib/types.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.SupportedAlgorithm = void 0;
       var SupportedAlgorithm;
@@ -9612,7 +9540,6 @@
   var require_version11 = __commonJS({
     "node_modules/@ethersproject/sha2/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "sha2/5.7.0";
@@ -9623,7 +9550,6 @@
   var require_browser_sha2 = __commonJS({
     "node_modules/@ethersproject/sha2/lib/browser-sha2.js"(exports) {
       "use strict";
-      init_define_process();
       var __importDefault = exports && exports.__importDefault || function(mod) {
         return mod && mod.__esModule ? mod : { "default": mod };
       };
@@ -9664,7 +9590,6 @@
   var require_lib16 = __commonJS({
     "node_modules/@ethersproject/sha2/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.SupportedAlgorithm = exports.sha512 = exports.sha256 = exports.ripemd160 = exports.computeHmac = void 0;
       var sha2_1 = require_browser_sha2();
@@ -9691,7 +9616,6 @@
   var require_version12 = __commonJS({
     "node_modules/@ethersproject/web/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "web/5.7.1";
@@ -9702,7 +9626,6 @@
   var require_browser_geturl = __commonJS({
     "node_modules/@ethersproject/web/lib/browser-geturl.js"(exports) {
       "use strict";
-      init_define_process();
       var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
@@ -9883,7 +9806,6 @@
   var require_lib17 = __commonJS({
     "node_modules/@ethersproject/web/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
@@ -10403,7 +10325,6 @@
   var require_bech32 = __commonJS({
     "node_modules/bech32/index.js"(exports, module) {
       "use strict";
-      init_define_process();
       var ALPHABET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
       var ALPHABET_MAP = {};
       for (z = 0; z < ALPHABET.length; z++) {
@@ -10571,7 +10492,6 @@
   var require_version13 = __commonJS({
     "node_modules/@ethersproject/providers/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "providers/5.7.1";
@@ -10643,7 +10563,6 @@
   // node_modules/elliptic/node_modules/bn.js/lib/bn.js
   var require_bn2 = __commonJS({
     "node_modules/elliptic/node_modules/bn.js/lib/bn.js"(exports, module) {
-      init_define_process();
       (function(module2, exports2) {
         "use strict";
         function assert(val, msg) {
@@ -13479,7 +13398,6 @@
   var require_utils2 = __commonJS({
     "node_modules/minimalistic-crypto-utils/lib/utils.js"(exports) {
       "use strict";
-      init_define_process();
       var utils = exports;
       function toArray(msg, enc) {
         if (Array.isArray(msg))
@@ -13539,7 +13457,6 @@
   var require_utils3 = __commonJS({
     "node_modules/elliptic/lib/elliptic/utils.js"(exports) {
       "use strict";
-      init_define_process();
       var utils = exports;
       var BN = require_bn2();
       var minAssert = require_minimalistic_assert();
@@ -13642,14 +13559,12 @@
   // (disabled):crypto
   var require_crypto = __commonJS({
     "(disabled):crypto"() {
-      init_define_process();
     }
   });
 
   // node_modules/brorand/index.js
   var require_brorand = __commonJS({
     "node_modules/brorand/index.js"(exports, module) {
-      init_define_process();
       var r;
       module.exports = function rand(len) {
         if (!r)
@@ -13708,7 +13623,6 @@
   var require_base = __commonJS({
     "node_modules/elliptic/lib/elliptic/curve/base.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var utils = require_utils3();
       var getNAF = utils.getNAF;
@@ -14015,7 +13929,6 @@
   var require_short = __commonJS({
     "node_modules/elliptic/lib/elliptic/curve/short.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils3();
       var BN = require_bn2();
       var inherits = require_inherits_browser();
@@ -14714,7 +14627,6 @@
   var require_mont = __commonJS({
     "node_modules/elliptic/lib/elliptic/curve/mont.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var inherits = require_inherits_browser();
       var Base = require_base();
@@ -14843,7 +14755,6 @@
   var require_edwards = __commonJS({
     "node_modules/elliptic/lib/elliptic/curve/edwards.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils3();
       var BN = require_bn2();
       var inherits = require_inherits_browser();
@@ -15140,7 +15051,6 @@
   var require_curve = __commonJS({
     "node_modules/elliptic/lib/elliptic/curve/index.js"(exports) {
       "use strict";
-      init_define_process();
       var curve = exports;
       curve.base = require_base();
       curve.short = require_short();
@@ -15152,7 +15062,6 @@
   // node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js
   var require_secp256k1 = __commonJS({
     "node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js"(exports, module) {
-      init_define_process();
       module.exports = {
         doubles: {
           step: 4,
@@ -15940,7 +15849,6 @@
   var require_curves = __commonJS({
     "node_modules/elliptic/lib/elliptic/curves.js"(exports) {
       "use strict";
-      init_define_process();
       var curves = exports;
       var hash = require_hash();
       var curve = require_curve();
@@ -16114,7 +16022,6 @@
   var require_hmac_drbg = __commonJS({
     "node_modules/hmac-drbg/lib/hmac-drbg.js"(exports, module) {
       "use strict";
-      init_define_process();
       var hash = require_hash();
       var utils = require_utils2();
       var assert = require_minimalistic_assert();
@@ -16203,7 +16110,6 @@
   var require_key = __commonJS({
     "node_modules/elliptic/lib/elliptic/ec/key.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var utils = require_utils3();
       var assert = utils.assert;
@@ -16298,7 +16204,6 @@
   var require_signature = __commonJS({
     "node_modules/elliptic/lib/elliptic/ec/signature.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var utils = require_utils3();
       var assert = utils.assert;
@@ -16445,7 +16350,6 @@
   var require_ec = __commonJS({
     "node_modules/elliptic/lib/elliptic/ec/index.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var HmacDRBG = require_hmac_drbg();
       var utils = require_utils3();
@@ -16623,7 +16527,6 @@
   var require_key2 = __commonJS({
     "node_modules/elliptic/lib/elliptic/eddsa/key.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils3();
       var assert = utils.assert;
       var parseBytes = utils.parseBytes;
@@ -16698,7 +16601,6 @@
   var require_signature2 = __commonJS({
     "node_modules/elliptic/lib/elliptic/eddsa/signature.js"(exports, module) {
       "use strict";
-      init_define_process();
       var BN = require_bn2();
       var utils = require_utils3();
       var assert = utils.assert;
@@ -16748,7 +16650,6 @@
   var require_eddsa = __commonJS({
     "node_modules/elliptic/lib/elliptic/eddsa/index.js"(exports, module) {
       "use strict";
-      init_define_process();
       var hash = require_hash();
       var curves = require_curves();
       var utils = require_utils3();
@@ -16834,7 +16735,6 @@
   var require_elliptic = __commonJS({
     "node_modules/elliptic/lib/elliptic.js"(exports) {
       "use strict";
-      init_define_process();
       var elliptic = exports;
       elliptic.version = require_package().version;
       elliptic.utils = require_utils3();
@@ -16850,7 +16750,6 @@
   var require_elliptic2 = __commonJS({
     "node_modules/@ethersproject/signing-key/lib/elliptic.js"(exports) {
       "use strict";
-      init_define_process();
       var __importDefault = exports && exports.__importDefault || function(mod) {
         return mod && mod.__esModule ? mod : { "default": mod };
       };
@@ -16866,7 +16765,6 @@
   var require_version14 = __commonJS({
     "node_modules/@ethersproject/signing-key/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "signing-key/5.7.0";
@@ -16877,7 +16775,6 @@
   var require_lib18 = __commonJS({
     "node_modules/@ethersproject/signing-key/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.computePublicKey = exports.recoverPublicKey = exports.SigningKey = void 0;
       var elliptic_1 = require_elliptic2();
@@ -16969,7 +16866,6 @@
   var require_version15 = __commonJS({
     "node_modules/@ethersproject/transactions/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "transactions/5.7.0";
@@ -16980,7 +16876,6 @@
   var require_lib19 = __commonJS({
     "node_modules/@ethersproject/transactions/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __createBinding = exports && exports.__createBinding || (Object.create ? function(o, m, k, k2) {
         if (k2 === void 0)
           k2 = k;
@@ -17385,7 +17280,6 @@
   var require_formatter = __commonJS({
     "node_modules/@ethersproject/providers/lib/formatter.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.showThrottleMessage = exports.isCommunityResource = exports.isCommunityResourcable = exports.Formatter = void 0;
       var address_1 = require_lib14();
@@ -17818,7 +17712,6 @@
   var require_base_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/base-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -20454,7 +20347,6 @@
   var require_version16 = __commonJS({
     "node_modules/@ethersproject/abstract-signer/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "abstract-signer/5.7.0";
@@ -20465,7 +20357,6 @@
   var require_lib20 = __commonJS({
     "node_modules/@ethersproject/abstract-signer/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -20960,7 +20851,6 @@
   var require_json_rpc_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/json-rpc-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -21882,7 +21772,6 @@
   var require_browser_ws = __commonJS({
     "node_modules/@ethersproject/providers/lib/browser-ws.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.WebSocket = void 0;
       var logger_1 = require_lib();
@@ -21910,7 +21799,6 @@
   var require_websocket_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/websocket-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -22338,7 +22226,6 @@
   var require_url_json_rpc_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/url-json-rpc-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -22553,7 +22440,6 @@
   var require_alchemy_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/alchemy-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -22687,7 +22573,6 @@
   var require_ankr_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/ankr-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -22778,7 +22663,6 @@
   var require_cloudflare_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/cloudflare-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -22959,7 +22843,6 @@
   var require_etherscan_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/etherscan-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -23565,7 +23448,6 @@
   var require_version17 = __commonJS({
     "node_modules/@ethersproject/random/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "random/5.7.0";
@@ -23576,7 +23458,6 @@
   var require_browser_random = __commonJS({
     "node_modules/@ethersproject/random/lib/browser-random.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.randomBytes = void 0;
       var bytes_1 = require_lib2();
@@ -23623,7 +23504,6 @@
   var require_shuffle = __commonJS({
     "node_modules/@ethersproject/random/lib/shuffle.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.shuffled = void 0;
       function shuffled(array) {
@@ -23644,7 +23524,6 @@
   var require_lib21 = __commonJS({
     "node_modules/@ethersproject/random/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.shuffled = exports.randomBytes = void 0;
       var random_1 = require_browser_random();
@@ -23662,7 +23541,6 @@
   var require_fallback_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/fallback-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -24447,7 +24325,6 @@
   var require_browser_ipc_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/browser-ipc-provider.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.IpcProvider = void 0;
       var IpcProvider = null;
@@ -24459,7 +24336,6 @@
   var require_infura_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/infura-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -24619,7 +24495,6 @@
   var require_json_rpc_batch_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/json-rpc-batch-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -24724,7 +24599,6 @@
   var require_nodesmith_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/nodesmith-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -24798,7 +24672,6 @@
   var require_pocket_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/pocket-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -24903,7 +24776,6 @@
   var require_web3_provider = __commonJS({
     "node_modules/@ethersproject/providers/lib/web3-provider.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -25066,7 +24938,6 @@
   var require_lib22 = __commonJS({
     "node_modules/@ethersproject/providers/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Formatter = exports.showThrottleMessage = exports.isCommunityResourcable = exports.isCommunityResource = exports.getNetwork = exports.getDefaultProvider = exports.JsonRpcSigner = exports.IpcProvider = exports.WebSocketProvider = exports.Web3Provider = exports.StaticJsonRpcProvider = exports.PocketProvider = exports.NodesmithProvider = exports.JsonRpcBatchProvider = exports.JsonRpcProvider = exports.InfuraWebSocketProvider = exports.InfuraProvider = exports.EtherscanProvider = exports.CloudflareProvider = exports.AnkrProvider = exports.AlchemyWebSocketProvider = exports.AlchemyProvider = exports.FallbackProvider = exports.UrlJsonRpcProvider = exports.Resolver = exports.BaseProvider = exports.Provider = void 0;
       var abstract_provider_1 = require_lib5();
@@ -25216,7 +25087,6 @@
   var require_version18 = __commonJS({
     "node_modules/@ethersproject/abi/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "abi/5.7.0";
@@ -25227,7 +25097,6 @@
   var require_fragments = __commonJS({
     "node_modules/@ethersproject/abi/lib/fragments.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26114,7 +25983,6 @@
   var require_abstract_coder = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/abstract-coder.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Reader = exports.Writer = exports.Coder = exports.checkResultErrors = void 0;
       var bytes_1 = require_lib2();
@@ -26291,7 +26159,6 @@
   var require_address = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/address.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26347,7 +26214,6 @@
   var require_anonymous = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/anonymous.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26398,7 +26264,6 @@
   var require_array = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/array.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26630,7 +26495,6 @@
   var require_boolean = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/boolean.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26679,7 +26543,6 @@
   var require_bytes = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/bytes.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26743,7 +26606,6 @@
   var require_fixed_bytes = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/fixed-bytes.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26801,7 +26663,6 @@
   var require_null = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/null.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26854,7 +26715,6 @@
   var require_number = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/number.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26928,7 +26788,6 @@
   var require_string = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/string.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -26978,7 +26837,6 @@
   var require_tuple = __commonJS({
     "node_modules/@ethersproject/abi/lib/coders/tuple.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -27067,7 +26925,6 @@
   var require_abi_coder = __commonJS({
     "node_modules/@ethersproject/abi/lib/abi-coder.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.defaultAbiCoder = exports.AbiCoder = void 0;
       var bytes_1 = require_lib2();
@@ -27182,7 +27039,6 @@
   var require_interface = __commonJS({
     "node_modules/@ethersproject/abi/lib/interface.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -27790,7 +27646,6 @@
   var require_lib23 = __commonJS({
     "node_modules/@ethersproject/abi/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.TransactionDescription = exports.LogDescription = exports.checkResultErrors = exports.Indexed = exports.Interface = exports.defaultAbiCoder = exports.AbiCoder = exports.FormatTypes = exports.ParamType = exports.FunctionFragment = exports.Fragment = exports.EventFragment = exports.ErrorFragment = exports.ConstructorFragment = void 0;
       var fragments_1 = require_fragments();
@@ -27845,7 +27700,6 @@
   var require_version19 = __commonJS({
     "node_modules/@ethersproject/contracts/lib/_version.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.version = void 0;
       exports.version = "contracts/5.7.0";
@@ -27856,7 +27710,6 @@
   var require_lib24 = __commonJS({
     "node_modules/@ethersproject/contracts/lib/index.js"(exports) {
       "use strict";
-      init_define_process();
       var __extends = exports && exports.__extends || function() {
         var extendStatics = function(d, b) {
           extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -29075,7 +28928,6 @@
   var require_base64_js = __commonJS({
     "node_modules/base64-js/index.js"(exports) {
       "use strict";
-      init_define_process();
       exports.byteLength = byteLength;
       exports.toByteArray = toByteArray;
       exports.fromByteArray = fromByteArray;
@@ -29173,7 +29025,6 @@
   // node_modules/ieee754/index.js
   var require_ieee754 = __commonJS({
     "node_modules/ieee754/index.js"(exports) {
-      init_define_process();
       exports.read = function(buffer, offset, isLE, mLen, nBytes) {
         var e, m;
         var eLen = nBytes * 8 - mLen - 1;
@@ -29258,7 +29109,6 @@
   var require_buffer2 = __commonJS({
     "node_modules/buffer/index.js"(exports) {
       "use strict";
-      init_define_process();
       var base64 = require_base64_js();
       var ieee754 = require_ieee754();
       var customInspectSymbol = typeof Symbol === "function" && typeof Symbol["for"] === "function" ? Symbol["for"]("nodejs.util.inspect.custom") : null;
@@ -30895,7 +30745,6 @@
   // node_modules/dompurify/dist/purify.js
   var require_purify = __commonJS({
     "node_modules/dompurify/dist/purify.js"(exports, module) {
-      init_define_process();
       (function(global2, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.DOMPurify = factory());
       })(exports, function() {
@@ -31904,7 +31753,6 @@
   var require_util = __commonJS({
     "node_modules/fast-xml-parser/src/util.js"(exports) {
       "use strict";
-      init_define_process();
       var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
       var nameChar = nameStartChar + "\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
       var nameRegexp = "[" + nameStartChar + "][" + nameChar + "]*";
@@ -31988,7 +31836,6 @@
   var require_node2json = __commonJS({
     "node_modules/fast-xml-parser/src/node2json.js"(exports) {
       "use strict";
-      init_define_process();
       var util = require_util();
       var convertToJson = function(node, options, parentTagName) {
         const jObj = {};
@@ -32026,7 +31873,6 @@
   var require_xmlNode = __commonJS({
     "node_modules/fast-xml-parser/src/xmlNode.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function(tagname, parent, val) {
         this.tagname = tagname;
         this.parent = parent;
@@ -32047,7 +31893,6 @@
   // node_modules/strnum/strnum.js
   var require_strnum = __commonJS({
     "node_modules/strnum/strnum.js"(exports, module) {
-      init_define_process();
       var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
       var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
       if (!Number.parseInt && window.parseInt) {
@@ -32145,7 +31990,6 @@
   var require_xmlstr2xmlnode = __commonJS({
     "node_modules/fast-xml-parser/src/xmlstr2xmlnode.js"(exports) {
       "use strict";
-      init_define_process();
       var util = require_util();
       var buildOptions = require_util().buildOptions;
       var xmlNode = require_xmlNode();
@@ -32434,7 +32278,6 @@
   var require_validator = __commonJS({
     "node_modules/fast-xml-parser/src/validator.js"(exports) {
       "use strict";
-      init_define_process();
       var util = require_util();
       var defaultOptions = {
         allowBooleanAttributes: false
@@ -32731,7 +32574,6 @@
   var require_nimndata = __commonJS({
     "node_modules/fast-xml-parser/src/nimndata.js"(exports) {
       "use strict";
-      init_define_process();
       var char = function(a) {
         return String.fromCharCode(a);
       };
@@ -32857,7 +32699,6 @@
   var require_node2json_str = __commonJS({
     "node_modules/fast-xml-parser/src/node2json_str.js"(exports) {
       "use strict";
-      init_define_process();
       var util = require_util();
       var buildOptions = require_util().buildOptions;
       var x2j = require_xmlstr2xmlnode();
@@ -32911,7 +32752,6 @@
   var require_json2xml = __commonJS({
     "node_modules/fast-xml-parser/src/json2xml.js"(exports, module) {
       "use strict";
-      init_define_process();
       var buildOptions = require_util().buildOptions;
       var defaultOptions = {
         attributeNamePrefix: "@_",
@@ -33130,7 +32970,6 @@
   var require_parser = __commonJS({
     "node_modules/fast-xml-parser/src/parser.js"(exports) {
       "use strict";
-      init_define_process();
       var nodeToJson = require_node2json();
       var xmlToNodeobj = require_xmlstr2xmlnode();
       var x2xmlnode = require_xmlstr2xmlnode();
@@ -33170,7 +33009,6 @@
   var require_is_svg = __commonJS({
     "node_modules/is-svg/index.js"(exports, module) {
       "use strict";
-      init_define_process();
       var parser = require_parser();
       var isSvg = (input) => {
         if (input === void 0 || input === null) {
@@ -33205,7 +33043,6 @@
   // node_modules/url-join/lib/url-join.js
   var require_url_join = __commonJS({
     "node_modules/url-join/lib/url-join.js"(exports, module) {
-      init_define_process();
       (function(name, context, definition) {
         if (typeof module !== "undefined" && module.exports)
           module.exports = definition();
@@ -33302,7 +33139,6 @@
   var encode_1, MSB, REST, MSBALL, INT, decode, MSB$1, REST$1, N1, N2, N3, N4, N5, N6, N7, N8, N9, length, varint, _brrp_varint, varint_default;
   var init_varint = __esm({
     "node_modules/multiformats/esm/vendor/varint.js"() {
-      init_define_process();
       encode_1 = encode;
       MSB = 128;
       REST = 127;
@@ -33343,7 +33179,6 @@
   var decode2, encodeTo, encodingLength;
   var init_varint2 = __esm({
     "node_modules/multiformats/esm/src/varint.js"() {
-      init_define_process();
       init_varint();
       decode2 = (data) => {
         const code = varint_default.decode(data);
@@ -33377,7 +33212,6 @@
   var empty, toHex, fromHex, equals, coerce, isBinary, fromString, toString;
   var init_bytes = __esm({
     "node_modules/multiformats/esm/src/bytes.js"() {
-      init_define_process();
       empty = new Uint8Array(0);
       toHex = (d) => d.reduce((hex, byte) => hex + byte.toString(16).padStart(2, "0"), "");
       fromHex = (hex) => {
@@ -33424,7 +33258,6 @@
   var create, decode3, equals2, Digest;
   var init_digest = __esm({
     "node_modules/multiformats/esm/src/hashes/digest.js"() {
-      init_define_process();
       init_bytes();
       init_varint2();
       create = (code, digest) => {
@@ -33600,7 +33433,6 @@
   var src, _brrp__multiformats_scope_baseX, base_x_default;
   var init_base_x = __esm({
     "node_modules/multiformats/esm/vendor/base-x.js"() {
-      init_define_process();
       src = base;
       _brrp__multiformats_scope_baseX = src;
       base_x_default = _brrp__multiformats_scope_baseX;
@@ -33611,7 +33443,6 @@
   var Encoder, Decoder, ComposedDecoder, or, Codec, from, baseX, decode4, encode2, rfc4648;
   var init_base = __esm({
     "node_modules/multiformats/esm/src/bases/base.js"() {
-      init_define_process();
       init_base_x();
       init_bytes();
       Encoder = class {
@@ -33772,7 +33603,6 @@
   var base58btc, base58flickr;
   var init_base58 = __esm({
     "node_modules/multiformats/esm/src/bases/base58.js"() {
-      init_define_process();
       init_base();
       base58btc = baseX({
         name: "base58btc",
@@ -33791,7 +33621,6 @@
   var base32, base32upper, base32pad, base32padupper, base32hex, base32hexupper, base32hexpad, base32hexpadupper, base32z;
   var init_base32 = __esm({
     "node_modules/multiformats/esm/src/bases/base32.js"() {
-      init_define_process();
       init_base();
       base32 = rfc4648({
         prefix: "b",
@@ -33854,7 +33683,6 @@
   var CID, parseCIDtoBytes, toStringV0, toStringV1, DAG_PB_CODE, SHA_256_CODE, encodeCID, cidSymbol, readonly, hidden, version, deprecate, IS_CID_DEPRECATION;
   var init_cid = __esm({
     "node_modules/multiformats/esm/src/cid.js"() {
-      init_define_process();
       init_varint2();
       init_digest();
       init_base58();
@@ -34175,7 +34003,6 @@ if (cid) {
   var from2, Hasher;
   var init_hasher = __esm({
     "node_modules/multiformats/esm/src/hashes/hasher.js"() {
-      init_define_process();
       init_digest();
       from2 = ({ name, code, encode: encode3 }) => new Hasher(name, code, encode3);
       Hasher = class {
@@ -34207,7 +34034,6 @@ if (cid) {
   });
   var init_src = __esm({
     "node_modules/multiformats/esm/src/index.js"() {
-      init_define_process();
       init_cid();
       init_varint2();
       init_bytes();
@@ -34220,7 +34046,6 @@ if (cid) {
   var require_bind = __commonJS({
     "node_modules/axios/lib/helpers/bind.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function bind(fn, thisArg) {
         return function wrap() {
           var args = new Array(arguments.length);
@@ -34237,7 +34062,6 @@ if (cid) {
   var require_utils4 = __commonJS({
     "node_modules/axios/lib/utils.js"(exports, module) {
       "use strict";
-      init_define_process();
       var bind = require_bind();
       var toString2 = Object.prototype.toString;
       function isArray(val) {
@@ -34391,7 +34215,6 @@ if (cid) {
   var require_buildURL = __commonJS({
     "node_modules/axios/lib/helpers/buildURL.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       function encode3(val) {
         return encodeURIComponent(val).replace(/%3A/gi, ":").replace(/%24/g, "$").replace(/%2C/gi, ",").replace(/%20/g, "+").replace(/%5B/gi, "[").replace(/%5D/gi, "]");
@@ -34443,7 +34266,6 @@ if (cid) {
   var require_InterceptorManager = __commonJS({
     "node_modules/axios/lib/core/InterceptorManager.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       function InterceptorManager() {
         this.handlers = [];
@@ -34477,7 +34299,6 @@ if (cid) {
   var require_normalizeHeaderName = __commonJS({
     "node_modules/axios/lib/helpers/normalizeHeaderName.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       module.exports = function normalizeHeaderName(headers, normalizedName) {
         utils.forEach(headers, function processHeader(value, name) {
@@ -34494,7 +34315,6 @@ if (cid) {
   var require_enhanceError = __commonJS({
     "node_modules/axios/lib/core/enhanceError.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function enhanceError(error, config, code, request, response) {
         error.config = config;
         if (code) {
@@ -34527,7 +34347,6 @@ if (cid) {
   var require_createError = __commonJS({
     "node_modules/axios/lib/core/createError.js"(exports, module) {
       "use strict";
-      init_define_process();
       var enhanceError = require_enhanceError();
       module.exports = function createError(message, config, code, request, response) {
         var error = new Error(message);
@@ -34540,7 +34359,6 @@ if (cid) {
   var require_settle = __commonJS({
     "node_modules/axios/lib/core/settle.js"(exports, module) {
       "use strict";
-      init_define_process();
       var createError = require_createError();
       module.exports = function settle(resolve, reject, response) {
         var validateStatus = response.config.validateStatus;
@@ -34557,7 +34375,6 @@ if (cid) {
   var require_cookies = __commonJS({
     "node_modules/axios/lib/helpers/cookies.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
         return {
@@ -34604,7 +34421,6 @@ if (cid) {
   var require_isAbsoluteURL = __commonJS({
     "node_modules/axios/lib/helpers/isAbsoluteURL.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function isAbsoluteURL(url) {
         return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
       };
@@ -34615,7 +34431,6 @@ if (cid) {
   var require_combineURLs = __commonJS({
     "node_modules/axios/lib/helpers/combineURLs.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function combineURLs(baseURL, relativeURL) {
         return relativeURL ? baseURL.replace(/\/+$/, "") + "/" + relativeURL.replace(/^\/+/, "") : baseURL;
       };
@@ -34626,7 +34441,6 @@ if (cid) {
   var require_buildFullPath = __commonJS({
     "node_modules/axios/lib/core/buildFullPath.js"(exports, module) {
       "use strict";
-      init_define_process();
       var isAbsoluteURL = require_isAbsoluteURL();
       var combineURLs = require_combineURLs();
       module.exports = function buildFullPath(baseURL, requestedURL) {
@@ -34642,7 +34456,6 @@ if (cid) {
   var require_parseHeaders = __commonJS({
     "node_modules/axios/lib/helpers/parseHeaders.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var ignoreDuplicateOf = [
         "age",
@@ -34695,7 +34508,6 @@ if (cid) {
   var require_isURLSameOrigin = __commonJS({
     "node_modules/axios/lib/helpers/isURLSameOrigin.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
         var msie = /(msie|trident)/i.test(navigator.userAgent);
@@ -34736,7 +34548,6 @@ if (cid) {
   var require_Cancel = __commonJS({
     "node_modules/axios/lib/cancel/Cancel.js"(exports, module) {
       "use strict";
-      init_define_process();
       function Cancel(message) {
         this.message = message;
       }
@@ -34752,7 +34563,6 @@ if (cid) {
   var require_xhr = __commonJS({
     "node_modules/axios/lib/adapters/xhr.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var settle = require_settle();
       var cookies = require_cookies();
@@ -34899,7 +34709,6 @@ if (cid) {
   var require_defaults = __commonJS({
     "node_modules/axios/lib/defaults.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var normalizeHeaderName = require_normalizeHeaderName();
       var enhanceError = require_enhanceError();
@@ -34915,7 +34724,7 @@ if (cid) {
         var adapter;
         if (typeof XMLHttpRequest !== "undefined") {
           adapter = require_xhr();
-        } else if (typeof define_process_default !== "undefined" && Object.prototype.toString.call(define_process_default) === "[object process]") {
+        } else if (typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]") {
           adapter = require_xhr();
         }
         return adapter;
@@ -35006,7 +34815,6 @@ if (cid) {
   var require_transformData = __commonJS({
     "node_modules/axios/lib/core/transformData.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var defaults = require_defaults();
       module.exports = function transformData(data, headers, fns) {
@@ -35023,7 +34831,6 @@ if (cid) {
   var require_isCancel = __commonJS({
     "node_modules/axios/lib/cancel/isCancel.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function isCancel(value) {
         return !!(value && value.__CANCEL__);
       };
@@ -35034,7 +34841,6 @@ if (cid) {
   var require_dispatchRequest = __commonJS({
     "node_modules/axios/lib/core/dispatchRequest.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var transformData = require_transformData();
       var isCancel = require_isCancel();
@@ -35078,7 +34884,6 @@ if (cid) {
   var require_mergeConfig = __commonJS({
     "node_modules/axios/lib/core/mergeConfig.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       module.exports = function mergeConfig(config1, config2) {
         config2 = config2 || {};
@@ -35160,7 +34965,6 @@ if (cid) {
   // node_modules/axios/lib/env/data.js
   var require_data = __commonJS({
     "node_modules/axios/lib/env/data.js"(exports, module) {
-      init_define_process();
       module.exports = {
         "version": "0.25.0"
       };
@@ -35171,7 +34975,6 @@ if (cid) {
   var require_validator2 = __commonJS({
     "node_modules/axios/lib/helpers/validator.js"(exports, module) {
       "use strict";
-      init_define_process();
       var VERSION = require_data().version;
       var validators = {};
       ["object", "boolean", "number", "function", "string", "symbol"].forEach(function(type, i) {
@@ -35228,7 +35031,6 @@ if (cid) {
   var require_Axios = __commonJS({
     "node_modules/axios/lib/core/Axios.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var buildURL = require_buildURL();
       var InterceptorManager = require_InterceptorManager();
@@ -35347,7 +35149,6 @@ if (cid) {
   var require_CancelToken = __commonJS({
     "node_modules/axios/lib/cancel/CancelToken.js"(exports, module) {
       "use strict";
-      init_define_process();
       var Cancel = require_Cancel();
       function CancelToken(executor) {
         if (typeof executor !== "function") {
@@ -35430,7 +35231,6 @@ if (cid) {
   var require_spread = __commonJS({
     "node_modules/axios/lib/helpers/spread.js"(exports, module) {
       "use strict";
-      init_define_process();
       module.exports = function spread(callback) {
         return function wrap(arr) {
           return callback.apply(null, arr);
@@ -35443,7 +35243,6 @@ if (cid) {
   var require_isAxiosError = __commonJS({
     "node_modules/axios/lib/helpers/isAxiosError.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       module.exports = function isAxiosError(payload) {
         return utils.isObject(payload) && payload.isAxiosError === true;
@@ -35455,7 +35254,6 @@ if (cid) {
   var require_axios = __commonJS({
     "node_modules/axios/lib/axios.js"(exports, module) {
       "use strict";
-      init_define_process();
       var utils = require_utils4();
       var bind = require_bind();
       var Axios = require_Axios();
@@ -35490,7 +35288,6 @@ if (cid) {
   // node_modules/axios/index.js
   var require_axios2 = __commonJS({
     "node_modules/axios/index.js"(exports, module) {
-      init_define_process();
       module.exports = require_axios();
     }
   });
@@ -35498,7 +35295,6 @@ if (cid) {
   // node_modules/cache-parser/dist/index.js
   var require_dist = __commonJS({
     "node_modules/cache-parser/dist/index.js"(exports) {
-      init_define_process();
       var e = Symbol("cache-parser");
       function a(e2) {
         return (typeof e2 == "string" || typeof e2 == "number") && (e2 = Number(e2)) >= 0 && e2 < Infinity;
@@ -35534,7 +35330,6 @@ if (cid) {
   // node_modules/fast-defer/dist/index.js
   var require_dist2 = __commonJS({
     "node_modules/fast-defer/dist/index.js"(exports) {
-      init_define_process();
       var e = Symbol();
       exports.deferred = function() {
         var r, n, o = new Promise(function(e2, o2) {
@@ -35550,7 +35345,6 @@ if (cid) {
   // node_modules/object-code/dist/index.js
   var require_dist3 = __commonJS({
     "node_modules/object-code/dist/index.js"(exports) {
-      init_define_process();
       function r(t) {
         var e = typeof t;
         if (t && e == "object" && !(t instanceof Date || t instanceof RegExp)) {
@@ -35573,7 +35367,6 @@ if (cid) {
   // node_modules/axios-cache-interceptor/cjs/index.js
   var require_cjs = __commonJS({
     "node_modules/axios-cache-interceptor/cjs/index.js"(exports, module) {
-      init_define_process();
       (() => {
         "use strict";
         var e = { d: (t2, a2) => {
@@ -35821,853 +35614,10 @@ if (cid) {
     }
   });
 
-  // dist/ens-avatar.cjs.production.min.js
-  var require_ens_avatar_cjs_production_min = __commonJS({
-    "dist/ens-avatar.cjs.production.min.js"(exports) {
-      "use strict";
-      init_define_process();
-      function t(t2) {
-        return t2 && typeof t2 == "object" && "default" in t2 ? t2.default : t2;
-      }
-      Object.defineProperty(exports, "__esModule", { value: true });
-      var e = require_lib24();
-      var r = require_buffer2();
-      var n = t(require_purify());
-      var o = t(require_is_svg());
-      var a = t(require_url_join());
-      var i = (init_src(), __toCommonJS(src_exports));
-      var u = t(require_axios2());
-      function s() {
-        s = function(t3, e3) {
-          return new r2(t3, void 0, e3);
-        };
-        var t2 = RegExp.prototype, e2 = /* @__PURE__ */ new WeakMap();
-        function r2(t3, n3, o2) {
-          var a2 = new RegExp(t3, n3);
-          return e2.set(a2, o2 || e2.get(t3)), v(a2, r2.prototype);
-        }
-        function n2(t3, r3) {
-          var n3 = e2.get(r3);
-          return Object.keys(n3).reduce(function(e3, r4) {
-            return e3[r4] = t3[n3[r4]], e3;
-          }, /* @__PURE__ */ Object.create(null));
-        }
-        return f(r2, RegExp), r2.prototype.exec = function(e3) {
-          var r3 = t2.exec.call(this, e3);
-          return r3 && (r3.groups = n2(r3, this)), r3;
-        }, r2.prototype[Symbol.replace] = function(r3, o2) {
-          if (typeof o2 == "string") {
-            var a2 = e2.get(this);
-            return t2[Symbol.replace].call(this, r3, o2.replace(/\$<([^>]+)>/g, function(t3, e3) {
-              return "$" + a2[e3];
-            }));
-          }
-          if (typeof o2 == "function") {
-            var i2 = this;
-            return t2[Symbol.replace].call(this, r3, function() {
-              var t3 = arguments;
-              return typeof t3[t3.length - 1] != "object" && (t3 = [].slice.call(t3)).push(n2(t3, i2)), o2.apply(this, t3);
-            });
-          }
-          return t2[Symbol.replace].call(this, r3, o2);
-        }, s.apply(this, arguments);
-      }
-      function c(t2, e2, r2, n2, o2, a2, i2) {
-        try {
-          var u2 = t2[a2](i2), s2 = u2.value;
-        } catch (t3) {
-          return void r2(t3);
-        }
-        u2.done ? e2(s2) : Promise.resolve(s2).then(n2, o2);
-      }
-      function l(t2) {
-        return function() {
-          var e2 = this, r2 = arguments;
-          return new Promise(function(n2, o2) {
-            var a2 = t2.apply(e2, r2);
-            function i2(t3) {
-              c(a2, n2, o2, i2, u2, "next", t3);
-            }
-            function u2(t3) {
-              c(a2, n2, o2, i2, u2, "throw", t3);
-            }
-            i2(void 0);
-          });
-        };
-      }
-      function p() {
-        return (p = Object.assign || function(t2) {
-          for (var e2 = 1; e2 < arguments.length; e2++) {
-            var r2 = arguments[e2];
-            for (var n2 in r2)
-              Object.prototype.hasOwnProperty.call(r2, n2) && (t2[n2] = r2[n2]);
-          }
-          return t2;
-        }).apply(this, arguments);
-      }
-      function f(t2, e2) {
-        if (typeof e2 != "function" && e2 !== null)
-          throw new TypeError("Super expression must either be null or a function");
-        t2.prototype = Object.create(e2 && e2.prototype, { constructor: { value: t2, writable: true, configurable: true } }), Object.defineProperty(t2, "prototype", { writable: false }), e2 && v(t2, e2);
-      }
-      function h(t2, e2) {
-        t2.prototype = Object.create(e2.prototype), t2.prototype.constructor = t2, v(t2, e2);
-      }
-      function d(t2) {
-        return (d = Object.setPrototypeOf ? Object.getPrototypeOf : function(t3) {
-          return t3.__proto__ || Object.getPrototypeOf(t3);
-        })(t2);
-      }
-      function v(t2, e2) {
-        return (v = Object.setPrototypeOf || function(t3, e3) {
-          return t3.__proto__ = e3, t3;
-        })(t2, e2);
-      }
-      function y() {
-        if (typeof Reflect == "undefined" || !Reflect.construct)
-          return false;
-        if (Reflect.construct.sham)
-          return false;
-        if (typeof Proxy == "function")
-          return true;
-        try {
-          return Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
-          })), true;
-        } catch (t2) {
-          return false;
-        }
-      }
-      function g(t2, e2, r2) {
-        return (g = y() ? Reflect.construct : function(t3, e3, r3) {
-          var n2 = [null];
-          n2.push.apply(n2, e3);
-          var o2 = new (Function.bind.apply(t3, n2))();
-          return r3 && v(o2, r3.prototype), o2;
-        }).apply(null, arguments);
-      }
-      function m(t2) {
-        var e2 = typeof Map == "function" ? /* @__PURE__ */ new Map() : void 0;
-        return (m = function(t3) {
-          if (t3 === null || Function.toString.call(t3).indexOf("[native code]") === -1)
-            return t3;
-          if (typeof t3 != "function")
-            throw new TypeError("Super expression must either be null or a function");
-          if (e2 !== void 0) {
-            if (e2.has(t3))
-              return e2.get(t3);
-            e2.set(t3, r2);
-          }
-          function r2() {
-            return g(t3, arguments, d(this).constructor);
-          }
-          return r2.prototype = Object.create(t3.prototype, { constructor: { value: r2, enumerable: false, writable: true, configurable: true } }), v(r2, t3);
-        })(t2);
-      }
-      function w(t2, e2) {
-        (e2 == null || e2 > t2.length) && (e2 = t2.length);
-        for (var r2 = 0, n2 = new Array(e2); r2 < e2; r2++)
-          n2[r2] = t2[r2];
-        return n2;
-      }
-      function b(t2, e2) {
-        var r2 = typeof Symbol != "undefined" && t2[Symbol.iterator] || t2["@@iterator"];
-        if (r2)
-          return (r2 = r2.call(t2)).next.bind(r2);
-        if (Array.isArray(t2) || (r2 = function(t3, e3) {
-          if (t3) {
-            if (typeof t3 == "string")
-              return w(t3, void 0);
-            var r3 = Object.prototype.toString.call(t3).slice(8, -1);
-            return r3 === "Object" && t3.constructor && (r3 = t3.constructor.name), r3 === "Map" || r3 === "Set" ? Array.from(t3) : r3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r3) ? w(t3, void 0) : void 0;
-          }
-        }(t2)) || e2 && t2 && typeof t2.length == "number") {
-          r2 && (t2 = r2);
-          var n2 = 0;
-          return function() {
-            return n2 >= t2.length ? { done: true } : { done: false, value: t2[n2++] };
-          };
-        }
-        throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-      }
-      var x;
-      var O = (function(t2) {
-        var e2 = function(t3) {
-          var e3 = Object.prototype, r2 = e3.hasOwnProperty, n2 = typeof Symbol == "function" ? Symbol : {}, o2 = n2.iterator || "@@iterator", a2 = n2.asyncIterator || "@@asyncIterator", i2 = n2.toStringTag || "@@toStringTag";
-          function u2(t4, e4, r3) {
-            return Object.defineProperty(t4, e4, { value: r3, enumerable: true, configurable: true, writable: true }), t4[e4];
-          }
-          try {
-            u2({}, "");
-          } catch (t4) {
-            u2 = function(t5, e4, r3) {
-              return t5[e4] = r3;
-            };
-          }
-          function s2(t4, e4, r3, n3) {
-            var o3 = Object.create((e4 && e4.prototype instanceof p2 ? e4 : p2).prototype), a3 = new _2(n3 || []);
-            return o3._invoke = function(t5, e5, r4) {
-              var n4 = "suspendedStart";
-              return function(o4, a4) {
-                if (n4 === "executing")
-                  throw new Error("Generator is already running");
-                if (n4 === "completed") {
-                  if (o4 === "throw")
-                    throw a4;
-                  return { value: void 0, done: true };
-                }
-                for (r4.method = o4, r4.arg = a4; ; ) {
-                  var i3 = r4.delegate;
-                  if (i3) {
-                    var u3 = b2(i3, r4);
-                    if (u3) {
-                      if (u3 === l2)
-                        continue;
-                      return u3;
-                    }
-                  }
-                  if (r4.method === "next")
-                    r4.sent = r4._sent = r4.arg;
-                  else if (r4.method === "throw") {
-                    if (n4 === "suspendedStart")
-                      throw n4 = "completed", r4.arg;
-                    r4.dispatchException(r4.arg);
-                  } else
-                    r4.method === "return" && r4.abrupt("return", r4.arg);
-                  n4 = "executing";
-                  var s3 = c2(t5, e5, r4);
-                  if (s3.type === "normal") {
-                    if (n4 = r4.done ? "completed" : "suspendedYield", s3.arg === l2)
-                      continue;
-                    return { value: s3.arg, done: r4.done };
-                  }
-                  s3.type === "throw" && (n4 = "completed", r4.method = "throw", r4.arg = s3.arg);
-                }
-              };
-            }(t4, r3, a3), o3;
-          }
-          function c2(t4, e4, r3) {
-            try {
-              return { type: "normal", arg: t4.call(e4, r3) };
-            } catch (t5) {
-              return { type: "throw", arg: t5 };
-            }
-          }
-          t3.wrap = s2;
-          var l2 = {};
-          function p2() {
-          }
-          function f2() {
-          }
-          function h2() {
-          }
-          var d2 = {};
-          u2(d2, o2, function() {
-            return this;
-          });
-          var v2 = Object.getPrototypeOf, y2 = v2 && v2(v2(j2([])));
-          y2 && y2 !== e3 && r2.call(y2, o2) && (d2 = y2);
-          var g2 = h2.prototype = p2.prototype = Object.create(d2);
-          function m2(t4) {
-            ["next", "throw", "return"].forEach(function(e4) {
-              u2(t4, e4, function(t5) {
-                return this._invoke(e4, t5);
-              });
-            });
-          }
-          function w2(t4, e4) {
-            var n3;
-            this._invoke = function(o3, a3) {
-              function i3() {
-                return new e4(function(n4, i4) {
-                  !function n5(o4, a4, i5, u3) {
-                    var s3 = c2(t4[o4], t4, a4);
-                    if (s3.type !== "throw") {
-                      var l3 = s3.arg, p3 = l3.value;
-                      return p3 && typeof p3 == "object" && r2.call(p3, "__await") ? e4.resolve(p3.__await).then(function(t5) {
-                        n5("next", t5, i5, u3);
-                      }, function(t5) {
-                        n5("throw", t5, i5, u3);
-                      }) : e4.resolve(p3).then(function(t5) {
-                        l3.value = t5, i5(l3);
-                      }, function(t5) {
-                        return n5("throw", t5, i5, u3);
-                      });
-                    }
-                    u3(s3.arg);
-                  }(o3, a3, n4, i4);
-                });
-              }
-              return n3 = n3 ? n3.then(i3, i3) : i3();
-            };
-          }
-          function b2(t4, e4) {
-            var r3 = t4.iterator[e4.method];
-            if (r3 === void 0) {
-              if (e4.delegate = null, e4.method === "throw") {
-                if (t4.iterator.return && (e4.method = "return", e4.arg = void 0, b2(t4, e4), e4.method === "throw"))
-                  return l2;
-                e4.method = "throw", e4.arg = new TypeError("The iterator does not provide a 'throw' method");
-              }
-              return l2;
-            }
-            var n3 = c2(r3, t4.iterator, e4.arg);
-            if (n3.type === "throw")
-              return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, l2;
-            var o3 = n3.arg;
-            return o3 ? o3.done ? (e4[t4.resultName] = o3.value, e4.next = t4.nextLoc, e4.method !== "return" && (e4.method = "next", e4.arg = void 0), e4.delegate = null, l2) : o3 : (e4.method = "throw", e4.arg = new TypeError("iterator result is not an object"), e4.delegate = null, l2);
-          }
-          function x2(t4) {
-            var e4 = { tryLoc: t4[0] };
-            1 in t4 && (e4.catchLoc = t4[1]), 2 in t4 && (e4.finallyLoc = t4[2], e4.afterLoc = t4[3]), this.tryEntries.push(e4);
-          }
-          function O2(t4) {
-            var e4 = t4.completion || {};
-            e4.type = "normal", delete e4.arg, t4.completion = e4;
-          }
-          function _2(t4) {
-            this.tryEntries = [{ tryLoc: "root" }], t4.forEach(x2, this), this.reset(true);
-          }
-          function j2(t4) {
-            if (t4) {
-              var e4 = t4[o2];
-              if (e4)
-                return e4.call(t4);
-              if (typeof t4.next == "function")
-                return t4;
-              if (!isNaN(t4.length)) {
-                var n3 = -1, a3 = function e5() {
-                  for (; ++n3 < t4.length; )
-                    if (r2.call(t4, n3))
-                      return e5.value = t4[n3], e5.done = false, e5;
-                  return e5.value = void 0, e5.done = true, e5;
-                };
-                return a3.next = a3;
-              }
-            }
-            return { next: I2 };
-          }
-          function I2() {
-            return { value: void 0, done: true };
-          }
-          return f2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", f2), f2.displayName = u2(h2, i2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
-            var e4 = typeof t4 == "function" && t4.constructor;
-            return !!e4 && (e4 === f2 || (e4.displayName || e4.name) === "GeneratorFunction");
-          }, t3.mark = function(t4) {
-            return Object.setPrototypeOf ? Object.setPrototypeOf(t4, h2) : (t4.__proto__ = h2, u2(t4, i2, "GeneratorFunction")), t4.prototype = Object.create(g2), t4;
-          }, t3.awrap = function(t4) {
-            return { __await: t4 };
-          }, m2(w2.prototype), u2(w2.prototype, a2, function() {
-            return this;
-          }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, a3) {
-            a3 === void 0 && (a3 = Promise);
-            var i3 = new w2(s2(e4, r3, n3, o3), a3);
-            return t3.isGeneratorFunction(r3) ? i3 : i3.next().then(function(t4) {
-              return t4.done ? t4.value : i3.next();
-            });
-          }, m2(g2), u2(g2, i2, "Generator"), u2(g2, o2, function() {
-            return this;
-          }), u2(g2, "toString", function() {
-            return "[object Generator]";
-          }), t3.keys = function(t4) {
-            var e4 = [];
-            for (var r3 in t4)
-              e4.push(r3);
-            return e4.reverse(), function r4() {
-              for (; e4.length; ) {
-                var n3 = e4.pop();
-                if (n3 in t4)
-                  return r4.value = n3, r4.done = false, r4;
-              }
-              return r4.done = true, r4;
-            };
-          }, t3.values = j2, _2.prototype = { constructor: _2, reset: function(t4) {
-            if (this.prev = 0, this.next = 0, this.sent = this._sent = void 0, this.done = false, this.delegate = null, this.method = "next", this.arg = void 0, this.tryEntries.forEach(O2), !t4)
-              for (var e4 in this)
-                e4.charAt(0) === "t" && r2.call(this, e4) && !isNaN(+e4.slice(1)) && (this[e4] = void 0);
-          }, stop: function() {
-            this.done = true;
-            var t4 = this.tryEntries[0].completion;
-            if (t4.type === "throw")
-              throw t4.arg;
-            return this.rval;
-          }, dispatchException: function(t4) {
-            if (this.done)
-              throw t4;
-            var e4 = this;
-            function n3(r3, n4) {
-              return i3.type = "throw", i3.arg = t4, e4.next = r3, n4 && (e4.method = "next", e4.arg = void 0), !!n4;
-            }
-            for (var o3 = this.tryEntries.length - 1; o3 >= 0; --o3) {
-              var a3 = this.tryEntries[o3], i3 = a3.completion;
-              if (a3.tryLoc === "root")
-                return n3("end");
-              if (a3.tryLoc <= this.prev) {
-                var u3 = r2.call(a3, "catchLoc"), s3 = r2.call(a3, "finallyLoc");
-                if (u3 && s3) {
-                  if (this.prev < a3.catchLoc)
-                    return n3(a3.catchLoc, true);
-                  if (this.prev < a3.finallyLoc)
-                    return n3(a3.finallyLoc);
-                } else if (u3) {
-                  if (this.prev < a3.catchLoc)
-                    return n3(a3.catchLoc, true);
-                } else {
-                  if (!s3)
-                    throw new Error("try statement without catch or finally");
-                  if (this.prev < a3.finallyLoc)
-                    return n3(a3.finallyLoc);
-                }
-              }
-            }
-          }, abrupt: function(t4, e4) {
-            for (var n3 = this.tryEntries.length - 1; n3 >= 0; --n3) {
-              var o3 = this.tryEntries[n3];
-              if (o3.tryLoc <= this.prev && r2.call(o3, "finallyLoc") && this.prev < o3.finallyLoc) {
-                var a3 = o3;
-                break;
-              }
-            }
-            a3 && (t4 === "break" || t4 === "continue") && a3.tryLoc <= e4 && e4 <= a3.finallyLoc && (a3 = null);
-            var i3 = a3 ? a3.completion : {};
-            return i3.type = t4, i3.arg = e4, a3 ? (this.method = "next", this.next = a3.finallyLoc, l2) : this.complete(i3);
-          }, complete: function(t4, e4) {
-            if (t4.type === "throw")
-              throw t4.arg;
-            return t4.type === "break" || t4.type === "continue" ? this.next = t4.arg : t4.type === "return" ? (this.rval = this.arg = t4.arg, this.method = "return", this.next = "end") : t4.type === "normal" && e4 && (this.next = e4), l2;
-          }, finish: function(t4) {
-            for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
-              var r3 = this.tryEntries[e4];
-              if (r3.finallyLoc === t4)
-                return this.complete(r3.completion, r3.afterLoc), O2(r3), l2;
-            }
-          }, catch: function(t4) {
-            for (var e4 = this.tryEntries.length - 1; e4 >= 0; --e4) {
-              var r3 = this.tryEntries[e4];
-              if (r3.tryLoc === t4) {
-                var n3 = r3.completion;
-                if (n3.type === "throw") {
-                  var o3 = n3.arg;
-                  O2(r3);
-                }
-                return o3;
-              }
-            }
-            throw new Error("illegal catch attempt");
-          }, delegateYield: function(t4, e4, r3) {
-            return this.delegate = { iterator: E2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), l2;
-          } }, t3;
-        }(t2.exports);
-        try {
-          regeneratorRuntime = e2;
-        } catch (t3) {
-          typeof globalThis == "object" ? globalThis.regeneratorRuntime = e2 : Function("r", "regeneratorRuntime = r")(e2);
-        }
-      }(x = { exports: {} }), x.exports);
-      function _(t2, e2) {
-        if (!t2)
-          throw e2;
-      }
-      function E(t2) {
-        return I.apply(this, arguments);
-      }
-      function I() {
-        return (I = l(O.mark(function t2(e2) {
-          var r2, n2, o2, a2;
-          return O.wrap(function(t3) {
-            for (; ; )
-              switch (t3.prev = t3.next) {
-                case 0:
-                  return r2 = [], t3.next = 3, Promise.allSettled(e2);
-                case 3:
-                  for (n2 = b(t3.sent); !(o2 = n2()).done; )
-                    (a2 = o2.value).status === "fulfilled" ? r2.push(a2.value) : a2.status === "rejected" && r2.push(null);
-                  return t3.abrupt("return", r2);
-                case 6:
-                case "end":
-                  return t3.stop();
-              }
-          }, t2);
-        }))).apply(this, arguments);
-      }
-      var L = function(t2) {
-        function e2(r2) {
-          var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
-          return (n2 = t2.call(this, r2) || this).__proto__ = o2, n2;
-        }
-        return h(e2, t2), e2;
-      }(m(Error));
-      var j = function(t2) {
-        function e2() {
-          return t2.apply(this, arguments) || this;
-        }
-        return h(e2, t2), e2;
-      }(L);
-      function k(t2, e2) {
-        e2 === void 0 && (e2 = "/");
-        try {
-          _(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
-          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], a2 = r2[0].split(":"), i2 = a2[0], u2 = a2[1], s2 = n2.split(":"), c2 = s2[0], l2 = s2[1];
-          return _(i2 && i2.toLowerCase() === "eip155", "Only EIP-155 is supported"), _(u2, "chainID not found"), _(l2, "contractAddress not found"), _(c2, "erc namespace not found"), _(o2, "tokenID not found"), { chainID: Number(u2), namespace: c2.toLowerCase(), contractAddress: l2, tokenID: o2 };
-        } catch (e3) {
-          throw new j(e3 + " - " + t2);
-        }
-      }
-      function S(t2) {
-        try {
-          return typeof t2 == "string" ? Boolean(i.CID.parse(t2)) : Boolean(i.CID.asCID(t2));
-        } catch (t3) {
-          return false;
-        }
-      }
-      var R = s(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
-      var P = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var A = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
-      function C(t2, e2, r2) {
-        if (t2.startsWith(e2) && r2)
-          try {
-            var n2 = new URL(t2);
-            return n2.hostname = new URL(r2).hostname, n2.toString();
-          } catch (e3) {
-            return t2;
-          }
-        return t2;
-      }
-      function U(t2, e2, r2) {
-        var n2, o2, i2, u2, s2, c2 = P.test(t2);
-        if (c2 || t2.startsWith("http"))
-          return t2 = C(t2, "https://ipfs.io/", (u2 = e2) == null ? void 0 : u2.ipfs), { uri: t2 = C(t2, "https://arweave.net/", (s2 = e2) == null ? void 0 : s2.arweave), isOnChain: c2, isEncoded: c2 };
-        (n2 = e2) != null && n2.ipfs || !r2 || (console.warn("'customGateway' option depreciated, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"), e2 = p({}, e2, { ipfs: r2 }));
-        var l2 = ((o2 = e2) == null ? void 0 : o2.ipfs) || "https://ipfs.io", f2 = ((i2 = e2) == null ? void 0 : i2.arweave) || "https://arweave.net", h2 = t2.match(R), d2 = (h2 == null ? void 0 : h2.groups) || {}, v2 = d2.protocol, y2 = d2.target, g2 = d2.subtarget, m2 = g2 === void 0 ? "" : g2;
-        return v2 !== "ipns:/" && d2.subpath !== "ipns/" || !y2 ? S(y2) ? { uri: a(l2, "/ipfs/", y2, m2), isOnChain: false, isEncoded: false } : v2 === "ar:/" && y2 ? { uri: a(f2, y2, m2 || ""), isOnChain: false, isEncoded: false } : { uri: t2.replace(A, ""), isOnChain: true, isEncoded: false } : { uri: a(l2, "/ipns/", y2, m2), isOnChain: false, isEncoded: false };
-      }
-      function D(t2) {
-        if (t2.startsWith("data:image/svg+xml;base64,")) {
-          var e2 = t2.substring("data:image/svg+xml;base64,".length);
-          try {
-            return Buffer.from(e2, "base64").toString();
-          } catch (t3) {
-            return console.error("Invalid base64 encoded SVG"), null;
-          }
-        } else {
-          if (!t2.startsWith("data:image/svg+xml,"))
-            return t2;
-          var r2 = t2.substring("data:image/svg+xml,".length);
-          try {
-            return decodeURIComponent(r2);
-          } catch (t3) {
-            return console.error("Invalid URL encoded SVG"), null;
-          }
-        }
-      }
-      function T(t2) {
-        var e2 = t2.metadata, r2 = t2.customGateway, a2 = t2.gateways, i2 = t2.jsdomWindow, u2 = t2.urlDenyList, s2 = e2.image || e2.image_url || e2.image_data;
-        _(s2, "Image is not available");
-        var c2 = U(s2, a2, r2).uri;
-        if (o(c2) || c2.startsWith("data:image/svg+xml")) {
-          var l2 = D(c2);
-          return l2 ? "data:image/svg+xml;base64," + function(t3, e3) {
-            var r3;
-            try {
-              r3 = window;
-            } catch (t4) {
-              if (!e3)
-                throw Error("In node environment JSDOM window is required");
-              r3 = e3;
-            }
-            var o2 = n(r3).sanitize(t3);
-            return Buffer.from(o2);
-          }(l2, i2).toString("base64") : null;
-        }
-        return function(t3) {
-          var e3 = t3.match(/^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/);
-          if (!e3 || e3.length < 2)
-            return false;
-          var r3 = e3[1].toLowerCase();
-          return ["jpeg", "png", "gif", "bmp", "webp"].includes(r3);
-        }(c2) || c2.startsWith("http") ? u2 != null && u2.includes(new URL(c2).hostname) ? null : c2 : null;
-      }
-      function W(t2, e2) {
-        (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
-      }
-      function G(t2) {
-        var e2 = t2.ttl, r2 = u.create({ proxy: false });
-        return e2 && e2 > 0 && W(r2, e2), r2;
-      }
-      var N = G({});
-      function M() {
-        return (M = l(O.mark(function t2(e2) {
-          var n2, o2, a2, i2, s2, c2;
-          return O.wrap(function(t3) {
-            for (; ; )
-              switch (t3.prev = t3.next) {
-                case 0:
-                  return t3.prev = 0, n2 = u.CancelToken.source(), t3.next = 4, N.get(e2, { responseType: "arraybuffer", headers: { Range: "bytes=0-1023" }, cancelToken: n2.token, onDownloadProgress: function(t4) {
-                    t4.loaded > 1024 && n2.cancel("Aborted to prevent downloading the entire file.");
-                  } });
-                case 4:
-                  return a2 = (o2 = t3.sent).data instanceof ArrayBuffer ? new DataView(o2.data).getUint32(0).toString(16) : o2.data.readUInt32BE(0).toString(16), i2 = ["ffd8ff", "89504e47", "47494638", "49492a00", "4d4d002a", "424d"].some(function(t4) {
-                    return a2.startsWith(t4);
-                  }), s2 = r.Buffer.from(o2.data).toString(), c2 = /<svg[\s\S]*?xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(s2), t3.abrupt("return", i2 || c2);
-                case 13:
-                  return t3.prev = 13, t3.t0 = t3.catch(0), u.isCancel(t3.t0) ? console.error("Stream request was canceled:", t3.t0.message) : console.error("Error checking stream:", t3.t0), t3.abrupt("return", false);
-                case 17:
-                case "end":
-                  return t3.stop();
-              }
-          }, t2, null, [[0, 13]]);
-        }))).apply(this, arguments);
-      }
-      function B(t2) {
-        return new Promise(function(e2) {
-          N({ url: encodeURI(t2), method: "HEAD" }).then(function(r2) {
-            if (r2.status === 200) {
-              var n2 = r2.headers["content-type"];
-              n2 != null && n2.startsWith("application/octet-stream") && e2(function(t3) {
-                return M.apply(this, arguments);
-              }(t2)), e2(n2 == null ? void 0 : n2.startsWith("image/"));
-            } else
-              e2(false);
-          }).catch(function(r2) {
-            if (console.warn("isImageURI: fetch error", r2), r2.response === void 0)
-              if (globalThis.hasOwnProperty("Image")) {
-                var n2 = new Image();
-                n2.onload = function() {
-                  e2(true);
-                }, n2.onerror = function() {
-                  e2(false);
-                }, n2.src = t2;
-              } else
-                e2(false);
-            else
-              e2(false);
-          });
-        });
-      }
-      var q = { __proto__: null, BaseError: L, assert: _, convertToRawSVG: D, createCacheAdapter: W, fetch: N, getImageURI: T, handleSettled: E, isCID: S, isImageURI: B, parseNFT: k, resolveURI: U };
-      var F = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
-      function z(t2, e2) {
-        var r2;
-        return !(!t2.startsWith("https://api.opensea.io") || e2 == null || (r2 = e2.apiKey) == null || !r2.opensea) && { "X-API-KEY": e2.apiKey.opensea };
-      }
-      var Y = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
-            var s2, c2, l2, f2, h2, d2, v2, y2, g2, m2, w2, b2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return s2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(a2, F, n2), t5.next = 4, Promise.all([c2.uri(i2), o2 && c2.balanceOf(o2, i2)]);
-                  case 4:
-                    if (f2 = (l2 = t5.sent)[0], h2 = l2[1], d2 = !(!o2 || !h2.gt(0)), v2 = U(f2, u2), g2 = v2.isEncoded, m2 = y2 = v2.uri, !v2.isOnChain) {
-                      t5.next = 13;
-                      break;
-                    }
-                    return g2 && (m2 = r.Buffer.from(y2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(m2));
-                  case 13:
-                    return w2 = z(y2, u2), t5.next = 16, N.get(encodeURI(y2.replace(/(?:0x)?{id}/, s2)), w2 ? { headers: w2 } : {});
-                  case 16:
-                    return b2 = t5.sent, t5.next = 19, b2 == null ? void 0 : b2.data;
-                  case 19:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: d2 }));
-                  case 21:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2, r2, n2, o2, a2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      var Z = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
-      var V = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
-            var s2, c2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return s2 = new e.Contract(a2, Z, n2), t5.next = 3, Promise.all([s2.tokenURI(i2), o2 && s2.ownerOf(i2)]);
-                  case 3:
-                    if (l2 = (c2 = t5.sent)[0], f2 = c2[1], h2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), d2 = U(l2, u2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
-                      t5.next = 13;
-                      break;
-                    }
-                    return y2 && (g2 = r.Buffer.from(v2.replace("data:application/json;base64,", ""), "base64").toString()), m2 = JSON.parse(decodeURI(g2)), t5.abrupt("return", p({}, m2, { is_owner: h2 }));
-                  case 13:
-                    return t5.next = 15, N(encodeURI(v2.replace(/(?:0x)?{id}/, i2)));
-                  case 15:
-                    return w2 = t5.sent, t5.next = 18, w2 == null ? void 0 : w2.data;
-                  case 18:
-                    return t5.abrupt("return", p({}, t5.sent, { is_owner: h2 }));
-                  case 20:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2, r2, n2, o2, a2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      var J = function() {
-        function t2() {
-        }
-        return t2.prototype.getMetadata = function() {
-          var t3 = l(O.mark(function t4(e2, r2) {
-            var n2, o2, a2, i2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    if (o2 = U(e2, r2), a2 = o2.uri, !o2.isOnChain) {
-                      t5.next = 3;
-                      break;
-                    }
-                    return t5.abrupt("return", a2);
-                  case 3:
-                    if (r2 == null || (n2 = r2.urlDenyList) == null || !n2.includes(new URL(a2).hostname)) {
-                      t5.next = 5;
-                      break;
-                    }
-                    return t5.abrupt("return", { image: null });
-                  case 5:
-                    return t5.next = 7, B(a2);
-                  case 7:
-                    if (!t5.sent) {
-                      t5.next = 10;
-                      break;
-                    }
-                    return t5.abrupt("return", { image: a2 });
-                  case 10:
-                    return t5.next = 12, N(encodeURI(a2));
-                  case 12:
-                    return i2 = t5.sent, t5.next = 15, i2 == null ? void 0 : i2.data;
-                  case 15:
-                    return t5.abrupt("return", t5.sent);
-                  case 16:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4);
-          }));
-          return function(e2, r2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }();
-      var K = Object.freeze({ erc721: V, erc1155: Y });
-      var $ = function(t2) {
-        function e2() {
-          return t2.apply(this, arguments) || this;
-        }
-        return h(e2, t2), e2;
-      }(L);
-      exports.AvatarResolver = function() {
-        function t2(t3, e3) {
-          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && W(N, e3 == null ? void 0 : e3.cache);
-        }
-        var e2 = t2.prototype;
-        return e2.getMetadata = function() {
-          var t3 = l(O.mark(function t4(e3) {
-            var r2, n2, o2, a2, i2, u2, s2, c2, l2, f2, h2, d2, v2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return t5.next = 2, E([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
-                  case 2:
-                    if (n2 = (r2 = t5.sent)[0], o2 = r2[1]) {
-                      t5.next = 7;
-                      break;
-                    }
-                    return t5.abrupt("return", null);
-                  case 7:
-                    return t5.next = 9, o2.getText("avatar");
-                  case 9:
-                    if (a2 = t5.sent) {
-                      t5.next = 12;
-                      break;
-                    }
-                    return t5.abrupt("return", null);
-                  case 12:
-                    if (/eip155:/i.test(a2)) {
-                      t5.next = 18;
-                      break;
-                    }
-                    return i2 = new J(), t5.next = 16, i2.getMetadata(a2, this.options);
-                  case 16:
-                    return t5.abrupt("return", p({ uri: e3 }, t5.sent));
-                  case 18:
-                    if (u2 = k(a2), s2 = u2.chainID, l2 = u2.contractAddress, f2 = u2.tokenID, h2 = K[c2 = u2.namespace]) {
-                      t5.next = 22;
-                      break;
-                    }
-                    throw new $("Unsupported namespace: " + c2);
-                  case 22:
-                    return d2 = new h2(), v2 = { chain_id: s2, namespace: c2, contract_address: l2, token_id: f2, reference_url: "https://opensea.io/assets/" + l2 + "/" + f2 }, t5.next = 26, d2.getMetadata(this.provider, n2, l2, f2, this.options);
-                  case 26:
-                    return t5.abrupt("return", p({ uri: e3, host_meta: v2 }, t5.sent));
-                  case 28:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4, this);
-          }));
-          return function(e3) {
-            return t3.apply(this, arguments);
-          };
-        }(), e2.getAvatar = function() {
-          var t3 = l(O.mark(function t4(e3, r2) {
-            var n2, o2, a2, i2, u2;
-            return O.wrap(function(t5) {
-              for (; ; )
-                switch (t5.prev = t5.next) {
-                  case 0:
-                    return t5.next = 2, this.getMetadata(e3);
-                  case 2:
-                    if (a2 = t5.sent) {
-                      t5.next = 5;
-                      break;
-                    }
-                    return t5.abrupt("return", null);
-                  case 5:
-                    if (u2 = T({ metadata: i2, gateways: { ipfs: (n2 = this.options) == null ? void 0 : n2.ipfs, arweave: (o2 = this.options) == null ? void 0 : o2.arweave }, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow, urlDenyList: (a2 = this.options) == null ? void 0 : a2.urlDenyList }), !i2.hasOwnProperty("host_meta") || u2 == null || !u2.startsWith("http")) {
-                      t5.next = 11;
-                      break;
-                    }
-                    return t5.next = 9, B(u2);
-                  case 9:
-                    return t5.abrupt("return", t5.sent ? u2 : null);
-                  case 11:
-                    return t5.abrupt("return", u2);
-                  case 12:
-                  case "end":
-                    return t5.stop();
-                }
-            }, t4, this);
-          }));
-          return function(e3, r2) {
-            return t3.apply(this, arguments);
-          };
-        }(), t2;
-      }(), exports.UnsupportedNamespace = $, exports.specs = K, exports.utils = q;
-    }
-  });
-
   // dist/ens-avatar.cjs.development.js
   var require_ens_avatar_cjs_development = __commonJS({
     "dist/ens-avatar.cjs.development.js"(exports) {
       "use strict";
-      init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       function _interopDefault(ex) {
         return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
@@ -37604,43 +36554,6 @@ if (cid) {
         }
         return null;
       }
-      function isImageDataUri(uri) {
-        var imageFormats = ["jpeg", "png", "gif", "bmp", "webp"];
-        var dataUriPattern = /^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/;
-        var match = uri.match(dataUriPattern);
-        if (!match || match.length < 2) {
-          return false;
-        }
-        var format = match[1].toLowerCase();
-        return imageFormats.includes(format);
-      }
-      function isSVGDataUri(uri) {
-        var svgDataUriPrefix = "data:image/svg+xml";
-        return uri.startsWith(svgDataUriPrefix);
-      }
-      function convertToRawSVG(input) {
-        var base64Prefix = "data:image/svg+xml;base64,";
-        var encodedPrefix = "data:image/svg+xml,";
-        if (input.startsWith(base64Prefix)) {
-          var base64Data = input.substring(base64Prefix.length);
-          try {
-            return _.Buffer.from(base64Data, "base64").toString();
-          } catch (error) {
-            console.error("Invalid base64 encoded SVG");
-            return null;
-          }
-        } else if (input.startsWith(encodedPrefix)) {
-          var encodedData = input.substring(encodedPrefix.length);
-          try {
-            return decodeURIComponent(encodedData);
-          } catch (error) {
-            console.error("Invalid URL encoded SVG");
-            return null;
-          }
-        } else {
-          return input;
-        }
-      }
       function createCacheAdapter(fetch3, ttl) {
         var _require = require_cjs(), setupCache = _require.setupCache;
         setupCache(fetch3, {
@@ -38115,9 +37028,8 @@ if (cid) {
   var require_dist4 = __commonJS({
     "dist/index.js"(exports, module) {
       "use strict";
-      init_define_process();
-      if (define_process_default.env.NODE_ENV === "production") {
-        module.exports = require_ens_avatar_cjs_production_min();
+      if (false) {
+        module.exports = null;
       } else {
         module.exports = require_ens_avatar_cjs_development();
       }
@@ -38125,7 +37037,6 @@ if (cid) {
   });
 
   // example/browser.js
-  init_define_process();
   var { StaticJsonRpcProvider } = require_lib22();
   var { AvatarResolver, utils: avtUtils } = require_dist4();
   var ensNames = [
@@ -38150,9 +37061,9 @@ if (cid) {
     "griff.eth"
   ];
   var notFoundImage = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzAwcHgiIGhlaWdodD0iMzAwcHgiIHZpZXdCb3g9IjAgMCAzMDAgMzAwIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPHRpdGxlPkdyb3VwPC90aXRsZT4KICAgIDxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJHcm91cCI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIGZpbGw9IiMwMDAwMDAiIHg9IjAiIHk9IjAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48L3JlY3Q+CiAgICAgICAgICAgIDx0ZXh0IGlkPSJDb3VsZC1ub3QtbG9hZC06KCIgZm9udC1mYW1pbHk9IlBsdXNKYWthcnRhU2Fucy1Cb2xkLCBQbHVzIEpha2FydGEgU2FucyIgZm9udC1zaXplPSIzMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNGRkZGRkYiPgogICAgICAgICAgICAgICAgPHRzcGFuIHg9IjEwNi4wMDUiIHk9IjEyNCI+Q291bGQgPC90c3Bhbj4KICAgICAgICAgICAgICAgIDx0c3BhbiB4PSIxMjUuMjgiIHk9IjE2MiI+bm90IDwvdHNwYW4+CiAgICAgICAgICAgICAgICA8dHNwYW4geD0iMTAzLjYzNSIgeT0iMjAwIj5sb2FkIDooPC90c3Bhbj4KICAgICAgICAgICAgPC90ZXh0PgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+";
-  var provider = new StaticJsonRpcProvider(`https://mainnet.infura.io/v3/${define_process_default.env.INFURA_KEY}`);
+  var provider = new StaticJsonRpcProvider(`https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`);
   var avt = new AvatarResolver(provider, { apiKey: {
-    opensea: define_process_default.env.OPENSEA_KEY
+    opensea: process.env.OPENSEA_KEY
   } });
   for (let ens of ensNames) {
     avt.getMetadata(ens).then((metadata) => {
