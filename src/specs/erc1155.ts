@@ -2,12 +2,22 @@ import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
-import { AvatarResolverOpts } from '..';
+import { AvatarResolverOpts } from '../types';
 
 const abi = [
   'function uri(uint256 _id) public view returns (string memory)',
   'function balanceOf(address account, uint256 id) public view returns (uint256)',
 ];
+
+function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
+  if (
+    uri.startsWith('https://api.opensea.io') &&
+    options?.apiKey?.['opensea']
+  ) {
+    return { 'X-API-KEY': options.apiKey.opensea };
+  }
+  return false;
+}
 
 export default class ERC1155 {
   async getMetadata(
@@ -43,8 +53,12 @@ export default class ERC1155 {
       }
       return JSON.parse(_resolvedUri);
     }
-    const response = await fetch(
-      resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)
+
+    const marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);
+
+    const response = await fetch.get(
+      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)),
+      marketplaceKey ? { headers: marketplaceKey } : {}
     );
     const metadata = await response?.data;
     return { ...metadata, is_owner: isOwner };

@@ -2,7 +2,7 @@ import { BaseProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
-import { AvatarResolverOpts } from '..';
+import { AvatarResolverOpts } from '../types';
 
 const abi = [
   'function tokenURI(uint256 tokenId) external view returns (string memory)',
@@ -42,7 +42,9 @@ export default class ERC721 {
       const metadata = JSON.parse(decodeURI(_resolvedUri));
       return { ...metadata, is_owner: isOwner };
     }
-    const response = await fetch(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
+    const response = await fetch(
+      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID))
+    );
     const metadata = await response?.data;
     return { ...metadata, is_owner: isOwner };
   }

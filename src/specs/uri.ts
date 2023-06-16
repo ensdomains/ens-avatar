@@ -1,4 +1,4 @@
-import { AvatarResolverOpts } from '..';
+import { AvatarResolverOpts } from '../types';
 import { fetch, isImageURI, resolveURI } from '../utils';
 
 export default class URI {
@@ -8,6 +8,10 @@ export default class URI {
       return resolvedURI;
     }
 
+    if (options?.urlDenyList?.includes(new URL(resolvedURI).hostname)) {
+      return { image: null };
+    }
+
     // check if resolvedURI is an image, if it is return the url
     const isImage = await isImageURI(resolvedURI);
     if (isImage) {
@@ -15,7 +19,7 @@ export default class URI {
     }
 
     // if resolvedURI is not an image, try retrieve the data.
-    const response = await fetch(resolvedURI);
+    const response = await fetch(encodeURI(resolvedURI));
     return await response?.data;
   }
 }

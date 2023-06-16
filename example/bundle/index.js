@@ -30892,1285 +30892,6 @@
     }
   });
 
-  // node_modules/axios/lib/helpers/bind.js
-  var require_bind = __commonJS({
-    "node_modules/axios/lib/helpers/bind.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function bind(fn, thisArg) {
-        return function wrap() {
-          var args = new Array(arguments.length);
-          for (var i = 0; i < args.length; i++) {
-            args[i] = arguments[i];
-          }
-          return fn.apply(thisArg, args);
-        };
-      };
-    }
-  });
-
-  // node_modules/axios/lib/utils.js
-  var require_utils4 = __commonJS({
-    "node_modules/axios/lib/utils.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var bind = require_bind();
-      var toString2 = Object.prototype.toString;
-      function isArray(val) {
-        return Array.isArray(val);
-      }
-      function isUndefined(val) {
-        return typeof val === "undefined";
-      }
-      function isBuffer(val) {
-        return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor) && typeof val.constructor.isBuffer === "function" && val.constructor.isBuffer(val);
-      }
-      function isArrayBuffer(val) {
-        return toString2.call(val) === "[object ArrayBuffer]";
-      }
-      function isFormData(val) {
-        return toString2.call(val) === "[object FormData]";
-      }
-      function isArrayBufferView(val) {
-        var result;
-        if (typeof ArrayBuffer !== "undefined" && ArrayBuffer.isView) {
-          result = ArrayBuffer.isView(val);
-        } else {
-          result = val && val.buffer && isArrayBuffer(val.buffer);
-        }
-        return result;
-      }
-      function isString(val) {
-        return typeof val === "string";
-      }
-      function isNumber(val) {
-        return typeof val === "number";
-      }
-      function isObject(val) {
-        return val !== null && typeof val === "object";
-      }
-      function isPlainObject(val) {
-        if (toString2.call(val) !== "[object Object]") {
-          return false;
-        }
-        var prototype = Object.getPrototypeOf(val);
-        return prototype === null || prototype === Object.prototype;
-      }
-      function isDate(val) {
-        return toString2.call(val) === "[object Date]";
-      }
-      function isFile(val) {
-        return toString2.call(val) === "[object File]";
-      }
-      function isBlob(val) {
-        return toString2.call(val) === "[object Blob]";
-      }
-      function isFunction(val) {
-        return toString2.call(val) === "[object Function]";
-      }
-      function isStream(val) {
-        return isObject(val) && isFunction(val.pipe);
-      }
-      function isURLSearchParams(val) {
-        return toString2.call(val) === "[object URLSearchParams]";
-      }
-      function trim(str) {
-        return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, "");
-      }
-      function isStandardBrowserEnv() {
-        if (typeof navigator !== "undefined" && (navigator.product === "ReactNative" || navigator.product === "NativeScript" || navigator.product === "NS")) {
-          return false;
-        }
-        return typeof window !== "undefined" && typeof document !== "undefined";
-      }
-      function forEach(obj, fn) {
-        if (obj === null || typeof obj === "undefined") {
-          return;
-        }
-        if (typeof obj !== "object") {
-          obj = [obj];
-        }
-        if (isArray(obj)) {
-          for (var i = 0, l = obj.length; i < l; i++) {
-            fn.call(null, obj[i], i, obj);
-          }
-        } else {
-          for (var key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key)) {
-              fn.call(null, obj[key], key, obj);
-            }
-          }
-        }
-      }
-      function merge() {
-        var result = {};
-        function assignValue(val, key) {
-          if (isPlainObject(result[key]) && isPlainObject(val)) {
-            result[key] = merge(result[key], val);
-          } else if (isPlainObject(val)) {
-            result[key] = merge({}, val);
-          } else if (isArray(val)) {
-            result[key] = val.slice();
-          } else {
-            result[key] = val;
-          }
-        }
-        for (var i = 0, l = arguments.length; i < l; i++) {
-          forEach(arguments[i], assignValue);
-        }
-        return result;
-      }
-      function extend(a, b, thisArg) {
-        forEach(b, function assignValue(val, key) {
-          if (thisArg && typeof val === "function") {
-            a[key] = bind(val, thisArg);
-          } else {
-            a[key] = val;
-          }
-        });
-        return a;
-      }
-      function stripBOM(content) {
-        if (content.charCodeAt(0) === 65279) {
-          content = content.slice(1);
-        }
-        return content;
-      }
-      module.exports = {
-        isArray,
-        isArrayBuffer,
-        isBuffer,
-        isFormData,
-        isArrayBufferView,
-        isString,
-        isNumber,
-        isObject,
-        isPlainObject,
-        isUndefined,
-        isDate,
-        isFile,
-        isBlob,
-        isFunction,
-        isStream,
-        isURLSearchParams,
-        isStandardBrowserEnv,
-        forEach,
-        merge,
-        extend,
-        trim,
-        stripBOM
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/buildURL.js
-  var require_buildURL = __commonJS({
-    "node_modules/axios/lib/helpers/buildURL.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      function encode3(val) {
-        return encodeURIComponent(val).replace(/%3A/gi, ":").replace(/%24/g, "$").replace(/%2C/gi, ",").replace(/%20/g, "+").replace(/%5B/gi, "[").replace(/%5D/gi, "]");
-      }
-      module.exports = function buildURL(url, params, paramsSerializer) {
-        if (!params) {
-          return url;
-        }
-        var serializedParams;
-        if (paramsSerializer) {
-          serializedParams = paramsSerializer(params);
-        } else if (utils.isURLSearchParams(params)) {
-          serializedParams = params.toString();
-        } else {
-          var parts = [];
-          utils.forEach(params, function serialize(val, key) {
-            if (val === null || typeof val === "undefined") {
-              return;
-            }
-            if (utils.isArray(val)) {
-              key = key + "[]";
-            } else {
-              val = [val];
-            }
-            utils.forEach(val, function parseValue(v) {
-              if (utils.isDate(v)) {
-                v = v.toISOString();
-              } else if (utils.isObject(v)) {
-                v = JSON.stringify(v);
-              }
-              parts.push(encode3(key) + "=" + encode3(v));
-            });
-          });
-          serializedParams = parts.join("&");
-        }
-        if (serializedParams) {
-          var hashmarkIndex = url.indexOf("#");
-          if (hashmarkIndex !== -1) {
-            url = url.slice(0, hashmarkIndex);
-          }
-          url += (url.indexOf("?") === -1 ? "?" : "&") + serializedParams;
-        }
-        return url;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/InterceptorManager.js
-  var require_InterceptorManager = __commonJS({
-    "node_modules/axios/lib/core/InterceptorManager.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      function InterceptorManager() {
-        this.handlers = [];
-      }
-      InterceptorManager.prototype.use = function use(fulfilled, rejected, options) {
-        this.handlers.push({
-          fulfilled,
-          rejected,
-          synchronous: options ? options.synchronous : false,
-          runWhen: options ? options.runWhen : null
-        });
-        return this.handlers.length - 1;
-      };
-      InterceptorManager.prototype.eject = function eject(id) {
-        if (this.handlers[id]) {
-          this.handlers[id] = null;
-        }
-      };
-      InterceptorManager.prototype.forEach = function forEach(fn) {
-        utils.forEach(this.handlers, function forEachHandler(h) {
-          if (h !== null) {
-            fn(h);
-          }
-        });
-      };
-      module.exports = InterceptorManager;
-    }
-  });
-
-  // node_modules/axios/lib/helpers/normalizeHeaderName.js
-  var require_normalizeHeaderName = __commonJS({
-    "node_modules/axios/lib/helpers/normalizeHeaderName.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      module.exports = function normalizeHeaderName(headers, normalizedName) {
-        utils.forEach(headers, function processHeader(value, name) {
-          if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
-            headers[normalizedName] = value;
-            delete headers[name];
-          }
-        });
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/enhanceError.js
-  var require_enhanceError = __commonJS({
-    "node_modules/axios/lib/core/enhanceError.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function enhanceError(error, config, code, request, response) {
-        error.config = config;
-        if (code) {
-          error.code = code;
-        }
-        error.request = request;
-        error.response = response;
-        error.isAxiosError = true;
-        error.toJSON = function toJSON() {
-          return {
-            message: this.message,
-            name: this.name,
-            description: this.description,
-            number: this.number,
-            fileName: this.fileName,
-            lineNumber: this.lineNumber,
-            columnNumber: this.columnNumber,
-            stack: this.stack,
-            config: this.config,
-            code: this.code,
-            status: this.response && this.response.status ? this.response.status : null
-          };
-        };
-        return error;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/createError.js
-  var require_createError = __commonJS({
-    "node_modules/axios/lib/core/createError.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var enhanceError = require_enhanceError();
-      module.exports = function createError(message, config, code, request, response) {
-        var error = new Error(message);
-        return enhanceError(error, config, code, request, response);
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/settle.js
-  var require_settle = __commonJS({
-    "node_modules/axios/lib/core/settle.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var createError = require_createError();
-      module.exports = function settle(resolve, reject, response) {
-        var validateStatus = response.config.validateStatus;
-        if (!response.status || !validateStatus || validateStatus(response.status)) {
-          resolve(response);
-        } else {
-          reject(createError("Request failed with status code " + response.status, response.config, null, response.request, response));
-        }
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/cookies.js
-  var require_cookies = __commonJS({
-    "node_modules/axios/lib/helpers/cookies.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
-        return {
-          write: function write(name, value, expires, path, domain, secure) {
-            var cookie = [];
-            cookie.push(name + "=" + encodeURIComponent(value));
-            if (utils.isNumber(expires)) {
-              cookie.push("expires=" + new Date(expires).toGMTString());
-            }
-            if (utils.isString(path)) {
-              cookie.push("path=" + path);
-            }
-            if (utils.isString(domain)) {
-              cookie.push("domain=" + domain);
-            }
-            if (secure === true) {
-              cookie.push("secure");
-            }
-            document.cookie = cookie.join("; ");
-          },
-          read: function read2(name) {
-            var match = document.cookie.match(new RegExp("(^|;\\s*)(" + name + ")=([^;]*)"));
-            return match ? decodeURIComponent(match[3]) : null;
-          },
-          remove: function remove(name) {
-            this.write(name, "", Date.now() - 864e5);
-          }
-        };
-      }() : function nonStandardBrowserEnv() {
-        return {
-          write: function write() {
-          },
-          read: function read2() {
-            return null;
-          },
-          remove: function remove() {
-          }
-        };
-      }();
-    }
-  });
-
-  // node_modules/axios/lib/helpers/isAbsoluteURL.js
-  var require_isAbsoluteURL = __commonJS({
-    "node_modules/axios/lib/helpers/isAbsoluteURL.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function isAbsoluteURL(url) {
-        return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/combineURLs.js
-  var require_combineURLs = __commonJS({
-    "node_modules/axios/lib/helpers/combineURLs.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function combineURLs(baseURL, relativeURL) {
-        return relativeURL ? baseURL.replace(/\/+$/, "") + "/" + relativeURL.replace(/^\/+/, "") : baseURL;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/buildFullPath.js
-  var require_buildFullPath = __commonJS({
-    "node_modules/axios/lib/core/buildFullPath.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var isAbsoluteURL = require_isAbsoluteURL();
-      var combineURLs = require_combineURLs();
-      module.exports = function buildFullPath(baseURL, requestedURL) {
-        if (baseURL && !isAbsoluteURL(requestedURL)) {
-          return combineURLs(baseURL, requestedURL);
-        }
-        return requestedURL;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/parseHeaders.js
-  var require_parseHeaders = __commonJS({
-    "node_modules/axios/lib/helpers/parseHeaders.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var ignoreDuplicateOf = [
-        "age",
-        "authorization",
-        "content-length",
-        "content-type",
-        "etag",
-        "expires",
-        "from",
-        "host",
-        "if-modified-since",
-        "if-unmodified-since",
-        "last-modified",
-        "location",
-        "max-forwards",
-        "proxy-authorization",
-        "referer",
-        "retry-after",
-        "user-agent"
-      ];
-      module.exports = function parseHeaders(headers) {
-        var parsed = {};
-        var key;
-        var val;
-        var i;
-        if (!headers) {
-          return parsed;
-        }
-        utils.forEach(headers.split("\n"), function parser(line) {
-          i = line.indexOf(":");
-          key = utils.trim(line.substr(0, i)).toLowerCase();
-          val = utils.trim(line.substr(i + 1));
-          if (key) {
-            if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
-              return;
-            }
-            if (key === "set-cookie") {
-              parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
-            } else {
-              parsed[key] = parsed[key] ? parsed[key] + ", " + val : val;
-            }
-          }
-        });
-        return parsed;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/isURLSameOrigin.js
-  var require_isURLSameOrigin = __commonJS({
-    "node_modules/axios/lib/helpers/isURLSameOrigin.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
-        var msie = /(msie|trident)/i.test(navigator.userAgent);
-        var urlParsingNode = document.createElement("a");
-        var originURL;
-        function resolveURL(url) {
-          var href = url;
-          if (msie) {
-            urlParsingNode.setAttribute("href", href);
-            href = urlParsingNode.href;
-          }
-          urlParsingNode.setAttribute("href", href);
-          return {
-            href: urlParsingNode.href,
-            protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, "") : "",
-            host: urlParsingNode.host,
-            search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, "") : "",
-            hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, "") : "",
-            hostname: urlParsingNode.hostname,
-            port: urlParsingNode.port,
-            pathname: urlParsingNode.pathname.charAt(0) === "/" ? urlParsingNode.pathname : "/" + urlParsingNode.pathname
-          };
-        }
-        originURL = resolveURL(window.location.href);
-        return function isURLSameOrigin(requestURL) {
-          var parsed = utils.isString(requestURL) ? resolveURL(requestURL) : requestURL;
-          return parsed.protocol === originURL.protocol && parsed.host === originURL.host;
-        };
-      }() : function nonStandardBrowserEnv() {
-        return function isURLSameOrigin() {
-          return true;
-        };
-      }();
-    }
-  });
-
-  // node_modules/axios/lib/cancel/Cancel.js
-  var require_Cancel = __commonJS({
-    "node_modules/axios/lib/cancel/Cancel.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      function Cancel(message) {
-        this.message = message;
-      }
-      Cancel.prototype.toString = function toString2() {
-        return "Cancel" + (this.message ? ": " + this.message : "");
-      };
-      Cancel.prototype.__CANCEL__ = true;
-      module.exports = Cancel;
-    }
-  });
-
-  // node_modules/axios/lib/adapters/xhr.js
-  var require_xhr = __commonJS({
-    "node_modules/axios/lib/adapters/xhr.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var settle = require_settle();
-      var cookies = require_cookies();
-      var buildURL = require_buildURL();
-      var buildFullPath = require_buildFullPath();
-      var parseHeaders = require_parseHeaders();
-      var isURLSameOrigin = require_isURLSameOrigin();
-      var createError = require_createError();
-      var defaults = require_defaults();
-      var Cancel = require_Cancel();
-      module.exports = function xhrAdapter(config) {
-        return new Promise(function dispatchXhrRequest(resolve, reject) {
-          var requestData = config.data;
-          var requestHeaders = config.headers;
-          var responseType = config.responseType;
-          var onCanceled;
-          function done() {
-            if (config.cancelToken) {
-              config.cancelToken.unsubscribe(onCanceled);
-            }
-            if (config.signal) {
-              config.signal.removeEventListener("abort", onCanceled);
-            }
-          }
-          if (utils.isFormData(requestData)) {
-            delete requestHeaders["Content-Type"];
-          }
-          var request = new XMLHttpRequest();
-          if (config.auth) {
-            var username = config.auth.username || "";
-            var password = config.auth.password ? unescape(encodeURIComponent(config.auth.password)) : "";
-            requestHeaders.Authorization = "Basic " + btoa(username + ":" + password);
-          }
-          var fullPath = buildFullPath(config.baseURL, config.url);
-          request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
-          request.timeout = config.timeout;
-          function onloadend() {
-            if (!request) {
-              return;
-            }
-            var responseHeaders = "getAllResponseHeaders" in request ? parseHeaders(request.getAllResponseHeaders()) : null;
-            var responseData = !responseType || responseType === "text" || responseType === "json" ? request.responseText : request.response;
-            var response = {
-              data: responseData,
-              status: request.status,
-              statusText: request.statusText,
-              headers: responseHeaders,
-              config,
-              request
-            };
-            settle(function _resolve(value) {
-              resolve(value);
-              done();
-            }, function _reject(err) {
-              reject(err);
-              done();
-            }, response);
-            request = null;
-          }
-          if ("onloadend" in request) {
-            request.onloadend = onloadend;
-          } else {
-            request.onreadystatechange = function handleLoad() {
-              if (!request || request.readyState !== 4) {
-                return;
-              }
-              if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf("file:") === 0)) {
-                return;
-              }
-              setTimeout(onloadend);
-            };
-          }
-          request.onabort = function handleAbort() {
-            if (!request) {
-              return;
-            }
-            reject(createError("Request aborted", config, "ECONNABORTED", request));
-            request = null;
-          };
-          request.onerror = function handleError() {
-            reject(createError("Network Error", config, null, request));
-            request = null;
-          };
-          request.ontimeout = function handleTimeout() {
-            var timeoutErrorMessage = config.timeout ? "timeout of " + config.timeout + "ms exceeded" : "timeout exceeded";
-            var transitional = config.transitional || defaults.transitional;
-            if (config.timeoutErrorMessage) {
-              timeoutErrorMessage = config.timeoutErrorMessage;
-            }
-            reject(createError(timeoutErrorMessage, config, transitional.clarifyTimeoutError ? "ETIMEDOUT" : "ECONNABORTED", request));
-            request = null;
-          };
-          if (utils.isStandardBrowserEnv()) {
-            var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ? cookies.read(config.xsrfCookieName) : void 0;
-            if (xsrfValue) {
-              requestHeaders[config.xsrfHeaderName] = xsrfValue;
-            }
-          }
-          if ("setRequestHeader" in request) {
-            utils.forEach(requestHeaders, function setRequestHeader(val, key) {
-              if (typeof requestData === "undefined" && key.toLowerCase() === "content-type") {
-                delete requestHeaders[key];
-              } else {
-                request.setRequestHeader(key, val);
-              }
-            });
-          }
-          if (!utils.isUndefined(config.withCredentials)) {
-            request.withCredentials = !!config.withCredentials;
-          }
-          if (responseType && responseType !== "json") {
-            request.responseType = config.responseType;
-          }
-          if (typeof config.onDownloadProgress === "function") {
-            request.addEventListener("progress", config.onDownloadProgress);
-          }
-          if (typeof config.onUploadProgress === "function" && request.upload) {
-            request.upload.addEventListener("progress", config.onUploadProgress);
-          }
-          if (config.cancelToken || config.signal) {
-            onCanceled = function(cancel) {
-              if (!request) {
-                return;
-              }
-              reject(!cancel || cancel && cancel.type ? new Cancel("canceled") : cancel);
-              request.abort();
-              request = null;
-            };
-            config.cancelToken && config.cancelToken.subscribe(onCanceled);
-            if (config.signal) {
-              config.signal.aborted ? onCanceled() : config.signal.addEventListener("abort", onCanceled);
-            }
-          }
-          if (!requestData) {
-            requestData = null;
-          }
-          request.send(requestData);
-        });
-      };
-    }
-  });
-
-  // node_modules/axios/lib/defaults.js
-  var require_defaults = __commonJS({
-    "node_modules/axios/lib/defaults.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var normalizeHeaderName = require_normalizeHeaderName();
-      var enhanceError = require_enhanceError();
-      var DEFAULT_CONTENT_TYPE = {
-        "Content-Type": "application/x-www-form-urlencoded"
-      };
-      function setContentTypeIfUnset(headers, value) {
-        if (!utils.isUndefined(headers) && utils.isUndefined(headers["Content-Type"])) {
-          headers["Content-Type"] = value;
-        }
-      }
-      function getDefaultAdapter() {
-        var adapter;
-        if (typeof XMLHttpRequest !== "undefined") {
-          adapter = require_xhr();
-        } else if (typeof define_process_default !== "undefined" && Object.prototype.toString.call(define_process_default) === "[object process]") {
-          adapter = require_xhr();
-        }
-        return adapter;
-      }
-      function stringifySafely(rawValue, parser, encoder) {
-        if (utils.isString(rawValue)) {
-          try {
-            (parser || JSON.parse)(rawValue);
-            return utils.trim(rawValue);
-          } catch (e) {
-            if (e.name !== "SyntaxError") {
-              throw e;
-            }
-          }
-        }
-        return (encoder || JSON.stringify)(rawValue);
-      }
-      var defaults = {
-        transitional: {
-          silentJSONParsing: true,
-          forcedJSONParsing: true,
-          clarifyTimeoutError: false
-        },
-        adapter: getDefaultAdapter(),
-        transformRequest: [function transformRequest(data, headers) {
-          normalizeHeaderName(headers, "Accept");
-          normalizeHeaderName(headers, "Content-Type");
-          if (utils.isFormData(data) || utils.isArrayBuffer(data) || utils.isBuffer(data) || utils.isStream(data) || utils.isFile(data) || utils.isBlob(data)) {
-            return data;
-          }
-          if (utils.isArrayBufferView(data)) {
-            return data.buffer;
-          }
-          if (utils.isURLSearchParams(data)) {
-            setContentTypeIfUnset(headers, "application/x-www-form-urlencoded;charset=utf-8");
-            return data.toString();
-          }
-          if (utils.isObject(data) || headers && headers["Content-Type"] === "application/json") {
-            setContentTypeIfUnset(headers, "application/json");
-            return stringifySafely(data);
-          }
-          return data;
-        }],
-        transformResponse: [function transformResponse(data) {
-          var transitional = this.transitional || defaults.transitional;
-          var silentJSONParsing = transitional && transitional.silentJSONParsing;
-          var forcedJSONParsing = transitional && transitional.forcedJSONParsing;
-          var strictJSONParsing = !silentJSONParsing && this.responseType === "json";
-          if (strictJSONParsing || forcedJSONParsing && utils.isString(data) && data.length) {
-            try {
-              return JSON.parse(data);
-            } catch (e) {
-              if (strictJSONParsing) {
-                if (e.name === "SyntaxError") {
-                  throw enhanceError(e, this, "E_JSON_PARSE");
-                }
-                throw e;
-              }
-            }
-          }
-          return data;
-        }],
-        timeout: 0,
-        xsrfCookieName: "XSRF-TOKEN",
-        xsrfHeaderName: "X-XSRF-TOKEN",
-        maxContentLength: -1,
-        maxBodyLength: -1,
-        validateStatus: function validateStatus(status) {
-          return status >= 200 && status < 300;
-        },
-        headers: {
-          common: {
-            "Accept": "application/json, text/plain, */*"
-          }
-        }
-      };
-      utils.forEach(["delete", "get", "head"], function forEachMethodNoData(method) {
-        defaults.headers[method] = {};
-      });
-      utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
-        defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
-      });
-      module.exports = defaults;
-    }
-  });
-
-  // node_modules/axios/lib/core/transformData.js
-  var require_transformData = __commonJS({
-    "node_modules/axios/lib/core/transformData.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var defaults = require_defaults();
-      module.exports = function transformData(data, headers, fns) {
-        var context = this || defaults;
-        utils.forEach(fns, function transform(fn) {
-          data = fn.call(context, data, headers);
-        });
-        return data;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/cancel/isCancel.js
-  var require_isCancel = __commonJS({
-    "node_modules/axios/lib/cancel/isCancel.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function isCancel(value) {
-        return !!(value && value.__CANCEL__);
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/dispatchRequest.js
-  var require_dispatchRequest = __commonJS({
-    "node_modules/axios/lib/core/dispatchRequest.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var transformData = require_transformData();
-      var isCancel = require_isCancel();
-      var defaults = require_defaults();
-      var Cancel = require_Cancel();
-      function throwIfCancellationRequested(config) {
-        if (config.cancelToken) {
-          config.cancelToken.throwIfRequested();
-        }
-        if (config.signal && config.signal.aborted) {
-          throw new Cancel("canceled");
-        }
-      }
-      module.exports = function dispatchRequest(config) {
-        throwIfCancellationRequested(config);
-        config.headers = config.headers || {};
-        config.data = transformData.call(config, config.data, config.headers, config.transformRequest);
-        config.headers = utils.merge(config.headers.common || {}, config.headers[config.method] || {}, config.headers);
-        utils.forEach(["delete", "get", "head", "post", "put", "patch", "common"], function cleanHeaderConfig(method) {
-          delete config.headers[method];
-        });
-        var adapter = config.adapter || defaults.adapter;
-        return adapter(config).then(function onAdapterResolution(response) {
-          throwIfCancellationRequested(config);
-          response.data = transformData.call(config, response.data, response.headers, config.transformResponse);
-          return response;
-        }, function onAdapterRejection(reason) {
-          if (!isCancel(reason)) {
-            throwIfCancellationRequested(config);
-            if (reason && reason.response) {
-              reason.response.data = transformData.call(config, reason.response.data, reason.response.headers, config.transformResponse);
-            }
-          }
-          return Promise.reject(reason);
-        });
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/mergeConfig.js
-  var require_mergeConfig = __commonJS({
-    "node_modules/axios/lib/core/mergeConfig.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      module.exports = function mergeConfig(config1, config2) {
-        config2 = config2 || {};
-        var config = {};
-        function getMergedValue(target, source) {
-          if (utils.isPlainObject(target) && utils.isPlainObject(source)) {
-            return utils.merge(target, source);
-          } else if (utils.isPlainObject(source)) {
-            return utils.merge({}, source);
-          } else if (utils.isArray(source)) {
-            return source.slice();
-          }
-          return source;
-        }
-        function mergeDeepProperties(prop) {
-          if (!utils.isUndefined(config2[prop])) {
-            return getMergedValue(config1[prop], config2[prop]);
-          } else if (!utils.isUndefined(config1[prop])) {
-            return getMergedValue(void 0, config1[prop]);
-          }
-        }
-        function valueFromConfig2(prop) {
-          if (!utils.isUndefined(config2[prop])) {
-            return getMergedValue(void 0, config2[prop]);
-          }
-        }
-        function defaultToConfig2(prop) {
-          if (!utils.isUndefined(config2[prop])) {
-            return getMergedValue(void 0, config2[prop]);
-          } else if (!utils.isUndefined(config1[prop])) {
-            return getMergedValue(void 0, config1[prop]);
-          }
-        }
-        function mergeDirectKeys(prop) {
-          if (prop in config2) {
-            return getMergedValue(config1[prop], config2[prop]);
-          } else if (prop in config1) {
-            return getMergedValue(void 0, config1[prop]);
-          }
-        }
-        var mergeMap = {
-          "url": valueFromConfig2,
-          "method": valueFromConfig2,
-          "data": valueFromConfig2,
-          "baseURL": defaultToConfig2,
-          "transformRequest": defaultToConfig2,
-          "transformResponse": defaultToConfig2,
-          "paramsSerializer": defaultToConfig2,
-          "timeout": defaultToConfig2,
-          "timeoutMessage": defaultToConfig2,
-          "withCredentials": defaultToConfig2,
-          "adapter": defaultToConfig2,
-          "responseType": defaultToConfig2,
-          "xsrfCookieName": defaultToConfig2,
-          "xsrfHeaderName": defaultToConfig2,
-          "onUploadProgress": defaultToConfig2,
-          "onDownloadProgress": defaultToConfig2,
-          "decompress": defaultToConfig2,
-          "maxContentLength": defaultToConfig2,
-          "maxBodyLength": defaultToConfig2,
-          "transport": defaultToConfig2,
-          "httpAgent": defaultToConfig2,
-          "httpsAgent": defaultToConfig2,
-          "cancelToken": defaultToConfig2,
-          "socketPath": defaultToConfig2,
-          "responseEncoding": defaultToConfig2,
-          "validateStatus": mergeDirectKeys
-        };
-        utils.forEach(Object.keys(config1).concat(Object.keys(config2)), function computeConfigValue(prop) {
-          var merge = mergeMap[prop] || mergeDeepProperties;
-          var configValue = merge(prop);
-          utils.isUndefined(configValue) && merge !== mergeDirectKeys || (config[prop] = configValue);
-        });
-        return config;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/env/data.js
-  var require_data = __commonJS({
-    "node_modules/axios/lib/env/data.js"(exports, module) {
-      init_define_process();
-      module.exports = {
-        "version": "0.25.0"
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/validator.js
-  var require_validator = __commonJS({
-    "node_modules/axios/lib/helpers/validator.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var VERSION = require_data().version;
-      var validators = {};
-      ["object", "boolean", "number", "function", "string", "symbol"].forEach(function(type, i) {
-        validators[type] = function validator(thing) {
-          return typeof thing === type || "a" + (i < 1 ? "n " : " ") + type;
-        };
-      });
-      var deprecatedWarnings = {};
-      validators.transitional = function transitional(validator, version2, message) {
-        function formatMessage(opt, desc) {
-          return "[Axios v" + VERSION + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
-        }
-        return function(value, opt, opts) {
-          if (validator === false) {
-            throw new Error(formatMessage(opt, " has been removed" + (version2 ? " in " + version2 : "")));
-          }
-          if (version2 && !deprecatedWarnings[opt]) {
-            deprecatedWarnings[opt] = true;
-            console.warn(formatMessage(opt, " has been deprecated since v" + version2 + " and will be removed in the near future"));
-          }
-          return validator ? validator(value, opt, opts) : true;
-        };
-      };
-      function assertOptions(options, schema, allowUnknown) {
-        if (typeof options !== "object") {
-          throw new TypeError("options must be an object");
-        }
-        var keys = Object.keys(options);
-        var i = keys.length;
-        while (i-- > 0) {
-          var opt = keys[i];
-          var validator = schema[opt];
-          if (validator) {
-            var value = options[opt];
-            var result = value === void 0 || validator(value, opt, options);
-            if (result !== true) {
-              throw new TypeError("option " + opt + " must be " + result);
-            }
-            continue;
-          }
-          if (allowUnknown !== true) {
-            throw Error("Unknown option " + opt);
-          }
-        }
-      }
-      module.exports = {
-        assertOptions,
-        validators
-      };
-    }
-  });
-
-  // node_modules/axios/lib/core/Axios.js
-  var require_Axios = __commonJS({
-    "node_modules/axios/lib/core/Axios.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var buildURL = require_buildURL();
-      var InterceptorManager = require_InterceptorManager();
-      var dispatchRequest = require_dispatchRequest();
-      var mergeConfig = require_mergeConfig();
-      var validator = require_validator();
-      var validators = validator.validators;
-      function Axios(instanceConfig) {
-        this.defaults = instanceConfig;
-        this.interceptors = {
-          request: new InterceptorManager(),
-          response: new InterceptorManager()
-        };
-      }
-      Axios.prototype.request = function request(configOrUrl, config) {
-        if (typeof configOrUrl === "string") {
-          config = config || {};
-          config.url = configOrUrl;
-        } else {
-          config = configOrUrl || {};
-        }
-        if (!config.url) {
-          throw new Error("Provided config url is not valid");
-        }
-        config = mergeConfig(this.defaults, config);
-        if (config.method) {
-          config.method = config.method.toLowerCase();
-        } else if (this.defaults.method) {
-          config.method = this.defaults.method.toLowerCase();
-        } else {
-          config.method = "get";
-        }
-        var transitional = config.transitional;
-        if (transitional !== void 0) {
-          validator.assertOptions(transitional, {
-            silentJSONParsing: validators.transitional(validators.boolean),
-            forcedJSONParsing: validators.transitional(validators.boolean),
-            clarifyTimeoutError: validators.transitional(validators.boolean)
-          }, false);
-        }
-        var requestInterceptorChain = [];
-        var synchronousRequestInterceptors = true;
-        this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-          if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config) === false) {
-            return;
-          }
-          synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
-          requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
-        });
-        var responseInterceptorChain = [];
-        this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
-          responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
-        });
-        var promise;
-        if (!synchronousRequestInterceptors) {
-          var chain = [dispatchRequest, void 0];
-          Array.prototype.unshift.apply(chain, requestInterceptorChain);
-          chain = chain.concat(responseInterceptorChain);
-          promise = Promise.resolve(config);
-          while (chain.length) {
-            promise = promise.then(chain.shift(), chain.shift());
-          }
-          return promise;
-        }
-        var newConfig = config;
-        while (requestInterceptorChain.length) {
-          var onFulfilled = requestInterceptorChain.shift();
-          var onRejected = requestInterceptorChain.shift();
-          try {
-            newConfig = onFulfilled(newConfig);
-          } catch (error) {
-            onRejected(error);
-            break;
-          }
-        }
-        try {
-          promise = dispatchRequest(newConfig);
-        } catch (error) {
-          return Promise.reject(error);
-        }
-        while (responseInterceptorChain.length) {
-          promise = promise.then(responseInterceptorChain.shift(), responseInterceptorChain.shift());
-        }
-        return promise;
-      };
-      Axios.prototype.getUri = function getUri(config) {
-        if (!config.url) {
-          throw new Error("Provided config url is not valid");
-        }
-        config = mergeConfig(this.defaults, config);
-        return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, "");
-      };
-      utils.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
-        Axios.prototype[method] = function(url, config) {
-          return this.request(mergeConfig(config || {}, {
-            method,
-            url,
-            data: (config || {}).data
-          }));
-        };
-      });
-      utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
-        Axios.prototype[method] = function(url, data, config) {
-          return this.request(mergeConfig(config || {}, {
-            method,
-            url,
-            data
-          }));
-        };
-      });
-      module.exports = Axios;
-    }
-  });
-
-  // node_modules/axios/lib/cancel/CancelToken.js
-  var require_CancelToken = __commonJS({
-    "node_modules/axios/lib/cancel/CancelToken.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var Cancel = require_Cancel();
-      function CancelToken(executor) {
-        if (typeof executor !== "function") {
-          throw new TypeError("executor must be a function.");
-        }
-        var resolvePromise;
-        this.promise = new Promise(function promiseExecutor(resolve) {
-          resolvePromise = resolve;
-        });
-        var token = this;
-        this.promise.then(function(cancel) {
-          if (!token._listeners)
-            return;
-          var i;
-          var l = token._listeners.length;
-          for (i = 0; i < l; i++) {
-            token._listeners[i](cancel);
-          }
-          token._listeners = null;
-        });
-        this.promise.then = function(onfulfilled) {
-          var _resolve;
-          var promise = new Promise(function(resolve) {
-            token.subscribe(resolve);
-            _resolve = resolve;
-          }).then(onfulfilled);
-          promise.cancel = function reject() {
-            token.unsubscribe(_resolve);
-          };
-          return promise;
-        };
-        executor(function cancel(message) {
-          if (token.reason) {
-            return;
-          }
-          token.reason = new Cancel(message);
-          resolvePromise(token.reason);
-        });
-      }
-      CancelToken.prototype.throwIfRequested = function throwIfRequested() {
-        if (this.reason) {
-          throw this.reason;
-        }
-      };
-      CancelToken.prototype.subscribe = function subscribe(listener) {
-        if (this.reason) {
-          listener(this.reason);
-          return;
-        }
-        if (this._listeners) {
-          this._listeners.push(listener);
-        } else {
-          this._listeners = [listener];
-        }
-      };
-      CancelToken.prototype.unsubscribe = function unsubscribe(listener) {
-        if (!this._listeners) {
-          return;
-        }
-        var index = this._listeners.indexOf(listener);
-        if (index !== -1) {
-          this._listeners.splice(index, 1);
-        }
-      };
-      CancelToken.source = function source() {
-        var cancel;
-        var token = new CancelToken(function executor(c) {
-          cancel = c;
-        });
-        return {
-          token,
-          cancel
-        };
-      };
-      module.exports = CancelToken;
-    }
-  });
-
-  // node_modules/axios/lib/helpers/spread.js
-  var require_spread = __commonJS({
-    "node_modules/axios/lib/helpers/spread.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function spread(callback) {
-        return function wrap(arr) {
-          return callback.apply(null, arr);
-        };
-      };
-    }
-  });
-
-  // node_modules/axios/lib/helpers/isAxiosError.js
-  var require_isAxiosError = __commonJS({
-    "node_modules/axios/lib/helpers/isAxiosError.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      module.exports = function isAxiosError(payload) {
-        return utils.isObject(payload) && payload.isAxiosError === true;
-      };
-    }
-  });
-
-  // node_modules/axios/lib/axios.js
-  var require_axios = __commonJS({
-    "node_modules/axios/lib/axios.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      var utils = require_utils4();
-      var bind = require_bind();
-      var Axios = require_Axios();
-      var mergeConfig = require_mergeConfig();
-      var defaults = require_defaults();
-      function createInstance(defaultConfig) {
-        var context = new Axios(defaultConfig);
-        var instance = bind(Axios.prototype.request, context);
-        utils.extend(instance, Axios.prototype, context);
-        utils.extend(instance, context);
-        instance.create = function create2(instanceConfig) {
-          return createInstance(mergeConfig(defaultConfig, instanceConfig));
-        };
-        return instance;
-      }
-      var axios = createInstance(defaults);
-      axios.Axios = Axios;
-      axios.Cancel = require_Cancel();
-      axios.CancelToken = require_CancelToken();
-      axios.isCancel = require_isCancel();
-      axios.VERSION = require_data().version;
-      axios.all = function all(promises) {
-        return Promise.all(promises);
-      };
-      axios.spread = require_spread();
-      axios.isAxiosError = require_isAxiosError();
-      module.exports = axios;
-      module.exports.default = axios;
-    }
-  });
-
-  // node_modules/axios/index.js
-  var require_axios2 = __commonJS({
-    "node_modules/axios/index.js"(exports, module) {
-      init_define_process();
-      module.exports = require_axios();
-    }
-  });
-
   // node_modules/dompurify/dist/purify.js
   var require_purify = __commonJS({
     "node_modules/dompurify/dist/purify.js"(exports, module) {
@@ -33179,6 +31900,1374 @@
     }
   });
 
+  // node_modules/fast-xml-parser/src/util.js
+  var require_util = __commonJS({
+    "node_modules/fast-xml-parser/src/util.js"(exports) {
+      "use strict";
+      init_define_process();
+      var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
+      var nameChar = nameStartChar + "\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
+      var nameRegexp = "[" + nameStartChar + "][" + nameChar + "]*";
+      var regexName = new RegExp("^" + nameRegexp + "$");
+      var getAllMatches = function(string, regex) {
+        const matches = [];
+        let match = regex.exec(string);
+        while (match) {
+          const allmatches = [];
+          allmatches.startIndex = regex.lastIndex - match[0].length;
+          const len = match.length;
+          for (let index = 0; index < len; index++) {
+            allmatches.push(match[index]);
+          }
+          matches.push(allmatches);
+          match = regex.exec(string);
+        }
+        return matches;
+      };
+      var isName = function(string) {
+        const match = regexName.exec(string);
+        return !(match === null || typeof match === "undefined");
+      };
+      exports.isExist = function(v) {
+        return typeof v !== "undefined";
+      };
+      exports.isEmptyObject = function(obj) {
+        return Object.keys(obj).length === 0;
+      };
+      exports.merge = function(target, a, arrayMode) {
+        if (a) {
+          const keys = Object.keys(a);
+          const len = keys.length;
+          for (let i = 0; i < len; i++) {
+            if (arrayMode === "strict") {
+              target[keys[i]] = [a[keys[i]]];
+            } else {
+              target[keys[i]] = a[keys[i]];
+            }
+          }
+        }
+      };
+      exports.getValue = function(v) {
+        if (exports.isExist(v)) {
+          return v;
+        } else {
+          return "";
+        }
+      };
+      exports.buildOptions = function(options, defaultOptions, props) {
+        let newOptions = {};
+        if (!options) {
+          return defaultOptions;
+        }
+        for (let i = 0; i < props.length; i++) {
+          if (options[props[i]] !== void 0) {
+            newOptions[props[i]] = options[props[i]];
+          } else {
+            newOptions[props[i]] = defaultOptions[props[i]];
+          }
+        }
+        return newOptions;
+      };
+      exports.isTagNameInArrayMode = function(tagName, arrayMode, parentTagName) {
+        if (arrayMode === false) {
+          return false;
+        } else if (arrayMode instanceof RegExp) {
+          return arrayMode.test(tagName);
+        } else if (typeof arrayMode === "function") {
+          return !!arrayMode(tagName, parentTagName);
+        }
+        return arrayMode === "strict";
+      };
+      exports.isName = isName;
+      exports.getAllMatches = getAllMatches;
+      exports.nameRegexp = nameRegexp;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/node2json.js
+  var require_node2json = __commonJS({
+    "node_modules/fast-xml-parser/src/node2json.js"(exports) {
+      "use strict";
+      init_define_process();
+      var util = require_util();
+      var convertToJson = function(node, options, parentTagName) {
+        const jObj = {};
+        if (!options.alwaysCreateTextNode && (!node.child || util.isEmptyObject(node.child)) && (!node.attrsMap || util.isEmptyObject(node.attrsMap))) {
+          return util.isExist(node.val) ? node.val : "";
+        }
+        if (util.isExist(node.val) && !(typeof node.val === "string" && (node.val === "" || node.val === options.cdataPositionChar))) {
+          const asArray = util.isTagNameInArrayMode(node.tagname, options.arrayMode, parentTagName);
+          jObj[options.textNodeName] = asArray ? [node.val] : node.val;
+        }
+        util.merge(jObj, node.attrsMap, options.arrayMode);
+        const keys = Object.keys(node.child);
+        for (let index = 0; index < keys.length; index++) {
+          const tagName = keys[index];
+          if (node.child[tagName] && node.child[tagName].length > 1) {
+            jObj[tagName] = [];
+            for (let tag in node.child[tagName]) {
+              if (node.child[tagName].hasOwnProperty(tag)) {
+                jObj[tagName].push(convertToJson(node.child[tagName][tag], options, tagName));
+              }
+            }
+          } else {
+            const result = convertToJson(node.child[tagName][0], options, tagName);
+            const asArray = options.arrayMode === true && typeof result === "object" || util.isTagNameInArrayMode(tagName, options.arrayMode, parentTagName);
+            jObj[tagName] = asArray ? [result] : result;
+          }
+        }
+        return jObj;
+      };
+      exports.convertToJson = convertToJson;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/xmlNode.js
+  var require_xmlNode = __commonJS({
+    "node_modules/fast-xml-parser/src/xmlNode.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      module.exports = function(tagname, parent, val) {
+        this.tagname = tagname;
+        this.parent = parent;
+        this.child = {};
+        this.attrsMap = {};
+        this.val = val;
+        this.addChild = function(child) {
+          if (Array.isArray(this.child[child.tagname])) {
+            this.child[child.tagname].push(child);
+          } else {
+            this.child[child.tagname] = [child];
+          }
+        };
+      };
+    }
+  });
+
+  // node_modules/strnum/strnum.js
+  var require_strnum = __commonJS({
+    "node_modules/strnum/strnum.js"(exports, module) {
+      init_define_process();
+      var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
+      var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
+      if (!Number.parseInt && window.parseInt) {
+        Number.parseInt = window.parseInt;
+      }
+      if (!Number.parseFloat && window.parseFloat) {
+        Number.parseFloat = window.parseFloat;
+      }
+      var consider = {
+        hex: true,
+        leadingZeros: true,
+        decimalPoint: ".",
+        eNotation: true
+      };
+      function toNumber(str, options = {}) {
+        options = Object.assign({}, consider, options);
+        if (!str || typeof str !== "string")
+          return str;
+        let trimmedStr = str.trim();
+        if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr))
+          return str;
+        else if (options.hex && hexRegex.test(trimmedStr)) {
+          return Number.parseInt(trimmedStr, 16);
+        } else {
+          const match = numRegex.exec(trimmedStr);
+          if (match) {
+            const sign = match[1];
+            const leadingZeros = match[2];
+            let numTrimmedByZeros = trimZeros(match[3]);
+            const eNotation = match[4] || match[6];
+            if (!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== ".")
+              return str;
+            else if (!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== ".")
+              return str;
+            else {
+              const num = Number(trimmedStr);
+              const numStr = "" + num;
+              if (numStr.search(/[eE]/) !== -1) {
+                if (options.eNotation)
+                  return num;
+                else
+                  return str;
+              } else if (eNotation) {
+                if (options.eNotation)
+                  return num;
+                else
+                  return str;
+              } else if (trimmedStr.indexOf(".") !== -1) {
+                if (numStr === "0" && numTrimmedByZeros === "")
+                  return num;
+                else if (numStr === numTrimmedByZeros)
+                  return num;
+                else if (sign && numStr === "-" + numTrimmedByZeros)
+                  return num;
+                else
+                  return str;
+              }
+              if (leadingZeros) {
+                if (numTrimmedByZeros === numStr)
+                  return num;
+                else if (sign + numTrimmedByZeros === numStr)
+                  return num;
+                else
+                  return str;
+              }
+              if (trimmedStr === numStr)
+                return num;
+              else if (trimmedStr === sign + numStr)
+                return num;
+              return str;
+            }
+          } else {
+            return str;
+          }
+        }
+      }
+      function trimZeros(numStr) {
+        if (numStr && numStr.indexOf(".") !== -1) {
+          numStr = numStr.replace(/0+$/, "");
+          if (numStr === ".")
+            numStr = "0";
+          else if (numStr[0] === ".")
+            numStr = "0" + numStr;
+          else if (numStr[numStr.length - 1] === ".")
+            numStr = numStr.substr(0, numStr.length - 1);
+          return numStr;
+        }
+        return numStr;
+      }
+      module.exports = toNumber;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/xmlstr2xmlnode.js
+  var require_xmlstr2xmlnode = __commonJS({
+    "node_modules/fast-xml-parser/src/xmlstr2xmlnode.js"(exports) {
+      "use strict";
+      init_define_process();
+      var util = require_util();
+      var buildOptions = require_util().buildOptions;
+      var xmlNode = require_xmlNode();
+      var toNumber = require_strnum();
+      var regx = "<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)".replace(/NAME/g, util.nameRegexp);
+      if (!Number.parseInt && window.parseInt) {
+        Number.parseInt = window.parseInt;
+      }
+      if (!Number.parseFloat && window.parseFloat) {
+        Number.parseFloat = window.parseFloat;
+      }
+      var defaultOptions = {
+        attributeNamePrefix: "@_",
+        attrNodeName: false,
+        textNodeName: "#text",
+        ignoreAttributes: true,
+        ignoreNameSpace: false,
+        allowBooleanAttributes: false,
+        parseNodeValue: true,
+        parseAttributeValue: false,
+        arrayMode: false,
+        trimValues: true,
+        cdataTagName: false,
+        cdataPositionChar: "\\c",
+        numParseOptions: {
+          hex: true,
+          leadingZeros: true
+        },
+        tagValueProcessor: function(a, tagName) {
+          return a;
+        },
+        attrValueProcessor: function(a, attrName) {
+          return a;
+        },
+        stopNodes: [],
+        alwaysCreateTextNode: false
+      };
+      exports.defaultOptions = defaultOptions;
+      var props = [
+        "attributeNamePrefix",
+        "attrNodeName",
+        "textNodeName",
+        "ignoreAttributes",
+        "ignoreNameSpace",
+        "allowBooleanAttributes",
+        "parseNodeValue",
+        "parseAttributeValue",
+        "arrayMode",
+        "trimValues",
+        "cdataTagName",
+        "cdataPositionChar",
+        "tagValueProcessor",
+        "attrValueProcessor",
+        "parseTrueNumberOnly",
+        "numParseOptions",
+        "stopNodes",
+        "alwaysCreateTextNode"
+      ];
+      exports.props = props;
+      function processTagValue(tagName, val, options) {
+        if (val) {
+          if (options.trimValues) {
+            val = val.trim();
+          }
+          val = options.tagValueProcessor(val, tagName);
+          val = parseValue(val, options.parseNodeValue, options.numParseOptions);
+        }
+        return val;
+      }
+      function resolveNameSpace(tagname, options) {
+        if (options.ignoreNameSpace) {
+          const tags = tagname.split(":");
+          const prefix = tagname.charAt(0) === "/" ? "/" : "";
+          if (tags[0] === "xmlns") {
+            return "";
+          }
+          if (tags.length === 2) {
+            tagname = prefix + tags[1];
+          }
+        }
+        return tagname;
+      }
+      function parseValue(val, shouldParse, options) {
+        if (shouldParse && typeof val === "string") {
+          const newval = val.trim();
+          if (newval === "true")
+            return true;
+          else if (newval === "false")
+            return false;
+          else
+            return toNumber(val, options);
+        } else {
+          if (util.isExist(val)) {
+            return val;
+          } else {
+            return "";
+          }
+        }
+      }
+      var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])(.*?)\\3)?`, "g");
+      function buildAttributesMap(attrStr, options) {
+        if (!options.ignoreAttributes && typeof attrStr === "string") {
+          attrStr = attrStr.replace(/\r?\n/g, " ");
+          const matches = util.getAllMatches(attrStr, attrsRegx);
+          const len = matches.length;
+          const attrs = {};
+          for (let i = 0; i < len; i++) {
+            const attrName = resolveNameSpace(matches[i][1], options);
+            if (attrName.length) {
+              if (matches[i][4] !== void 0) {
+                if (options.trimValues) {
+                  matches[i][4] = matches[i][4].trim();
+                }
+                matches[i][4] = options.attrValueProcessor(matches[i][4], attrName);
+                attrs[options.attributeNamePrefix + attrName] = parseValue(matches[i][4], options.parseAttributeValue, options.numParseOptions);
+              } else if (options.allowBooleanAttributes) {
+                attrs[options.attributeNamePrefix + attrName] = true;
+              }
+            }
+          }
+          if (!Object.keys(attrs).length) {
+            return;
+          }
+          if (options.attrNodeName) {
+            const attrCollection = {};
+            attrCollection[options.attrNodeName] = attrs;
+            return attrCollection;
+          }
+          return attrs;
+        }
+      }
+      var getTraversalObj = function(xmlData, options) {
+        xmlData = xmlData.replace(/\r\n?/g, "\n");
+        options = buildOptions(options, defaultOptions, props);
+        const xmlObj = new xmlNode("!xml");
+        let currentNode = xmlObj;
+        let textData = "";
+        for (let i = 0; i < xmlData.length; i++) {
+          const ch = xmlData[i];
+          if (ch === "<") {
+            if (xmlData[i + 1] === "/") {
+              const closeIndex = findClosingIndex(xmlData, ">", i, "Closing Tag is not closed.");
+              let tagName = xmlData.substring(i + 2, closeIndex).trim();
+              if (options.ignoreNameSpace) {
+                const colonIndex = tagName.indexOf(":");
+                if (colonIndex !== -1) {
+                  tagName = tagName.substr(colonIndex + 1);
+                }
+              }
+              if (currentNode) {
+                if (currentNode.val) {
+                  currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(tagName, textData, options);
+                } else {
+                  currentNode.val = processTagValue(tagName, textData, options);
+                }
+              }
+              if (options.stopNodes.length && options.stopNodes.includes(currentNode.tagname)) {
+                currentNode.child = [];
+                if (currentNode.attrsMap == void 0) {
+                  currentNode.attrsMap = {};
+                }
+                currentNode.val = xmlData.substr(currentNode.startIndex + 1, i - currentNode.startIndex - 1);
+              }
+              currentNode = currentNode.parent;
+              textData = "";
+              i = closeIndex;
+            } else if (xmlData[i + 1] === "?") {
+              i = findClosingIndex(xmlData, "?>", i, "Pi Tag is not closed.");
+            } else if (xmlData.substr(i + 1, 3) === "!--") {
+              i = findClosingIndex(xmlData, "-->", i, "Comment is not closed.");
+            } else if (xmlData.substr(i + 1, 2) === "!D") {
+              const closeIndex = findClosingIndex(xmlData, ">", i, "DOCTYPE is not closed.");
+              const tagExp = xmlData.substring(i, closeIndex);
+              if (tagExp.indexOf("[") >= 0) {
+                i = xmlData.indexOf("]>", i) + 1;
+              } else {
+                i = closeIndex;
+              }
+            } else if (xmlData.substr(i + 1, 2) === "![") {
+              const closeIndex = findClosingIndex(xmlData, "]]>", i, "CDATA is not closed.") - 2;
+              const tagExp = xmlData.substring(i + 9, closeIndex);
+              if (textData) {
+                currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(currentNode.tagname, textData, options);
+                textData = "";
+              }
+              if (options.cdataTagName) {
+                const childNode = new xmlNode(options.cdataTagName, currentNode, tagExp);
+                currentNode.addChild(childNode);
+                currentNode.val = util.getValue(currentNode.val) + options.cdataPositionChar;
+                if (tagExp) {
+                  childNode.val = tagExp;
+                }
+              } else {
+                currentNode.val = (currentNode.val || "") + (tagExp || "");
+              }
+              i = closeIndex + 2;
+            } else {
+              const result = closingIndexForOpeningTag(xmlData, i + 1);
+              let tagExp = result.data;
+              const closeIndex = result.index;
+              const separatorIndex = tagExp.indexOf(" ");
+              let tagName = tagExp;
+              let shouldBuildAttributesMap = true;
+              if (separatorIndex !== -1) {
+                tagName = tagExp.substr(0, separatorIndex).replace(/\s\s*$/, "");
+                tagExp = tagExp.substr(separatorIndex + 1);
+              }
+              if (options.ignoreNameSpace) {
+                const colonIndex = tagName.indexOf(":");
+                if (colonIndex !== -1) {
+                  tagName = tagName.substr(colonIndex + 1);
+                  shouldBuildAttributesMap = tagName !== result.data.substr(colonIndex + 1);
+                }
+              }
+              if (currentNode && textData) {
+                if (currentNode.tagname !== "!xml") {
+                  currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(currentNode.tagname, textData, options);
+                }
+              }
+              if (tagExp.length > 0 && tagExp.lastIndexOf("/") === tagExp.length - 1) {
+                if (tagName[tagName.length - 1] === "/") {
+                  tagName = tagName.substr(0, tagName.length - 1);
+                  tagExp = tagName;
+                } else {
+                  tagExp = tagExp.substr(0, tagExp.length - 1);
+                }
+                const childNode = new xmlNode(tagName, currentNode, "");
+                if (tagName !== tagExp) {
+                  childNode.attrsMap = buildAttributesMap(tagExp, options);
+                }
+                currentNode.addChild(childNode);
+              } else {
+                const childNode = new xmlNode(tagName, currentNode);
+                if (options.stopNodes.length && options.stopNodes.includes(childNode.tagname)) {
+                  childNode.startIndex = closeIndex;
+                }
+                if (tagName !== tagExp && shouldBuildAttributesMap) {
+                  childNode.attrsMap = buildAttributesMap(tagExp, options);
+                }
+                currentNode.addChild(childNode);
+                currentNode = childNode;
+              }
+              textData = "";
+              i = closeIndex;
+            }
+          } else {
+            textData += xmlData[i];
+          }
+        }
+        return xmlObj;
+      };
+      function closingIndexForOpeningTag(data, i) {
+        let attrBoundary;
+        let tagExp = "";
+        for (let index = i; index < data.length; index++) {
+          let ch = data[index];
+          if (attrBoundary) {
+            if (ch === attrBoundary)
+              attrBoundary = "";
+          } else if (ch === '"' || ch === "'") {
+            attrBoundary = ch;
+          } else if (ch === ">") {
+            return {
+              data: tagExp,
+              index
+            };
+          } else if (ch === "	") {
+            ch = " ";
+          }
+          tagExp += ch;
+        }
+      }
+      function findClosingIndex(xmlData, str, i, errMsg) {
+        const closingIndex = xmlData.indexOf(str, i);
+        if (closingIndex === -1) {
+          throw new Error(errMsg);
+        } else {
+          return closingIndex + str.length - 1;
+        }
+      }
+      exports.getTraversalObj = getTraversalObj;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/validator.js
+  var require_validator = __commonJS({
+    "node_modules/fast-xml-parser/src/validator.js"(exports) {
+      "use strict";
+      init_define_process();
+      var util = require_util();
+      var defaultOptions = {
+        allowBooleanAttributes: false
+      };
+      var props = ["allowBooleanAttributes"];
+      exports.validate = function(xmlData, options) {
+        options = util.buildOptions(options, defaultOptions, props);
+        const tags = [];
+        let tagFound = false;
+        let reachedRoot = false;
+        if (xmlData[0] === "\uFEFF") {
+          xmlData = xmlData.substr(1);
+        }
+        for (let i = 0; i < xmlData.length; i++) {
+          if (xmlData[i] === "<" && xmlData[i + 1] === "?") {
+            i += 2;
+            i = readPI(xmlData, i);
+            if (i.err)
+              return i;
+          } else if (xmlData[i] === "<") {
+            let tagStartPos = i;
+            i++;
+            if (xmlData[i] === "!") {
+              i = readCommentAndCDATA(xmlData, i);
+              continue;
+            } else {
+              let closingTag = false;
+              if (xmlData[i] === "/") {
+                closingTag = true;
+                i++;
+              }
+              let tagName = "";
+              for (; i < xmlData.length && xmlData[i] !== ">" && xmlData[i] !== " " && xmlData[i] !== "	" && xmlData[i] !== "\n" && xmlData[i] !== "\r"; i++) {
+                tagName += xmlData[i];
+              }
+              tagName = tagName.trim();
+              if (tagName[tagName.length - 1] === "/") {
+                tagName = tagName.substring(0, tagName.length - 1);
+                i--;
+              }
+              if (!validateTagName(tagName)) {
+                let msg;
+                if (tagName.trim().length === 0) {
+                  msg = "Invalid space after '<'.";
+                } else {
+                  msg = "Tag '" + tagName + "' is an invalid name.";
+                }
+                return getErrorObject("InvalidTag", msg, getLineNumberForPosition(xmlData, i));
+              }
+              const result = readAttributeStr(xmlData, i);
+              if (result === false) {
+                return getErrorObject("InvalidAttr", "Attributes for '" + tagName + "' have open quote.", getLineNumberForPosition(xmlData, i));
+              }
+              let attrStr = result.value;
+              i = result.index;
+              if (attrStr[attrStr.length - 1] === "/") {
+                const attrStrStart = i - attrStr.length;
+                attrStr = attrStr.substring(0, attrStr.length - 1);
+                const isValid = validateAttributeString(attrStr, options);
+                if (isValid === true) {
+                  tagFound = true;
+                } else {
+                  return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, attrStrStart + isValid.err.line));
+                }
+              } else if (closingTag) {
+                if (!result.tagClosed) {
+                  return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' doesn't have proper closing.", getLineNumberForPosition(xmlData, i));
+                } else if (attrStr.trim().length > 0) {
+                  return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' can't have attributes or invalid starting.", getLineNumberForPosition(xmlData, tagStartPos));
+                } else {
+                  const otg = tags.pop();
+                  if (tagName !== otg.tagName) {
+                    let openPos = getLineNumberForPosition(xmlData, otg.tagStartPos);
+                    return getErrorObject("InvalidTag", "Expected closing tag '" + otg.tagName + "' (opened in line " + openPos.line + ", col " + openPos.col + ") instead of closing tag '" + tagName + "'.", getLineNumberForPosition(xmlData, tagStartPos));
+                  }
+                  if (tags.length == 0) {
+                    reachedRoot = true;
+                  }
+                }
+              } else {
+                const isValid = validateAttributeString(attrStr, options);
+                if (isValid !== true) {
+                  return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, i - attrStr.length + isValid.err.line));
+                }
+                if (reachedRoot === true) {
+                  return getErrorObject("InvalidXml", "Multiple possible root nodes found.", getLineNumberForPosition(xmlData, i));
+                } else {
+                  tags.push({ tagName, tagStartPos });
+                }
+                tagFound = true;
+              }
+              for (i++; i < xmlData.length; i++) {
+                if (xmlData[i] === "<") {
+                  if (xmlData[i + 1] === "!") {
+                    i++;
+                    i = readCommentAndCDATA(xmlData, i);
+                    continue;
+                  } else if (xmlData[i + 1] === "?") {
+                    i = readPI(xmlData, ++i);
+                    if (i.err)
+                      return i;
+                  } else {
+                    break;
+                  }
+                } else if (xmlData[i] === "&") {
+                  const afterAmp = validateAmpersand(xmlData, i);
+                  if (afterAmp == -1)
+                    return getErrorObject("InvalidChar", "char '&' is not expected.", getLineNumberForPosition(xmlData, i));
+                  i = afterAmp;
+                }
+              }
+              if (xmlData[i] === "<") {
+                i--;
+              }
+            }
+          } else {
+            if (xmlData[i] === " " || xmlData[i] === "	" || xmlData[i] === "\n" || xmlData[i] === "\r") {
+              continue;
+            }
+            return getErrorObject("InvalidChar", "char '" + xmlData[i] + "' is not expected.", getLineNumberForPosition(xmlData, i));
+          }
+        }
+        if (!tagFound) {
+          return getErrorObject("InvalidXml", "Start tag expected.", 1);
+        } else if (tags.length == 1) {
+          return getErrorObject("InvalidTag", "Unclosed tag '" + tags[0].tagName + "'.", getLineNumberForPosition(xmlData, tags[0].tagStartPos));
+        } else if (tags.length > 0) {
+          return getErrorObject("InvalidXml", "Invalid '" + JSON.stringify(tags.map((t) => t.tagName), null, 4).replace(/\r?\n/g, "") + "' found.", { line: 1, col: 1 });
+        }
+        return true;
+      };
+      function readPI(xmlData, i) {
+        const start = i;
+        for (; i < xmlData.length; i++) {
+          if (xmlData[i] == "?" || xmlData[i] == " ") {
+            const tagname = xmlData.substr(start, i - start);
+            if (i > 5 && tagname === "xml") {
+              return getErrorObject("InvalidXml", "XML declaration allowed only at the start of the document.", getLineNumberForPosition(xmlData, i));
+            } else if (xmlData[i] == "?" && xmlData[i + 1] == ">") {
+              i++;
+              break;
+            } else {
+              continue;
+            }
+          }
+        }
+        return i;
+      }
+      function readCommentAndCDATA(xmlData, i) {
+        if (xmlData.length > i + 5 && xmlData[i + 1] === "-" && xmlData[i + 2] === "-") {
+          for (i += 3; i < xmlData.length; i++) {
+            if (xmlData[i] === "-" && xmlData[i + 1] === "-" && xmlData[i + 2] === ">") {
+              i += 2;
+              break;
+            }
+          }
+        } else if (xmlData.length > i + 8 && xmlData[i + 1] === "D" && xmlData[i + 2] === "O" && xmlData[i + 3] === "C" && xmlData[i + 4] === "T" && xmlData[i + 5] === "Y" && xmlData[i + 6] === "P" && xmlData[i + 7] === "E") {
+          let angleBracketsCount = 1;
+          for (i += 8; i < xmlData.length; i++) {
+            if (xmlData[i] === "<") {
+              angleBracketsCount++;
+            } else if (xmlData[i] === ">") {
+              angleBracketsCount--;
+              if (angleBracketsCount === 0) {
+                break;
+              }
+            }
+          }
+        } else if (xmlData.length > i + 9 && xmlData[i + 1] === "[" && xmlData[i + 2] === "C" && xmlData[i + 3] === "D" && xmlData[i + 4] === "A" && xmlData[i + 5] === "T" && xmlData[i + 6] === "A" && xmlData[i + 7] === "[") {
+          for (i += 8; i < xmlData.length; i++) {
+            if (xmlData[i] === "]" && xmlData[i + 1] === "]" && xmlData[i + 2] === ">") {
+              i += 2;
+              break;
+            }
+          }
+        }
+        return i;
+      }
+      var doubleQuote = '"';
+      var singleQuote = "'";
+      function readAttributeStr(xmlData, i) {
+        let attrStr = "";
+        let startChar = "";
+        let tagClosed = false;
+        for (; i < xmlData.length; i++) {
+          if (xmlData[i] === doubleQuote || xmlData[i] === singleQuote) {
+            if (startChar === "") {
+              startChar = xmlData[i];
+            } else if (startChar !== xmlData[i]) {
+            } else {
+              startChar = "";
+            }
+          } else if (xmlData[i] === ">") {
+            if (startChar === "") {
+              tagClosed = true;
+              break;
+            }
+          }
+          attrStr += xmlData[i];
+        }
+        if (startChar !== "") {
+          return false;
+        }
+        return {
+          value: attrStr,
+          index: i,
+          tagClosed
+        };
+      }
+      var validAttrStrRegxp = new RegExp(`(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['"])(([\\s\\S])*?)\\5)?`, "g");
+      function validateAttributeString(attrStr, options) {
+        const matches = util.getAllMatches(attrStr, validAttrStrRegxp);
+        const attrNames = {};
+        for (let i = 0; i < matches.length; i++) {
+          if (matches[i][1].length === 0) {
+            return getErrorObject("InvalidAttr", "Attribute '" + matches[i][2] + "' has no space in starting.", getPositionFromMatch(matches[i]));
+          } else if (matches[i][3] === void 0 && !options.allowBooleanAttributes) {
+            return getErrorObject("InvalidAttr", "boolean attribute '" + matches[i][2] + "' is not allowed.", getPositionFromMatch(matches[i]));
+          }
+          const attrName = matches[i][2];
+          if (!validateAttrName(attrName)) {
+            return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is an invalid name.", getPositionFromMatch(matches[i]));
+          }
+          if (!attrNames.hasOwnProperty(attrName)) {
+            attrNames[attrName] = 1;
+          } else {
+            return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is repeated.", getPositionFromMatch(matches[i]));
+          }
+        }
+        return true;
+      }
+      function validateNumberAmpersand(xmlData, i) {
+        let re = /\d/;
+        if (xmlData[i] === "x") {
+          i++;
+          re = /[\da-fA-F]/;
+        }
+        for (; i < xmlData.length; i++) {
+          if (xmlData[i] === ";")
+            return i;
+          if (!xmlData[i].match(re))
+            break;
+        }
+        return -1;
+      }
+      function validateAmpersand(xmlData, i) {
+        i++;
+        if (xmlData[i] === ";")
+          return -1;
+        if (xmlData[i] === "#") {
+          i++;
+          return validateNumberAmpersand(xmlData, i);
+        }
+        let count = 0;
+        for (; i < xmlData.length; i++, count++) {
+          if (xmlData[i].match(/\w/) && count < 20)
+            continue;
+          if (xmlData[i] === ";")
+            break;
+          return -1;
+        }
+        return i;
+      }
+      function getErrorObject(code, message, lineNumber) {
+        return {
+          err: {
+            code,
+            msg: message,
+            line: lineNumber.line || lineNumber,
+            col: lineNumber.col
+          }
+        };
+      }
+      function validateAttrName(attrName) {
+        return util.isName(attrName);
+      }
+      function validateTagName(tagname) {
+        return util.isName(tagname);
+      }
+      function getLineNumberForPosition(xmlData, index) {
+        const lines = xmlData.substring(0, index).split(/\r?\n/);
+        return {
+          line: lines.length,
+          col: lines[lines.length - 1].length + 1
+        };
+      }
+      function getPositionFromMatch(match) {
+        return match.startIndex + match[1].length;
+      }
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/nimndata.js
+  var require_nimndata = __commonJS({
+    "node_modules/fast-xml-parser/src/nimndata.js"(exports) {
+      "use strict";
+      init_define_process();
+      var char = function(a) {
+        return String.fromCharCode(a);
+      };
+      var chars = {
+        nilChar: char(176),
+        missingChar: char(201),
+        nilPremitive: char(175),
+        missingPremitive: char(200),
+        emptyChar: char(178),
+        emptyValue: char(177),
+        boundryChar: char(179),
+        objStart: char(198),
+        arrStart: char(204),
+        arrayEnd: char(185)
+      };
+      var charsArr = [
+        chars.nilChar,
+        chars.nilPremitive,
+        chars.missingChar,
+        chars.missingPremitive,
+        chars.boundryChar,
+        chars.emptyChar,
+        chars.emptyValue,
+        chars.arrayEnd,
+        chars.objStart,
+        chars.arrStart
+      ];
+      var _e = function(node, e_schema, options) {
+        if (typeof e_schema === "string") {
+          if (node && node[0] && node[0].val !== void 0) {
+            return getValue(node[0].val, e_schema);
+          } else {
+            return getValue(node, e_schema);
+          }
+        } else {
+          const hasValidData = hasData(node);
+          if (hasValidData === true) {
+            let str = "";
+            if (Array.isArray(e_schema)) {
+              str += chars.arrStart;
+              const itemSchema = e_schema[0];
+              const arr_len = node.length;
+              if (typeof itemSchema === "string") {
+                for (let arr_i = 0; arr_i < arr_len; arr_i++) {
+                  const r = getValue(node[arr_i].val, itemSchema);
+                  str = processValue(str, r);
+                }
+              } else {
+                for (let arr_i = 0; arr_i < arr_len; arr_i++) {
+                  const r = _e(node[arr_i], itemSchema, options);
+                  str = processValue(str, r);
+                }
+              }
+              str += chars.arrayEnd;
+            } else {
+              str += chars.objStart;
+              const keys = Object.keys(e_schema);
+              if (Array.isArray(node)) {
+                node = node[0];
+              }
+              for (let i in keys) {
+                const key = keys[i];
+                let r;
+                if (!options.ignoreAttributes && node.attrsMap && node.attrsMap[key]) {
+                  r = _e(node.attrsMap[key], e_schema[key], options);
+                } else if (key === options.textNodeName) {
+                  r = _e(node.val, e_schema[key], options);
+                } else {
+                  r = _e(node.child[key], e_schema[key], options);
+                }
+                str = processValue(str, r);
+              }
+            }
+            return str;
+          } else {
+            return hasValidData;
+          }
+        }
+      };
+      var getValue = function(a) {
+        switch (a) {
+          case void 0:
+            return chars.missingPremitive;
+          case null:
+            return chars.nilPremitive;
+          case "":
+            return chars.emptyValue;
+          default:
+            return a;
+        }
+      };
+      var processValue = function(str, r) {
+        if (!isAppChar(r[0]) && !isAppChar(str[str.length - 1])) {
+          str += chars.boundryChar;
+        }
+        return str + r;
+      };
+      var isAppChar = function(ch) {
+        return charsArr.indexOf(ch) !== -1;
+      };
+      function hasData(jObj) {
+        if (jObj === void 0) {
+          return chars.missingChar;
+        } else if (jObj === null) {
+          return chars.nilChar;
+        } else if (jObj.child && Object.keys(jObj.child).length === 0 && (!jObj.attrsMap || Object.keys(jObj.attrsMap).length === 0)) {
+          return chars.emptyChar;
+        } else {
+          return true;
+        }
+      }
+      var x2j = require_xmlstr2xmlnode();
+      var buildOptions = require_util().buildOptions;
+      var convert2nimn = function(node, e_schema, options) {
+        options = buildOptions(options, x2j.defaultOptions, x2j.props);
+        return _e(node, e_schema, options);
+      };
+      exports.convert2nimn = convert2nimn;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/node2json_str.js
+  var require_node2json_str = __commonJS({
+    "node_modules/fast-xml-parser/src/node2json_str.js"(exports) {
+      "use strict";
+      init_define_process();
+      var util = require_util();
+      var buildOptions = require_util().buildOptions;
+      var x2j = require_xmlstr2xmlnode();
+      var convertToJsonString = function(node, options) {
+        options = buildOptions(options, x2j.defaultOptions, x2j.props);
+        options.indentBy = options.indentBy || "";
+        return _cToJsonStr(node, options, 0);
+      };
+      var _cToJsonStr = function(node, options, level) {
+        let jObj = "{";
+        const keys = Object.keys(node.child);
+        for (let index = 0; index < keys.length; index++) {
+          const tagname = keys[index];
+          if (node.child[tagname] && node.child[tagname].length > 1) {
+            jObj += '"' + tagname + '" : [ ';
+            for (let tag in node.child[tagname]) {
+              jObj += _cToJsonStr(node.child[tagname][tag], options) + " , ";
+            }
+            jObj = jObj.substr(0, jObj.length - 1) + " ] ";
+          } else {
+            jObj += '"' + tagname + '" : ' + _cToJsonStr(node.child[tagname][0], options) + " ,";
+          }
+        }
+        util.merge(jObj, node.attrsMap);
+        if (util.isEmptyObject(jObj)) {
+          return util.isExist(node.val) ? node.val : "";
+        } else {
+          if (util.isExist(node.val)) {
+            if (!(typeof node.val === "string" && (node.val === "" || node.val === options.cdataPositionChar))) {
+              jObj += '"' + options.textNodeName + '" : ' + stringval(node.val);
+            }
+          }
+        }
+        if (jObj[jObj.length - 1] === ",") {
+          jObj = jObj.substr(0, jObj.length - 2);
+        }
+        return jObj + "}";
+      };
+      function stringval(v) {
+        if (v === true || v === false || !isNaN(v)) {
+          return v;
+        } else {
+          return '"' + v + '"';
+        }
+      }
+      exports.convertToJsonString = convertToJsonString;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/json2xml.js
+  var require_json2xml = __commonJS({
+    "node_modules/fast-xml-parser/src/json2xml.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var buildOptions = require_util().buildOptions;
+      var defaultOptions = {
+        attributeNamePrefix: "@_",
+        attrNodeName: false,
+        textNodeName: "#text",
+        ignoreAttributes: true,
+        cdataTagName: false,
+        cdataPositionChar: "\\c",
+        format: false,
+        indentBy: "  ",
+        supressEmptyNode: false,
+        tagValueProcessor: function(a) {
+          return a;
+        },
+        attrValueProcessor: function(a) {
+          return a;
+        }
+      };
+      var props = [
+        "attributeNamePrefix",
+        "attrNodeName",
+        "textNodeName",
+        "ignoreAttributes",
+        "cdataTagName",
+        "cdataPositionChar",
+        "format",
+        "indentBy",
+        "supressEmptyNode",
+        "tagValueProcessor",
+        "attrValueProcessor",
+        "rootNodeName"
+      ];
+      function Parser(options) {
+        this.options = buildOptions(options, defaultOptions, props);
+        if (this.options.ignoreAttributes || this.options.attrNodeName) {
+          this.isAttribute = function() {
+            return false;
+          };
+        } else {
+          this.attrPrefixLen = this.options.attributeNamePrefix.length;
+          this.isAttribute = isAttribute;
+        }
+        if (this.options.cdataTagName) {
+          this.isCDATA = isCDATA;
+        } else {
+          this.isCDATA = function() {
+            return false;
+          };
+        }
+        this.replaceCDATAstr = replaceCDATAstr;
+        this.replaceCDATAarr = replaceCDATAarr;
+        this.processTextOrObjNode = processTextOrObjNode;
+        if (this.options.format) {
+          this.indentate = indentate;
+          this.tagEndChar = ">\n";
+          this.newLine = "\n";
+        } else {
+          this.indentate = function() {
+            return "";
+          };
+          this.tagEndChar = ">";
+          this.newLine = "";
+        }
+        if (this.options.supressEmptyNode) {
+          this.buildTextNode = buildEmptyTextNode;
+          this.buildObjNode = buildEmptyObjNode;
+        } else {
+          this.buildTextNode = buildTextValNode;
+          this.buildObjNode = buildObjectNode;
+        }
+        this.buildTextValNode = buildTextValNode;
+        this.buildObjectNode = buildObjectNode;
+      }
+      Parser.prototype.parse = function(jObj) {
+        if (Array.isArray(jObj) && this.options.rootNodeName && this.options.rootNodeName.length > 1) {
+          jObj = {
+            [this.options.rootNodeName]: jObj
+          };
+        }
+        return this.j2x(jObj, 0).val;
+      };
+      Parser.prototype.j2x = function(jObj, level) {
+        let attrStr = "";
+        let val = "";
+        for (let key in jObj) {
+          if (typeof jObj[key] === "undefined") {
+          } else if (jObj[key] === null) {
+            val += this.indentate(level) + "<" + key + "/" + this.tagEndChar;
+          } else if (jObj[key] instanceof Date) {
+            val += this.buildTextNode(jObj[key], key, "", level);
+          } else if (typeof jObj[key] !== "object") {
+            const attr = this.isAttribute(key);
+            if (attr) {
+              attrStr += " " + attr + '="' + this.options.attrValueProcessor("" + jObj[key]) + '"';
+            } else if (this.isCDATA(key)) {
+              if (jObj[this.options.textNodeName]) {
+                val += this.replaceCDATAstr(jObj[this.options.textNodeName], jObj[key]);
+              } else {
+                val += this.replaceCDATAstr("", jObj[key]);
+              }
+            } else {
+              if (key === this.options.textNodeName) {
+                if (jObj[this.options.cdataTagName]) {
+                } else {
+                  val += this.options.tagValueProcessor("" + jObj[key]);
+                }
+              } else {
+                val += this.buildTextNode(jObj[key], key, "", level);
+              }
+            }
+          } else if (Array.isArray(jObj[key])) {
+            if (this.isCDATA(key)) {
+              val += this.indentate(level);
+              if (jObj[this.options.textNodeName]) {
+                val += this.replaceCDATAarr(jObj[this.options.textNodeName], jObj[key]);
+              } else {
+                val += this.replaceCDATAarr("", jObj[key]);
+              }
+            } else {
+              const arrLen = jObj[key].length;
+              for (let j = 0; j < arrLen; j++) {
+                const item = jObj[key][j];
+                if (typeof item === "undefined") {
+                } else if (item === null) {
+                  val += this.indentate(level) + "<" + key + "/" + this.tagEndChar;
+                } else if (typeof item === "object") {
+                  val += this.processTextOrObjNode(item, key, level);
+                } else {
+                  val += this.buildTextNode(item, key, "", level);
+                }
+              }
+            }
+          } else {
+            if (this.options.attrNodeName && key === this.options.attrNodeName) {
+              const Ks = Object.keys(jObj[key]);
+              const L = Ks.length;
+              for (let j = 0; j < L; j++) {
+                attrStr += " " + Ks[j] + '="' + this.options.attrValueProcessor("" + jObj[key][Ks[j]]) + '"';
+              }
+            } else {
+              val += this.processTextOrObjNode(jObj[key], key, level);
+            }
+          }
+        }
+        return { attrStr, val };
+      };
+      function processTextOrObjNode(object, key, level) {
+        const result = this.j2x(object, level + 1);
+        if (object[this.options.textNodeName] !== void 0 && Object.keys(object).length === 1) {
+          return this.buildTextNode(result.val, key, result.attrStr, level);
+        } else {
+          return this.buildObjNode(result.val, key, result.attrStr, level);
+        }
+      }
+      function replaceCDATAstr(str, cdata) {
+        str = this.options.tagValueProcessor("" + str);
+        if (this.options.cdataPositionChar === "" || str === "") {
+          return str + "<![CDATA[" + cdata + "]]" + this.tagEndChar;
+        } else {
+          return str.replace(this.options.cdataPositionChar, "<![CDATA[" + cdata + "]]" + this.tagEndChar);
+        }
+      }
+      function replaceCDATAarr(str, cdata) {
+        str = this.options.tagValueProcessor("" + str);
+        if (this.options.cdataPositionChar === "" || str === "") {
+          return str + "<![CDATA[" + cdata.join("]]><![CDATA[") + "]]" + this.tagEndChar;
+        } else {
+          for (let v in cdata) {
+            str = str.replace(this.options.cdataPositionChar, "<![CDATA[" + cdata[v] + "]]>");
+          }
+          return str + this.newLine;
+        }
+      }
+      function buildObjectNode(val, key, attrStr, level) {
+        if (attrStr && val.indexOf("<") === -1) {
+          return this.indentate(level) + "<" + key + attrStr + ">" + val + "</" + key + this.tagEndChar;
+        } else {
+          return this.indentate(level) + "<" + key + attrStr + this.tagEndChar + val + this.indentate(level) + "</" + key + this.tagEndChar;
+        }
+      }
+      function buildEmptyObjNode(val, key, attrStr, level) {
+        if (val !== "") {
+          return this.buildObjectNode(val, key, attrStr, level);
+        } else {
+          return this.indentate(level) + "<" + key + attrStr + "/" + this.tagEndChar;
+        }
+      }
+      function buildTextValNode(val, key, attrStr, level) {
+        return this.indentate(level) + "<" + key + attrStr + ">" + this.options.tagValueProcessor(val) + "</" + key + this.tagEndChar;
+      }
+      function buildEmptyTextNode(val, key, attrStr, level) {
+        if (val !== "") {
+          return this.buildTextValNode(val, key, attrStr, level);
+        } else {
+          return this.indentate(level) + "<" + key + attrStr + "/" + this.tagEndChar;
+        }
+      }
+      function indentate(level) {
+        return this.options.indentBy.repeat(level);
+      }
+      function isAttribute(name) {
+        if (name.startsWith(this.options.attributeNamePrefix)) {
+          return name.substr(this.attrPrefixLen);
+        } else {
+          return false;
+        }
+      }
+      function isCDATA(name) {
+        return name === this.options.cdataTagName;
+      }
+      module.exports = Parser;
+    }
+  });
+
+  // node_modules/fast-xml-parser/src/parser.js
+  var require_parser = __commonJS({
+    "node_modules/fast-xml-parser/src/parser.js"(exports) {
+      "use strict";
+      init_define_process();
+      var nodeToJson = require_node2json();
+      var xmlToNodeobj = require_xmlstr2xmlnode();
+      var x2xmlnode = require_xmlstr2xmlnode();
+      var buildOptions = require_util().buildOptions;
+      var validator = require_validator();
+      exports.parse = function(xmlData, givenOptions = {}, validationOption) {
+        if (validationOption) {
+          if (validationOption === true)
+            validationOption = {};
+          const result = validator.validate(xmlData, validationOption);
+          if (result !== true) {
+            throw Error(result.err.msg);
+          }
+        }
+        if (givenOptions.parseTrueNumberOnly && givenOptions.parseNodeValue !== false && !givenOptions.numParseOptions) {
+          givenOptions.numParseOptions = {
+            leadingZeros: false
+          };
+        }
+        let options = buildOptions(givenOptions, x2xmlnode.defaultOptions, x2xmlnode.props);
+        const traversableObj = xmlToNodeobj.getTraversalObj(xmlData, options);
+        return nodeToJson.convertToJson(traversableObj, options);
+      };
+      exports.convertTonimn = require_nimndata().convert2nimn;
+      exports.getTraversalObj = xmlToNodeobj.getTraversalObj;
+      exports.convertToJson = nodeToJson.convertToJson;
+      exports.convertToJsonString = require_node2json_str().convertToJsonString;
+      exports.validate = validator.validate;
+      exports.j2xParser = require_json2xml();
+      exports.parseToNimn = function(xmlData, schema, options) {
+        return exports.convertTonimn(exports.getTraversalObj(xmlData, options), schema, options);
+      };
+    }
+  });
+
+  // node_modules/is-svg/index.js
+  var require_is_svg = __commonJS({
+    "node_modules/is-svg/index.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var parser = require_parser();
+      var isSvg = (input) => {
+        if (input === void 0 || input === null) {
+          return false;
+        }
+        input = input.toString().trim().replace(/\n/g, " ");
+        if (input.length === 0) {
+          return false;
+        }
+        if (parser.validate(input) !== true) {
+          return false;
+        }
+        let jsonObject;
+        try {
+          jsonObject = parser.parse(input);
+        } catch (_) {
+          return false;
+        }
+        if (!jsonObject) {
+          return false;
+        }
+        if (!("svg" in jsonObject)) {
+          return false;
+        }
+        return true;
+      };
+      module.exports = isSvg;
+      module.exports.default = isSvg;
+    }
+  });
+
+  // node_modules/url-join/lib/url-join.js
+  var require_url_join = __commonJS({
+    "node_modules/url-join/lib/url-join.js"(exports, module) {
+      init_define_process();
+      (function(name, context, definition) {
+        if (typeof module !== "undefined" && module.exports)
+          module.exports = definition();
+        else if (typeof define === "function" && define.amd)
+          define(definition);
+        else
+          context[name] = definition();
+      })("urljoin", exports, function() {
+        function normalize(strArray) {
+          var resultArray = [];
+          if (strArray.length === 0) {
+            return "";
+          }
+          if (typeof strArray[0] !== "string") {
+            throw new TypeError("Url must be a string. Received " + strArray[0]);
+          }
+          if (strArray[0].match(/^[^/:]+:\/*$/) && strArray.length > 1) {
+            var first = strArray.shift();
+            strArray[0] = first + strArray[0];
+          }
+          if (strArray[0].match(/^file:\/\/\//)) {
+            strArray[0] = strArray[0].replace(/^([^/:]+):\/*/, "$1:///");
+          } else {
+            strArray[0] = strArray[0].replace(/^([^/:]+):\/*/, "$1://");
+          }
+          for (var i = 0; i < strArray.length; i++) {
+            var component = strArray[i];
+            if (typeof component !== "string") {
+              throw new TypeError("Url must be a string. Received " + component);
+            }
+            if (component === "") {
+              continue;
+            }
+            if (i > 0) {
+              component = component.replace(/^[\/]+/, "");
+            }
+            if (i < strArray.length - 1) {
+              component = component.replace(/[\/]+$/, "");
+            } else {
+              component = component.replace(/[\/]+$/, "/");
+            }
+            resultArray.push(component);
+          }
+          var str = resultArray.join("/");
+          str = str.replace(/\/(\?|&|#[^!])/g, "$1");
+          var parts = str.split("?");
+          str = parts.shift() + (parts.length > 0 ? "?" : "") + parts.join("&");
+          return str;
+        }
+        return function() {
+          var input;
+          if (typeof arguments[0] === "object") {
+            input = arguments[0];
+          } else {
+            input = [].slice.call(arguments);
+          }
+          return normalize(input);
+        };
+      });
+    }
+  });
+
   // node_modules/multiformats/esm/vendor/varint.js
   function encode(num, out, offset) {
     out = out || [];
@@ -34127,1371 +34216,1282 @@ if (cid) {
     }
   });
 
-  // node_modules/fast-xml-parser/src/util.js
-  var require_util = __commonJS({
-    "node_modules/fast-xml-parser/src/util.js"(exports) {
+  // node_modules/axios/lib/helpers/bind.js
+  var require_bind = __commonJS({
+    "node_modules/axios/lib/helpers/bind.js"(exports, module) {
       "use strict";
       init_define_process();
-      var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
-      var nameChar = nameStartChar + "\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
-      var nameRegexp = "[" + nameStartChar + "][" + nameChar + "]*";
-      var regexName = new RegExp("^" + nameRegexp + "$");
-      var getAllMatches = function(string, regex) {
-        const matches = [];
-        let match = regex.exec(string);
-        while (match) {
-          const allmatches = [];
-          allmatches.startIndex = regex.lastIndex - match[0].length;
-          const len = match.length;
-          for (let index = 0; index < len; index++) {
-            allmatches.push(match[index]);
+      module.exports = function bind(fn, thisArg) {
+        return function wrap() {
+          var args = new Array(arguments.length);
+          for (var i = 0; i < args.length; i++) {
+            args[i] = arguments[i];
           }
-          matches.push(allmatches);
-          match = regex.exec(string);
-        }
-        return matches;
-      };
-      var isName = function(string) {
-        const match = regexName.exec(string);
-        return !(match === null || typeof match === "undefined");
-      };
-      exports.isExist = function(v) {
-        return typeof v !== "undefined";
-      };
-      exports.isEmptyObject = function(obj) {
-        return Object.keys(obj).length === 0;
-      };
-      exports.merge = function(target, a, arrayMode) {
-        if (a) {
-          const keys = Object.keys(a);
-          const len = keys.length;
-          for (let i = 0; i < len; i++) {
-            if (arrayMode === "strict") {
-              target[keys[i]] = [a[keys[i]]];
-            } else {
-              target[keys[i]] = a[keys[i]];
-            }
-          }
-        }
-      };
-      exports.getValue = function(v) {
-        if (exports.isExist(v)) {
-          return v;
-        } else {
-          return "";
-        }
-      };
-      exports.buildOptions = function(options, defaultOptions, props) {
-        let newOptions = {};
-        if (!options) {
-          return defaultOptions;
-        }
-        for (let i = 0; i < props.length; i++) {
-          if (options[props[i]] !== void 0) {
-            newOptions[props[i]] = options[props[i]];
-          } else {
-            newOptions[props[i]] = defaultOptions[props[i]];
-          }
-        }
-        return newOptions;
-      };
-      exports.isTagNameInArrayMode = function(tagName, arrayMode, parentTagName) {
-        if (arrayMode === false) {
-          return false;
-        } else if (arrayMode instanceof RegExp) {
-          return arrayMode.test(tagName);
-        } else if (typeof arrayMode === "function") {
-          return !!arrayMode(tagName, parentTagName);
-        }
-        return arrayMode === "strict";
-      };
-      exports.isName = isName;
-      exports.getAllMatches = getAllMatches;
-      exports.nameRegexp = nameRegexp;
-    }
-  });
-
-  // node_modules/fast-xml-parser/src/node2json.js
-  var require_node2json = __commonJS({
-    "node_modules/fast-xml-parser/src/node2json.js"(exports) {
-      "use strict";
-      init_define_process();
-      var util = require_util();
-      var convertToJson = function(node, options, parentTagName) {
-        const jObj = {};
-        if (!options.alwaysCreateTextNode && (!node.child || util.isEmptyObject(node.child)) && (!node.attrsMap || util.isEmptyObject(node.attrsMap))) {
-          return util.isExist(node.val) ? node.val : "";
-        }
-        if (util.isExist(node.val) && !(typeof node.val === "string" && (node.val === "" || node.val === options.cdataPositionChar))) {
-          const asArray = util.isTagNameInArrayMode(node.tagname, options.arrayMode, parentTagName);
-          jObj[options.textNodeName] = asArray ? [node.val] : node.val;
-        }
-        util.merge(jObj, node.attrsMap, options.arrayMode);
-        const keys = Object.keys(node.child);
-        for (let index = 0; index < keys.length; index++) {
-          const tagName = keys[index];
-          if (node.child[tagName] && node.child[tagName].length > 1) {
-            jObj[tagName] = [];
-            for (let tag in node.child[tagName]) {
-              if (node.child[tagName].hasOwnProperty(tag)) {
-                jObj[tagName].push(convertToJson(node.child[tagName][tag], options, tagName));
-              }
-            }
-          } else {
-            const result = convertToJson(node.child[tagName][0], options, tagName);
-            const asArray = options.arrayMode === true && typeof result === "object" || util.isTagNameInArrayMode(tagName, options.arrayMode, parentTagName);
-            jObj[tagName] = asArray ? [result] : result;
-          }
-        }
-        return jObj;
-      };
-      exports.convertToJson = convertToJson;
-    }
-  });
-
-  // node_modules/fast-xml-parser/src/xmlNode.js
-  var require_xmlNode = __commonJS({
-    "node_modules/fast-xml-parser/src/xmlNode.js"(exports, module) {
-      "use strict";
-      init_define_process();
-      module.exports = function(tagname, parent, val) {
-        this.tagname = tagname;
-        this.parent = parent;
-        this.child = {};
-        this.attrsMap = {};
-        this.val = val;
-        this.addChild = function(child) {
-          if (Array.isArray(this.child[child.tagname])) {
-            this.child[child.tagname].push(child);
-          } else {
-            this.child[child.tagname] = [child];
-          }
+          return fn.apply(thisArg, args);
         };
       };
     }
   });
 
-  // node_modules/strnum/strnum.js
-  var require_strnum = __commonJS({
-    "node_modules/strnum/strnum.js"(exports, module) {
-      init_define_process();
-      var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
-      var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
-      if (!Number.parseInt && window.parseInt) {
-        Number.parseInt = window.parseInt;
-      }
-      if (!Number.parseFloat && window.parseFloat) {
-        Number.parseFloat = window.parseFloat;
-      }
-      var consider = {
-        hex: true,
-        leadingZeros: true,
-        decimalPoint: ".",
-        eNotation: true
-      };
-      function toNumber(str, options = {}) {
-        options = Object.assign({}, consider, options);
-        if (!str || typeof str !== "string")
-          return str;
-        let trimmedStr = str.trim();
-        if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr))
-          return str;
-        else if (options.hex && hexRegex.test(trimmedStr)) {
-          return Number.parseInt(trimmedStr, 16);
-        } else {
-          const match = numRegex.exec(trimmedStr);
-          if (match) {
-            const sign = match[1];
-            const leadingZeros = match[2];
-            let numTrimmedByZeros = trimZeros(match[3]);
-            const eNotation = match[4] || match[6];
-            if (!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== ".")
-              return str;
-            else if (!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== ".")
-              return str;
-            else {
-              const num = Number(trimmedStr);
-              const numStr = "" + num;
-              if (numStr.search(/[eE]/) !== -1) {
-                if (options.eNotation)
-                  return num;
-                else
-                  return str;
-              } else if (eNotation) {
-                if (options.eNotation)
-                  return num;
-                else
-                  return str;
-              } else if (trimmedStr.indexOf(".") !== -1) {
-                if (numStr === "0" && numTrimmedByZeros === "")
-                  return num;
-                else if (numStr === numTrimmedByZeros)
-                  return num;
-                else if (sign && numStr === "-" + numTrimmedByZeros)
-                  return num;
-                else
-                  return str;
-              }
-              if (leadingZeros) {
-                if (numTrimmedByZeros === numStr)
-                  return num;
-                else if (sign + numTrimmedByZeros === numStr)
-                  return num;
-                else
-                  return str;
-              }
-              if (trimmedStr === numStr)
-                return num;
-              else if (trimmedStr === sign + numStr)
-                return num;
-              return str;
-            }
-          } else {
-            return str;
-          }
-        }
-      }
-      function trimZeros(numStr) {
-        if (numStr && numStr.indexOf(".") !== -1) {
-          numStr = numStr.replace(/0+$/, "");
-          if (numStr === ".")
-            numStr = "0";
-          else if (numStr[0] === ".")
-            numStr = "0" + numStr;
-          else if (numStr[numStr.length - 1] === ".")
-            numStr = numStr.substr(0, numStr.length - 1);
-          return numStr;
-        }
-        return numStr;
-      }
-      module.exports = toNumber;
-    }
-  });
-
-  // node_modules/fast-xml-parser/src/xmlstr2xmlnode.js
-  var require_xmlstr2xmlnode = __commonJS({
-    "node_modules/fast-xml-parser/src/xmlstr2xmlnode.js"(exports) {
+  // node_modules/axios/lib/utils.js
+  var require_utils4 = __commonJS({
+    "node_modules/axios/lib/utils.js"(exports, module) {
       "use strict";
       init_define_process();
-      var util = require_util();
-      var buildOptions = require_util().buildOptions;
-      var xmlNode = require_xmlNode();
-      var toNumber = require_strnum();
-      var regx = "<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)".replace(/NAME/g, util.nameRegexp);
-      if (!Number.parseInt && window.parseInt) {
-        Number.parseInt = window.parseInt;
+      var bind = require_bind();
+      var toString2 = Object.prototype.toString;
+      function isArray(val) {
+        return Array.isArray(val);
       }
-      if (!Number.parseFloat && window.parseFloat) {
-        Number.parseFloat = window.parseFloat;
+      function isUndefined(val) {
+        return typeof val === "undefined";
       }
-      var defaultOptions = {
-        attributeNamePrefix: "@_",
-        attrNodeName: false,
-        textNodeName: "#text",
-        ignoreAttributes: true,
-        ignoreNameSpace: false,
-        allowBooleanAttributes: false,
-        parseNodeValue: true,
-        parseAttributeValue: false,
-        arrayMode: false,
-        trimValues: true,
-        cdataTagName: false,
-        cdataPositionChar: "\\c",
-        numParseOptions: {
-          hex: true,
-          leadingZeros: true
-        },
-        tagValueProcessor: function(a, tagName) {
-          return a;
-        },
-        attrValueProcessor: function(a, attrName) {
-          return a;
-        },
-        stopNodes: [],
-        alwaysCreateTextNode: false
-      };
-      exports.defaultOptions = defaultOptions;
-      var props = [
-        "attributeNamePrefix",
-        "attrNodeName",
-        "textNodeName",
-        "ignoreAttributes",
-        "ignoreNameSpace",
-        "allowBooleanAttributes",
-        "parseNodeValue",
-        "parseAttributeValue",
-        "arrayMode",
-        "trimValues",
-        "cdataTagName",
-        "cdataPositionChar",
-        "tagValueProcessor",
-        "attrValueProcessor",
-        "parseTrueNumberOnly",
-        "numParseOptions",
-        "stopNodes",
-        "alwaysCreateTextNode"
-      ];
-      exports.props = props;
-      function processTagValue(tagName, val, options) {
-        if (val) {
-          if (options.trimValues) {
-            val = val.trim();
-          }
-          val = options.tagValueProcessor(val, tagName);
-          val = parseValue(val, options.parseNodeValue, options.numParseOptions);
-        }
-        return val;
+      function isBuffer(val) {
+        return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor) && typeof val.constructor.isBuffer === "function" && val.constructor.isBuffer(val);
       }
-      function resolveNameSpace(tagname, options) {
-        if (options.ignoreNameSpace) {
-          const tags = tagname.split(":");
-          const prefix = tagname.charAt(0) === "/" ? "/" : "";
-          if (tags[0] === "xmlns") {
-            return "";
-          }
-          if (tags.length === 2) {
-            tagname = prefix + tags[1];
-          }
-        }
-        return tagname;
+      function isArrayBuffer(val) {
+        return toString2.call(val) === "[object ArrayBuffer]";
       }
-      function parseValue(val, shouldParse, options) {
-        if (shouldParse && typeof val === "string") {
-          const newval = val.trim();
-          if (newval === "true")
-            return true;
-          else if (newval === "false")
-            return false;
-          else
-            return toNumber(val, options);
+      function isFormData(val) {
+        return toString2.call(val) === "[object FormData]";
+      }
+      function isArrayBufferView(val) {
+        var result;
+        if (typeof ArrayBuffer !== "undefined" && ArrayBuffer.isView) {
+          result = ArrayBuffer.isView(val);
         } else {
-          if (util.isExist(val)) {
-            return val;
-          } else {
-            return "";
-          }
+          result = val && val.buffer && isArrayBuffer(val.buffer);
         }
+        return result;
       }
-      var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])(.*?)\\3)?`, "g");
-      function buildAttributesMap(attrStr, options) {
-        if (!options.ignoreAttributes && typeof attrStr === "string") {
-          attrStr = attrStr.replace(/\r?\n/g, " ");
-          const matches = util.getAllMatches(attrStr, attrsRegx);
-          const len = matches.length;
-          const attrs = {};
-          for (let i = 0; i < len; i++) {
-            const attrName = resolveNameSpace(matches[i][1], options);
-            if (attrName.length) {
-              if (matches[i][4] !== void 0) {
-                if (options.trimValues) {
-                  matches[i][4] = matches[i][4].trim();
-                }
-                matches[i][4] = options.attrValueProcessor(matches[i][4], attrName);
-                attrs[options.attributeNamePrefix + attrName] = parseValue(matches[i][4], options.parseAttributeValue, options.numParseOptions);
-              } else if (options.allowBooleanAttributes) {
-                attrs[options.attributeNamePrefix + attrName] = true;
-              }
-            }
-          }
-          if (!Object.keys(attrs).length) {
-            return;
-          }
-          if (options.attrNodeName) {
-            const attrCollection = {};
-            attrCollection[options.attrNodeName] = attrs;
-            return attrCollection;
-          }
-          return attrs;
-        }
+      function isString(val) {
+        return typeof val === "string";
       }
-      var getTraversalObj = function(xmlData, options) {
-        xmlData = xmlData.replace(/\r\n?/g, "\n");
-        options = buildOptions(options, defaultOptions, props);
-        const xmlObj = new xmlNode("!xml");
-        let currentNode = xmlObj;
-        let textData = "";
-        for (let i = 0; i < xmlData.length; i++) {
-          const ch = xmlData[i];
-          if (ch === "<") {
-            if (xmlData[i + 1] === "/") {
-              const closeIndex = findClosingIndex(xmlData, ">", i, "Closing Tag is not closed.");
-              let tagName = xmlData.substring(i + 2, closeIndex).trim();
-              if (options.ignoreNameSpace) {
-                const colonIndex = tagName.indexOf(":");
-                if (colonIndex !== -1) {
-                  tagName = tagName.substr(colonIndex + 1);
-                }
-              }
-              if (currentNode) {
-                if (currentNode.val) {
-                  currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(tagName, textData, options);
-                } else {
-                  currentNode.val = processTagValue(tagName, textData, options);
-                }
-              }
-              if (options.stopNodes.length && options.stopNodes.includes(currentNode.tagname)) {
-                currentNode.child = [];
-                if (currentNode.attrsMap == void 0) {
-                  currentNode.attrsMap = {};
-                }
-                currentNode.val = xmlData.substr(currentNode.startIndex + 1, i - currentNode.startIndex - 1);
-              }
-              currentNode = currentNode.parent;
-              textData = "";
-              i = closeIndex;
-            } else if (xmlData[i + 1] === "?") {
-              i = findClosingIndex(xmlData, "?>", i, "Pi Tag is not closed.");
-            } else if (xmlData.substr(i + 1, 3) === "!--") {
-              i = findClosingIndex(xmlData, "-->", i, "Comment is not closed.");
-            } else if (xmlData.substr(i + 1, 2) === "!D") {
-              const closeIndex = findClosingIndex(xmlData, ">", i, "DOCTYPE is not closed.");
-              const tagExp = xmlData.substring(i, closeIndex);
-              if (tagExp.indexOf("[") >= 0) {
-                i = xmlData.indexOf("]>", i) + 1;
-              } else {
-                i = closeIndex;
-              }
-            } else if (xmlData.substr(i + 1, 2) === "![") {
-              const closeIndex = findClosingIndex(xmlData, "]]>", i, "CDATA is not closed.") - 2;
-              const tagExp = xmlData.substring(i + 9, closeIndex);
-              if (textData) {
-                currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(currentNode.tagname, textData, options);
-                textData = "";
-              }
-              if (options.cdataTagName) {
-                const childNode = new xmlNode(options.cdataTagName, currentNode, tagExp);
-                currentNode.addChild(childNode);
-                currentNode.val = util.getValue(currentNode.val) + options.cdataPositionChar;
-                if (tagExp) {
-                  childNode.val = tagExp;
-                }
-              } else {
-                currentNode.val = (currentNode.val || "") + (tagExp || "");
-              }
-              i = closeIndex + 2;
-            } else {
-              const result = closingIndexForOpeningTag(xmlData, i + 1);
-              let tagExp = result.data;
-              const closeIndex = result.index;
-              const separatorIndex = tagExp.indexOf(" ");
-              let tagName = tagExp;
-              let shouldBuildAttributesMap = true;
-              if (separatorIndex !== -1) {
-                tagName = tagExp.substr(0, separatorIndex).replace(/\s\s*$/, "");
-                tagExp = tagExp.substr(separatorIndex + 1);
-              }
-              if (options.ignoreNameSpace) {
-                const colonIndex = tagName.indexOf(":");
-                if (colonIndex !== -1) {
-                  tagName = tagName.substr(colonIndex + 1);
-                  shouldBuildAttributesMap = tagName !== result.data.substr(colonIndex + 1);
-                }
-              }
-              if (currentNode && textData) {
-                if (currentNode.tagname !== "!xml") {
-                  currentNode.val = util.getValue(currentNode.val) + "" + processTagValue(currentNode.tagname, textData, options);
-                }
-              }
-              if (tagExp.length > 0 && tagExp.lastIndexOf("/") === tagExp.length - 1) {
-                if (tagName[tagName.length - 1] === "/") {
-                  tagName = tagName.substr(0, tagName.length - 1);
-                  tagExp = tagName;
-                } else {
-                  tagExp = tagExp.substr(0, tagExp.length - 1);
-                }
-                const childNode = new xmlNode(tagName, currentNode, "");
-                if (tagName !== tagExp) {
-                  childNode.attrsMap = buildAttributesMap(tagExp, options);
-                }
-                currentNode.addChild(childNode);
-              } else {
-                const childNode = new xmlNode(tagName, currentNode);
-                if (options.stopNodes.length && options.stopNodes.includes(childNode.tagname)) {
-                  childNode.startIndex = closeIndex;
-                }
-                if (tagName !== tagExp && shouldBuildAttributesMap) {
-                  childNode.attrsMap = buildAttributesMap(tagExp, options);
-                }
-                currentNode.addChild(childNode);
-                currentNode = childNode;
-              }
-              textData = "";
-              i = closeIndex;
-            }
-          } else {
-            textData += xmlData[i];
-          }
-        }
-        return xmlObj;
-      };
-      function closingIndexForOpeningTag(data, i) {
-        let attrBoundary;
-        let tagExp = "";
-        for (let index = i; index < data.length; index++) {
-          let ch = data[index];
-          if (attrBoundary) {
-            if (ch === attrBoundary)
-              attrBoundary = "";
-          } else if (ch === '"' || ch === "'") {
-            attrBoundary = ch;
-          } else if (ch === ">") {
-            return {
-              data: tagExp,
-              index
-            };
-          } else if (ch === "	") {
-            ch = " ";
-          }
-          tagExp += ch;
-        }
+      function isNumber(val) {
+        return typeof val === "number";
       }
-      function findClosingIndex(xmlData, str, i, errMsg) {
-        const closingIndex = xmlData.indexOf(str, i);
-        if (closingIndex === -1) {
-          throw new Error(errMsg);
-        } else {
-          return closingIndex + str.length - 1;
-        }
+      function isObject(val) {
+        return val !== null && typeof val === "object";
       }
-      exports.getTraversalObj = getTraversalObj;
-    }
-  });
-
-  // node_modules/fast-xml-parser/src/validator.js
-  var require_validator2 = __commonJS({
-    "node_modules/fast-xml-parser/src/validator.js"(exports) {
-      "use strict";
-      init_define_process();
-      var util = require_util();
-      var defaultOptions = {
-        allowBooleanAttributes: false
-      };
-      var props = ["allowBooleanAttributes"];
-      exports.validate = function(xmlData, options) {
-        options = util.buildOptions(options, defaultOptions, props);
-        const tags = [];
-        let tagFound = false;
-        let reachedRoot = false;
-        if (xmlData[0] === "\uFEFF") {
-          xmlData = xmlData.substr(1);
-        }
-        for (let i = 0; i < xmlData.length; i++) {
-          if (xmlData[i] === "<" && xmlData[i + 1] === "?") {
-            i += 2;
-            i = readPI(xmlData, i);
-            if (i.err)
-              return i;
-          } else if (xmlData[i] === "<") {
-            let tagStartPos = i;
-            i++;
-            if (xmlData[i] === "!") {
-              i = readCommentAndCDATA(xmlData, i);
-              continue;
-            } else {
-              let closingTag = false;
-              if (xmlData[i] === "/") {
-                closingTag = true;
-                i++;
-              }
-              let tagName = "";
-              for (; i < xmlData.length && xmlData[i] !== ">" && xmlData[i] !== " " && xmlData[i] !== "	" && xmlData[i] !== "\n" && xmlData[i] !== "\r"; i++) {
-                tagName += xmlData[i];
-              }
-              tagName = tagName.trim();
-              if (tagName[tagName.length - 1] === "/") {
-                tagName = tagName.substring(0, tagName.length - 1);
-                i--;
-              }
-              if (!validateTagName(tagName)) {
-                let msg;
-                if (tagName.trim().length === 0) {
-                  msg = "Invalid space after '<'.";
-                } else {
-                  msg = "Tag '" + tagName + "' is an invalid name.";
-                }
-                return getErrorObject("InvalidTag", msg, getLineNumberForPosition(xmlData, i));
-              }
-              const result = readAttributeStr(xmlData, i);
-              if (result === false) {
-                return getErrorObject("InvalidAttr", "Attributes for '" + tagName + "' have open quote.", getLineNumberForPosition(xmlData, i));
-              }
-              let attrStr = result.value;
-              i = result.index;
-              if (attrStr[attrStr.length - 1] === "/") {
-                const attrStrStart = i - attrStr.length;
-                attrStr = attrStr.substring(0, attrStr.length - 1);
-                const isValid = validateAttributeString(attrStr, options);
-                if (isValid === true) {
-                  tagFound = true;
-                } else {
-                  return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, attrStrStart + isValid.err.line));
-                }
-              } else if (closingTag) {
-                if (!result.tagClosed) {
-                  return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' doesn't have proper closing.", getLineNumberForPosition(xmlData, i));
-                } else if (attrStr.trim().length > 0) {
-                  return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' can't have attributes or invalid starting.", getLineNumberForPosition(xmlData, tagStartPos));
-                } else {
-                  const otg = tags.pop();
-                  if (tagName !== otg.tagName) {
-                    let openPos = getLineNumberForPosition(xmlData, otg.tagStartPos);
-                    return getErrorObject("InvalidTag", "Expected closing tag '" + otg.tagName + "' (opened in line " + openPos.line + ", col " + openPos.col + ") instead of closing tag '" + tagName + "'.", getLineNumberForPosition(xmlData, tagStartPos));
-                  }
-                  if (tags.length == 0) {
-                    reachedRoot = true;
-                  }
-                }
-              } else {
-                const isValid = validateAttributeString(attrStr, options);
-                if (isValid !== true) {
-                  return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, i - attrStr.length + isValid.err.line));
-                }
-                if (reachedRoot === true) {
-                  return getErrorObject("InvalidXml", "Multiple possible root nodes found.", getLineNumberForPosition(xmlData, i));
-                } else {
-                  tags.push({ tagName, tagStartPos });
-                }
-                tagFound = true;
-              }
-              for (i++; i < xmlData.length; i++) {
-                if (xmlData[i] === "<") {
-                  if (xmlData[i + 1] === "!") {
-                    i++;
-                    i = readCommentAndCDATA(xmlData, i);
-                    continue;
-                  } else if (xmlData[i + 1] === "?") {
-                    i = readPI(xmlData, ++i);
-                    if (i.err)
-                      return i;
-                  } else {
-                    break;
-                  }
-                } else if (xmlData[i] === "&") {
-                  const afterAmp = validateAmpersand(xmlData, i);
-                  if (afterAmp == -1)
-                    return getErrorObject("InvalidChar", "char '&' is not expected.", getLineNumberForPosition(xmlData, i));
-                  i = afterAmp;
-                }
-              }
-              if (xmlData[i] === "<") {
-                i--;
-              }
-            }
-          } else {
-            if (xmlData[i] === " " || xmlData[i] === "	" || xmlData[i] === "\n" || xmlData[i] === "\r") {
-              continue;
-            }
-            return getErrorObject("InvalidChar", "char '" + xmlData[i] + "' is not expected.", getLineNumberForPosition(xmlData, i));
-          }
-        }
-        if (!tagFound) {
-          return getErrorObject("InvalidXml", "Start tag expected.", 1);
-        } else if (tags.length == 1) {
-          return getErrorObject("InvalidTag", "Unclosed tag '" + tags[0].tagName + "'.", getLineNumberForPosition(xmlData, tags[0].tagStartPos));
-        } else if (tags.length > 0) {
-          return getErrorObject("InvalidXml", "Invalid '" + JSON.stringify(tags.map((t) => t.tagName), null, 4).replace(/\r?\n/g, "") + "' found.", { line: 1, col: 1 });
-        }
-        return true;
-      };
-      function readPI(xmlData, i) {
-        const start = i;
-        for (; i < xmlData.length; i++) {
-          if (xmlData[i] == "?" || xmlData[i] == " ") {
-            const tagname = xmlData.substr(start, i - start);
-            if (i > 5 && tagname === "xml") {
-              return getErrorObject("InvalidXml", "XML declaration allowed only at the start of the document.", getLineNumberForPosition(xmlData, i));
-            } else if (xmlData[i] == "?" && xmlData[i + 1] == ">") {
-              i++;
-              break;
-            } else {
-              continue;
-            }
-          }
-        }
-        return i;
-      }
-      function readCommentAndCDATA(xmlData, i) {
-        if (xmlData.length > i + 5 && xmlData[i + 1] === "-" && xmlData[i + 2] === "-") {
-          for (i += 3; i < xmlData.length; i++) {
-            if (xmlData[i] === "-" && xmlData[i + 1] === "-" && xmlData[i + 2] === ">") {
-              i += 2;
-              break;
-            }
-          }
-        } else if (xmlData.length > i + 8 && xmlData[i + 1] === "D" && xmlData[i + 2] === "O" && xmlData[i + 3] === "C" && xmlData[i + 4] === "T" && xmlData[i + 5] === "Y" && xmlData[i + 6] === "P" && xmlData[i + 7] === "E") {
-          let angleBracketsCount = 1;
-          for (i += 8; i < xmlData.length; i++) {
-            if (xmlData[i] === "<") {
-              angleBracketsCount++;
-            } else if (xmlData[i] === ">") {
-              angleBracketsCount--;
-              if (angleBracketsCount === 0) {
-                break;
-              }
-            }
-          }
-        } else if (xmlData.length > i + 9 && xmlData[i + 1] === "[" && xmlData[i + 2] === "C" && xmlData[i + 3] === "D" && xmlData[i + 4] === "A" && xmlData[i + 5] === "T" && xmlData[i + 6] === "A" && xmlData[i + 7] === "[") {
-          for (i += 8; i < xmlData.length; i++) {
-            if (xmlData[i] === "]" && xmlData[i + 1] === "]" && xmlData[i + 2] === ">") {
-              i += 2;
-              break;
-            }
-          }
-        }
-        return i;
-      }
-      var doubleQuote = '"';
-      var singleQuote = "'";
-      function readAttributeStr(xmlData, i) {
-        let attrStr = "";
-        let startChar = "";
-        let tagClosed = false;
-        for (; i < xmlData.length; i++) {
-          if (xmlData[i] === doubleQuote || xmlData[i] === singleQuote) {
-            if (startChar === "") {
-              startChar = xmlData[i];
-            } else if (startChar !== xmlData[i]) {
-            } else {
-              startChar = "";
-            }
-          } else if (xmlData[i] === ">") {
-            if (startChar === "") {
-              tagClosed = true;
-              break;
-            }
-          }
-          attrStr += xmlData[i];
-        }
-        if (startChar !== "") {
+      function isPlainObject(val) {
+        if (toString2.call(val) !== "[object Object]") {
           return false;
         }
-        return {
-          value: attrStr,
-          index: i,
-          tagClosed
-        };
+        var prototype = Object.getPrototypeOf(val);
+        return prototype === null || prototype === Object.prototype;
       }
-      var validAttrStrRegxp = new RegExp(`(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['"])(([\\s\\S])*?)\\5)?`, "g");
-      function validateAttributeString(attrStr, options) {
-        const matches = util.getAllMatches(attrStr, validAttrStrRegxp);
-        const attrNames = {};
-        for (let i = 0; i < matches.length; i++) {
-          if (matches[i][1].length === 0) {
-            return getErrorObject("InvalidAttr", "Attribute '" + matches[i][2] + "' has no space in starting.", getPositionFromMatch(matches[i]));
-          } else if (matches[i][3] === void 0 && !options.allowBooleanAttributes) {
-            return getErrorObject("InvalidAttr", "boolean attribute '" + matches[i][2] + "' is not allowed.", getPositionFromMatch(matches[i]));
+      function isDate(val) {
+        return toString2.call(val) === "[object Date]";
+      }
+      function isFile(val) {
+        return toString2.call(val) === "[object File]";
+      }
+      function isBlob(val) {
+        return toString2.call(val) === "[object Blob]";
+      }
+      function isFunction(val) {
+        return toString2.call(val) === "[object Function]";
+      }
+      function isStream(val) {
+        return isObject(val) && isFunction(val.pipe);
+      }
+      function isURLSearchParams(val) {
+        return toString2.call(val) === "[object URLSearchParams]";
+      }
+      function trim(str) {
+        return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, "");
+      }
+      function isStandardBrowserEnv() {
+        if (typeof navigator !== "undefined" && (navigator.product === "ReactNative" || navigator.product === "NativeScript" || navigator.product === "NS")) {
+          return false;
+        }
+        return typeof window !== "undefined" && typeof document !== "undefined";
+      }
+      function forEach(obj, fn) {
+        if (obj === null || typeof obj === "undefined") {
+          return;
+        }
+        if (typeof obj !== "object") {
+          obj = [obj];
+        }
+        if (isArray(obj)) {
+          for (var i = 0, l = obj.length; i < l; i++) {
+            fn.call(null, obj[i], i, obj);
           }
-          const attrName = matches[i][2];
-          if (!validateAttrName(attrName)) {
-            return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is an invalid name.", getPositionFromMatch(matches[i]));
+        } else {
+          for (var key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+              fn.call(null, obj[key], key, obj);
+            }
           }
-          if (!attrNames.hasOwnProperty(attrName)) {
-            attrNames[attrName] = 1;
+        }
+      }
+      function merge() {
+        var result = {};
+        function assignValue(val, key) {
+          if (isPlainObject(result[key]) && isPlainObject(val)) {
+            result[key] = merge(result[key], val);
+          } else if (isPlainObject(val)) {
+            result[key] = merge({}, val);
+          } else if (isArray(val)) {
+            result[key] = val.slice();
           } else {
-            return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is repeated.", getPositionFromMatch(matches[i]));
+            result[key] = val;
           }
         }
-        return true;
+        for (var i = 0, l = arguments.length; i < l; i++) {
+          forEach(arguments[i], assignValue);
+        }
+        return result;
       }
-      function validateNumberAmpersand(xmlData, i) {
-        let re = /\d/;
-        if (xmlData[i] === "x") {
-          i++;
-          re = /[\da-fA-F]/;
-        }
-        for (; i < xmlData.length; i++) {
-          if (xmlData[i] === ";")
-            return i;
-          if (!xmlData[i].match(re))
-            break;
-        }
-        return -1;
-      }
-      function validateAmpersand(xmlData, i) {
-        i++;
-        if (xmlData[i] === ";")
-          return -1;
-        if (xmlData[i] === "#") {
-          i++;
-          return validateNumberAmpersand(xmlData, i);
-        }
-        let count = 0;
-        for (; i < xmlData.length; i++, count++) {
-          if (xmlData[i].match(/\w/) && count < 20)
-            continue;
-          if (xmlData[i] === ";")
-            break;
-          return -1;
-        }
-        return i;
-      }
-      function getErrorObject(code, message, lineNumber) {
-        return {
-          err: {
-            code,
-            msg: message,
-            line: lineNumber.line || lineNumber,
-            col: lineNumber.col
+      function extend(a, b, thisArg) {
+        forEach(b, function assignValue(val, key) {
+          if (thisArg && typeof val === "function") {
+            a[key] = bind(val, thisArg);
+          } else {
+            a[key] = val;
           }
-        };
+        });
+        return a;
       }
-      function validateAttrName(attrName) {
-        return util.isName(attrName);
+      function stripBOM(content) {
+        if (content.charCodeAt(0) === 65279) {
+          content = content.slice(1);
+        }
+        return content;
       }
-      function validateTagName(tagname) {
-        return util.isName(tagname);
-      }
-      function getLineNumberForPosition(xmlData, index) {
-        const lines = xmlData.substring(0, index).split(/\r?\n/);
-        return {
-          line: lines.length,
-          col: lines[lines.length - 1].length + 1
-        };
-      }
-      function getPositionFromMatch(match) {
-        return match.startIndex + match[1].length;
-      }
+      module.exports = {
+        isArray,
+        isArrayBuffer,
+        isBuffer,
+        isFormData,
+        isArrayBufferView,
+        isString,
+        isNumber,
+        isObject,
+        isPlainObject,
+        isUndefined,
+        isDate,
+        isFile,
+        isBlob,
+        isFunction,
+        isStream,
+        isURLSearchParams,
+        isStandardBrowserEnv,
+        forEach,
+        merge,
+        extend,
+        trim,
+        stripBOM
+      };
     }
   });
 
-  // node_modules/fast-xml-parser/src/nimndata.js
-  var require_nimndata = __commonJS({
-    "node_modules/fast-xml-parser/src/nimndata.js"(exports) {
+  // node_modules/axios/lib/helpers/buildURL.js
+  var require_buildURL = __commonJS({
+    "node_modules/axios/lib/helpers/buildURL.js"(exports, module) {
       "use strict";
       init_define_process();
-      var char = function(a) {
-        return String.fromCharCode(a);
-      };
-      var chars = {
-        nilChar: char(176),
-        missingChar: char(201),
-        nilPremitive: char(175),
-        missingPremitive: char(200),
-        emptyChar: char(178),
-        emptyValue: char(177),
-        boundryChar: char(179),
-        objStart: char(198),
-        arrStart: char(204),
-        arrayEnd: char(185)
-      };
-      var charsArr = [
-        chars.nilChar,
-        chars.nilPremitive,
-        chars.missingChar,
-        chars.missingPremitive,
-        chars.boundryChar,
-        chars.emptyChar,
-        chars.emptyValue,
-        chars.arrayEnd,
-        chars.objStart,
-        chars.arrStart
-      ];
-      var _e = function(node, e_schema, options) {
-        if (typeof e_schema === "string") {
-          if (node && node[0] && node[0].val !== void 0) {
-            return getValue(node[0].val, e_schema);
-          } else {
-            return getValue(node, e_schema);
-          }
+      var utils = require_utils4();
+      function encode3(val) {
+        return encodeURIComponent(val).replace(/%3A/gi, ":").replace(/%24/g, "$").replace(/%2C/gi, ",").replace(/%20/g, "+").replace(/%5B/gi, "[").replace(/%5D/gi, "]");
+      }
+      module.exports = function buildURL(url, params, paramsSerializer) {
+        if (!params) {
+          return url;
+        }
+        var serializedParams;
+        if (paramsSerializer) {
+          serializedParams = paramsSerializer(params);
+        } else if (utils.isURLSearchParams(params)) {
+          serializedParams = params.toString();
         } else {
-          const hasValidData = hasData(node);
-          if (hasValidData === true) {
-            let str = "";
-            if (Array.isArray(e_schema)) {
-              str += chars.arrStart;
-              const itemSchema = e_schema[0];
-              const arr_len = node.length;
-              if (typeof itemSchema === "string") {
-                for (let arr_i = 0; arr_i < arr_len; arr_i++) {
-                  const r = getValue(node[arr_i].val, itemSchema);
-                  str = processValue(str, r);
-                }
-              } else {
-                for (let arr_i = 0; arr_i < arr_len; arr_i++) {
-                  const r = _e(node[arr_i], itemSchema, options);
-                  str = processValue(str, r);
-                }
-              }
-              str += chars.arrayEnd;
-            } else {
-              str += chars.objStart;
-              const keys = Object.keys(e_schema);
-              if (Array.isArray(node)) {
-                node = node[0];
-              }
-              for (let i in keys) {
-                const key = keys[i];
-                let r;
-                if (!options.ignoreAttributes && node.attrsMap && node.attrsMap[key]) {
-                  r = _e(node.attrsMap[key], e_schema[key], options);
-                } else if (key === options.textNodeName) {
-                  r = _e(node.val, e_schema[key], options);
-                } else {
-                  r = _e(node.child[key], e_schema[key], options);
-                }
-                str = processValue(str, r);
-              }
+          var parts = [];
+          utils.forEach(params, function serialize(val, key) {
+            if (val === null || typeof val === "undefined") {
+              return;
             }
-            return str;
-          } else {
-            return hasValidData;
+            if (utils.isArray(val)) {
+              key = key + "[]";
+            } else {
+              val = [val];
+            }
+            utils.forEach(val, function parseValue(v) {
+              if (utils.isDate(v)) {
+                v = v.toISOString();
+              } else if (utils.isObject(v)) {
+                v = JSON.stringify(v);
+              }
+              parts.push(encode3(key) + "=" + encode3(v));
+            });
+          });
+          serializedParams = parts.join("&");
+        }
+        if (serializedParams) {
+          var hashmarkIndex = url.indexOf("#");
+          if (hashmarkIndex !== -1) {
+            url = url.slice(0, hashmarkIndex);
           }
+          url += (url.indexOf("?") === -1 ? "?" : "&") + serializedParams;
+        }
+        return url;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/core/InterceptorManager.js
+  var require_InterceptorManager = __commonJS({
+    "node_modules/axios/lib/core/InterceptorManager.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      function InterceptorManager() {
+        this.handlers = [];
+      }
+      InterceptorManager.prototype.use = function use(fulfilled, rejected, options) {
+        this.handlers.push({
+          fulfilled,
+          rejected,
+          synchronous: options ? options.synchronous : false,
+          runWhen: options ? options.runWhen : null
+        });
+        return this.handlers.length - 1;
+      };
+      InterceptorManager.prototype.eject = function eject(id) {
+        if (this.handlers[id]) {
+          this.handlers[id] = null;
         }
       };
-      var getValue = function(a) {
-        switch (a) {
-          case void 0:
-            return chars.missingPremitive;
-          case null:
-            return chars.nilPremitive;
-          case "":
-            return chars.emptyValue;
-          default:
-            return a;
+      InterceptorManager.prototype.forEach = function forEach(fn) {
+        utils.forEach(this.handlers, function forEachHandler(h) {
+          if (h !== null) {
+            fn(h);
+          }
+        });
+      };
+      module.exports = InterceptorManager;
+    }
+  });
+
+  // node_modules/axios/lib/helpers/normalizeHeaderName.js
+  var require_normalizeHeaderName = __commonJS({
+    "node_modules/axios/lib/helpers/normalizeHeaderName.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      module.exports = function normalizeHeaderName(headers, normalizedName) {
+        utils.forEach(headers, function processHeader(value, name) {
+          if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
+            headers[normalizedName] = value;
+            delete headers[name];
+          }
+        });
+      };
+    }
+  });
+
+  // node_modules/axios/lib/core/enhanceError.js
+  var require_enhanceError = __commonJS({
+    "node_modules/axios/lib/core/enhanceError.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      module.exports = function enhanceError(error, config, code, request, response) {
+        error.config = config;
+        if (code) {
+          error.code = code;
         }
+        error.request = request;
+        error.response = response;
+        error.isAxiosError = true;
+        error.toJSON = function toJSON() {
+          return {
+            message: this.message,
+            name: this.name,
+            description: this.description,
+            number: this.number,
+            fileName: this.fileName,
+            lineNumber: this.lineNumber,
+            columnNumber: this.columnNumber,
+            stack: this.stack,
+            config: this.config,
+            code: this.code,
+            status: this.response && this.response.status ? this.response.status : null
+          };
+        };
+        return error;
       };
-      var processValue = function(str, r) {
-        if (!isAppChar(r[0]) && !isAppChar(str[str.length - 1])) {
-          str += chars.boundryChar;
-        }
-        return str + r;
+    }
+  });
+
+  // node_modules/axios/lib/core/createError.js
+  var require_createError = __commonJS({
+    "node_modules/axios/lib/core/createError.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var enhanceError = require_enhanceError();
+      module.exports = function createError(message, config, code, request, response) {
+        var error = new Error(message);
+        return enhanceError(error, config, code, request, response);
       };
-      var isAppChar = function(ch) {
-        return charsArr.indexOf(ch) !== -1;
-      };
-      function hasData(jObj) {
-        if (jObj === void 0) {
-          return chars.missingChar;
-        } else if (jObj === null) {
-          return chars.nilChar;
-        } else if (jObj.child && Object.keys(jObj.child).length === 0 && (!jObj.attrsMap || Object.keys(jObj.attrsMap).length === 0)) {
-          return chars.emptyChar;
+    }
+  });
+
+  // node_modules/axios/lib/core/settle.js
+  var require_settle = __commonJS({
+    "node_modules/axios/lib/core/settle.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var createError = require_createError();
+      module.exports = function settle(resolve, reject, response) {
+        var validateStatus = response.config.validateStatus;
+        if (!response.status || !validateStatus || validateStatus(response.status)) {
+          resolve(response);
         } else {
+          reject(createError("Request failed with status code " + response.status, response.config, null, response.request, response));
+        }
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/cookies.js
+  var require_cookies = __commonJS({
+    "node_modules/axios/lib/helpers/cookies.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
+        return {
+          write: function write(name, value, expires, path, domain, secure) {
+            var cookie = [];
+            cookie.push(name + "=" + encodeURIComponent(value));
+            if (utils.isNumber(expires)) {
+              cookie.push("expires=" + new Date(expires).toGMTString());
+            }
+            if (utils.isString(path)) {
+              cookie.push("path=" + path);
+            }
+            if (utils.isString(domain)) {
+              cookie.push("domain=" + domain);
+            }
+            if (secure === true) {
+              cookie.push("secure");
+            }
+            document.cookie = cookie.join("; ");
+          },
+          read: function read2(name) {
+            var match = document.cookie.match(new RegExp("(^|;\\s*)(" + name + ")=([^;]*)"));
+            return match ? decodeURIComponent(match[3]) : null;
+          },
+          remove: function remove(name) {
+            this.write(name, "", Date.now() - 864e5);
+          }
+        };
+      }() : function nonStandardBrowserEnv() {
+        return {
+          write: function write() {
+          },
+          read: function read2() {
+            return null;
+          },
+          remove: function remove() {
+          }
+        };
+      }();
+    }
+  });
+
+  // node_modules/axios/lib/helpers/isAbsoluteURL.js
+  var require_isAbsoluteURL = __commonJS({
+    "node_modules/axios/lib/helpers/isAbsoluteURL.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      module.exports = function isAbsoluteURL(url) {
+        return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/combineURLs.js
+  var require_combineURLs = __commonJS({
+    "node_modules/axios/lib/helpers/combineURLs.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      module.exports = function combineURLs(baseURL, relativeURL) {
+        return relativeURL ? baseURL.replace(/\/+$/, "") + "/" + relativeURL.replace(/^\/+/, "") : baseURL;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/core/buildFullPath.js
+  var require_buildFullPath = __commonJS({
+    "node_modules/axios/lib/core/buildFullPath.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var isAbsoluteURL = require_isAbsoluteURL();
+      var combineURLs = require_combineURLs();
+      module.exports = function buildFullPath(baseURL, requestedURL) {
+        if (baseURL && !isAbsoluteURL(requestedURL)) {
+          return combineURLs(baseURL, requestedURL);
+        }
+        return requestedURL;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/parseHeaders.js
+  var require_parseHeaders = __commonJS({
+    "node_modules/axios/lib/helpers/parseHeaders.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      var ignoreDuplicateOf = [
+        "age",
+        "authorization",
+        "content-length",
+        "content-type",
+        "etag",
+        "expires",
+        "from",
+        "host",
+        "if-modified-since",
+        "if-unmodified-since",
+        "last-modified",
+        "location",
+        "max-forwards",
+        "proxy-authorization",
+        "referer",
+        "retry-after",
+        "user-agent"
+      ];
+      module.exports = function parseHeaders(headers) {
+        var parsed = {};
+        var key;
+        var val;
+        var i;
+        if (!headers) {
+          return parsed;
+        }
+        utils.forEach(headers.split("\n"), function parser(line) {
+          i = line.indexOf(":");
+          key = utils.trim(line.substr(0, i)).toLowerCase();
+          val = utils.trim(line.substr(i + 1));
+          if (key) {
+            if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
+              return;
+            }
+            if (key === "set-cookie") {
+              parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
+            } else {
+              parsed[key] = parsed[key] ? parsed[key] + ", " + val : val;
+            }
+          }
+        });
+        return parsed;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/isURLSameOrigin.js
+  var require_isURLSameOrigin = __commonJS({
+    "node_modules/axios/lib/helpers/isURLSameOrigin.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      module.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
+        var msie = /(msie|trident)/i.test(navigator.userAgent);
+        var urlParsingNode = document.createElement("a");
+        var originURL;
+        function resolveURL(url) {
+          var href = url;
+          if (msie) {
+            urlParsingNode.setAttribute("href", href);
+            href = urlParsingNode.href;
+          }
+          urlParsingNode.setAttribute("href", href);
+          return {
+            href: urlParsingNode.href,
+            protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, "") : "",
+            host: urlParsingNode.host,
+            search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, "") : "",
+            hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, "") : "",
+            hostname: urlParsingNode.hostname,
+            port: urlParsingNode.port,
+            pathname: urlParsingNode.pathname.charAt(0) === "/" ? urlParsingNode.pathname : "/" + urlParsingNode.pathname
+          };
+        }
+        originURL = resolveURL(window.location.href);
+        return function isURLSameOrigin(requestURL) {
+          var parsed = utils.isString(requestURL) ? resolveURL(requestURL) : requestURL;
+          return parsed.protocol === originURL.protocol && parsed.host === originURL.host;
+        };
+      }() : function nonStandardBrowserEnv() {
+        return function isURLSameOrigin() {
           return true;
-        }
-      }
-      var x2j = require_xmlstr2xmlnode();
-      var buildOptions = require_util().buildOptions;
-      var convert2nimn = function(node, e_schema, options) {
-        options = buildOptions(options, x2j.defaultOptions, x2j.props);
-        return _e(node, e_schema, options);
-      };
-      exports.convert2nimn = convert2nimn;
+        };
+      }();
     }
   });
 
-  // node_modules/fast-xml-parser/src/node2json_str.js
-  var require_node2json_str = __commonJS({
-    "node_modules/fast-xml-parser/src/node2json_str.js"(exports) {
+  // node_modules/axios/lib/cancel/Cancel.js
+  var require_Cancel = __commonJS({
+    "node_modules/axios/lib/cancel/Cancel.js"(exports, module) {
       "use strict";
       init_define_process();
-      var util = require_util();
-      var buildOptions = require_util().buildOptions;
-      var x2j = require_xmlstr2xmlnode();
-      var convertToJsonString = function(node, options) {
-        options = buildOptions(options, x2j.defaultOptions, x2j.props);
-        options.indentBy = options.indentBy || "";
-        return _cToJsonStr(node, options, 0);
+      function Cancel(message) {
+        this.message = message;
+      }
+      Cancel.prototype.toString = function toString2() {
+        return "Cancel" + (this.message ? ": " + this.message : "");
       };
-      var _cToJsonStr = function(node, options, level) {
-        let jObj = "{";
-        const keys = Object.keys(node.child);
-        for (let index = 0; index < keys.length; index++) {
-          const tagname = keys[index];
-          if (node.child[tagname] && node.child[tagname].length > 1) {
-            jObj += '"' + tagname + '" : [ ';
-            for (let tag in node.child[tagname]) {
-              jObj += _cToJsonStr(node.child[tagname][tag], options) + " , ";
+      Cancel.prototype.__CANCEL__ = true;
+      module.exports = Cancel;
+    }
+  });
+
+  // node_modules/axios/lib/adapters/xhr.js
+  var require_xhr = __commonJS({
+    "node_modules/axios/lib/adapters/xhr.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      var settle = require_settle();
+      var cookies = require_cookies();
+      var buildURL = require_buildURL();
+      var buildFullPath = require_buildFullPath();
+      var parseHeaders = require_parseHeaders();
+      var isURLSameOrigin = require_isURLSameOrigin();
+      var createError = require_createError();
+      var defaults = require_defaults();
+      var Cancel = require_Cancel();
+      module.exports = function xhrAdapter(config) {
+        return new Promise(function dispatchXhrRequest(resolve, reject) {
+          var requestData = config.data;
+          var requestHeaders = config.headers;
+          var responseType = config.responseType;
+          var onCanceled;
+          function done() {
+            if (config.cancelToken) {
+              config.cancelToken.unsubscribe(onCanceled);
             }
-            jObj = jObj.substr(0, jObj.length - 1) + " ] ";
+            if (config.signal) {
+              config.signal.removeEventListener("abort", onCanceled);
+            }
+          }
+          if (utils.isFormData(requestData)) {
+            delete requestHeaders["Content-Type"];
+          }
+          var request = new XMLHttpRequest();
+          if (config.auth) {
+            var username = config.auth.username || "";
+            var password = config.auth.password ? unescape(encodeURIComponent(config.auth.password)) : "";
+            requestHeaders.Authorization = "Basic " + btoa(username + ":" + password);
+          }
+          var fullPath = buildFullPath(config.baseURL, config.url);
+          request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
+          request.timeout = config.timeout;
+          function onloadend() {
+            if (!request) {
+              return;
+            }
+            var responseHeaders = "getAllResponseHeaders" in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+            var responseData = !responseType || responseType === "text" || responseType === "json" ? request.responseText : request.response;
+            var response = {
+              data: responseData,
+              status: request.status,
+              statusText: request.statusText,
+              headers: responseHeaders,
+              config,
+              request
+            };
+            settle(function _resolve(value) {
+              resolve(value);
+              done();
+            }, function _reject(err) {
+              reject(err);
+              done();
+            }, response);
+            request = null;
+          }
+          if ("onloadend" in request) {
+            request.onloadend = onloadend;
           } else {
-            jObj += '"' + tagname + '" : ' + _cToJsonStr(node.child[tagname][0], options) + " ,";
+            request.onreadystatechange = function handleLoad() {
+              if (!request || request.readyState !== 4) {
+                return;
+              }
+              if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf("file:") === 0)) {
+                return;
+              }
+              setTimeout(onloadend);
+            };
           }
-        }
-        util.merge(jObj, node.attrsMap);
-        if (util.isEmptyObject(jObj)) {
-          return util.isExist(node.val) ? node.val : "";
-        } else {
-          if (util.isExist(node.val)) {
-            if (!(typeof node.val === "string" && (node.val === "" || node.val === options.cdataPositionChar))) {
-              jObj += '"' + options.textNodeName + '" : ' + stringval(node.val);
+          request.onabort = function handleAbort() {
+            if (!request) {
+              return;
+            }
+            reject(createError("Request aborted", config, "ECONNABORTED", request));
+            request = null;
+          };
+          request.onerror = function handleError() {
+            reject(createError("Network Error", config, null, request));
+            request = null;
+          };
+          request.ontimeout = function handleTimeout() {
+            var timeoutErrorMessage = config.timeout ? "timeout of " + config.timeout + "ms exceeded" : "timeout exceeded";
+            var transitional = config.transitional || defaults.transitional;
+            if (config.timeoutErrorMessage) {
+              timeoutErrorMessage = config.timeoutErrorMessage;
+            }
+            reject(createError(timeoutErrorMessage, config, transitional.clarifyTimeoutError ? "ETIMEDOUT" : "ECONNABORTED", request));
+            request = null;
+          };
+          if (utils.isStandardBrowserEnv()) {
+            var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ? cookies.read(config.xsrfCookieName) : void 0;
+            if (xsrfValue) {
+              requestHeaders[config.xsrfHeaderName] = xsrfValue;
             }
           }
-        }
-        if (jObj[jObj.length - 1] === ",") {
-          jObj = jObj.substr(0, jObj.length - 2);
-        }
-        return jObj + "}";
+          if ("setRequestHeader" in request) {
+            utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+              if (typeof requestData === "undefined" && key.toLowerCase() === "content-type") {
+                delete requestHeaders[key];
+              } else {
+                request.setRequestHeader(key, val);
+              }
+            });
+          }
+          if (!utils.isUndefined(config.withCredentials)) {
+            request.withCredentials = !!config.withCredentials;
+          }
+          if (responseType && responseType !== "json") {
+            request.responseType = config.responseType;
+          }
+          if (typeof config.onDownloadProgress === "function") {
+            request.addEventListener("progress", config.onDownloadProgress);
+          }
+          if (typeof config.onUploadProgress === "function" && request.upload) {
+            request.upload.addEventListener("progress", config.onUploadProgress);
+          }
+          if (config.cancelToken || config.signal) {
+            onCanceled = function(cancel) {
+              if (!request) {
+                return;
+              }
+              reject(!cancel || cancel && cancel.type ? new Cancel("canceled") : cancel);
+              request.abort();
+              request = null;
+            };
+            config.cancelToken && config.cancelToken.subscribe(onCanceled);
+            if (config.signal) {
+              config.signal.aborted ? onCanceled() : config.signal.addEventListener("abort", onCanceled);
+            }
+          }
+          if (!requestData) {
+            requestData = null;
+          }
+          request.send(requestData);
+        });
       };
-      function stringval(v) {
-        if (v === true || v === false || !isNaN(v)) {
-          return v;
-        } else {
-          return '"' + v + '"';
-        }
-      }
-      exports.convertToJsonString = convertToJsonString;
     }
   });
 
-  // node_modules/fast-xml-parser/src/json2xml.js
-  var require_json2xml = __commonJS({
-    "node_modules/fast-xml-parser/src/json2xml.js"(exports, module) {
+  // node_modules/axios/lib/defaults.js
+  var require_defaults = __commonJS({
+    "node_modules/axios/lib/defaults.js"(exports, module) {
       "use strict";
       init_define_process();
-      var buildOptions = require_util().buildOptions;
-      var defaultOptions = {
-        attributeNamePrefix: "@_",
-        attrNodeName: false,
-        textNodeName: "#text",
-        ignoreAttributes: true,
-        cdataTagName: false,
-        cdataPositionChar: "\\c",
-        format: false,
-        indentBy: "  ",
-        supressEmptyNode: false,
-        tagValueProcessor: function(a) {
-          return a;
+      var utils = require_utils4();
+      var normalizeHeaderName = require_normalizeHeaderName();
+      var enhanceError = require_enhanceError();
+      var DEFAULT_CONTENT_TYPE = {
+        "Content-Type": "application/x-www-form-urlencoded"
+      };
+      function setContentTypeIfUnset(headers, value) {
+        if (!utils.isUndefined(headers) && utils.isUndefined(headers["Content-Type"])) {
+          headers["Content-Type"] = value;
+        }
+      }
+      function getDefaultAdapter() {
+        var adapter;
+        if (typeof XMLHttpRequest !== "undefined") {
+          adapter = require_xhr();
+        } else if (typeof define_process_default !== "undefined" && Object.prototype.toString.call(define_process_default) === "[object process]") {
+          adapter = require_xhr();
+        }
+        return adapter;
+      }
+      function stringifySafely(rawValue, parser, encoder) {
+        if (utils.isString(rawValue)) {
+          try {
+            (parser || JSON.parse)(rawValue);
+            return utils.trim(rawValue);
+          } catch (e) {
+            if (e.name !== "SyntaxError") {
+              throw e;
+            }
+          }
+        }
+        return (encoder || JSON.stringify)(rawValue);
+      }
+      var defaults = {
+        transitional: {
+          silentJSONParsing: true,
+          forcedJSONParsing: true,
+          clarifyTimeoutError: false
         },
-        attrValueProcessor: function(a) {
-          return a;
-        }
-      };
-      var props = [
-        "attributeNamePrefix",
-        "attrNodeName",
-        "textNodeName",
-        "ignoreAttributes",
-        "cdataTagName",
-        "cdataPositionChar",
-        "format",
-        "indentBy",
-        "supressEmptyNode",
-        "tagValueProcessor",
-        "attrValueProcessor",
-        "rootNodeName"
-      ];
-      function Parser(options) {
-        this.options = buildOptions(options, defaultOptions, props);
-        if (this.options.ignoreAttributes || this.options.attrNodeName) {
-          this.isAttribute = function() {
-            return false;
-          };
-        } else {
-          this.attrPrefixLen = this.options.attributeNamePrefix.length;
-          this.isAttribute = isAttribute;
-        }
-        if (this.options.cdataTagName) {
-          this.isCDATA = isCDATA;
-        } else {
-          this.isCDATA = function() {
-            return false;
-          };
-        }
-        this.replaceCDATAstr = replaceCDATAstr;
-        this.replaceCDATAarr = replaceCDATAarr;
-        this.processTextOrObjNode = processTextOrObjNode;
-        if (this.options.format) {
-          this.indentate = indentate;
-          this.tagEndChar = ">\n";
-          this.newLine = "\n";
-        } else {
-          this.indentate = function() {
-            return "";
-          };
-          this.tagEndChar = ">";
-          this.newLine = "";
-        }
-        if (this.options.supressEmptyNode) {
-          this.buildTextNode = buildEmptyTextNode;
-          this.buildObjNode = buildEmptyObjNode;
-        } else {
-          this.buildTextNode = buildTextValNode;
-          this.buildObjNode = buildObjectNode;
-        }
-        this.buildTextValNode = buildTextValNode;
-        this.buildObjectNode = buildObjectNode;
-      }
-      Parser.prototype.parse = function(jObj) {
-        if (Array.isArray(jObj) && this.options.rootNodeName && this.options.rootNodeName.length > 1) {
-          jObj = {
-            [this.options.rootNodeName]: jObj
-          };
-        }
-        return this.j2x(jObj, 0).val;
-      };
-      Parser.prototype.j2x = function(jObj, level) {
-        let attrStr = "";
-        let val = "";
-        for (let key in jObj) {
-          if (typeof jObj[key] === "undefined") {
-          } else if (jObj[key] === null) {
-            val += this.indentate(level) + "<" + key + "/" + this.tagEndChar;
-          } else if (jObj[key] instanceof Date) {
-            val += this.buildTextNode(jObj[key], key, "", level);
-          } else if (typeof jObj[key] !== "object") {
-            const attr = this.isAttribute(key);
-            if (attr) {
-              attrStr += " " + attr + '="' + this.options.attrValueProcessor("" + jObj[key]) + '"';
-            } else if (this.isCDATA(key)) {
-              if (jObj[this.options.textNodeName]) {
-                val += this.replaceCDATAstr(jObj[this.options.textNodeName], jObj[key]);
-              } else {
-                val += this.replaceCDATAstr("", jObj[key]);
-              }
-            } else {
-              if (key === this.options.textNodeName) {
-                if (jObj[this.options.cdataTagName]) {
-                } else {
-                  val += this.options.tagValueProcessor("" + jObj[key]);
+        adapter: getDefaultAdapter(),
+        transformRequest: [function transformRequest(data, headers) {
+          normalizeHeaderName(headers, "Accept");
+          normalizeHeaderName(headers, "Content-Type");
+          if (utils.isFormData(data) || utils.isArrayBuffer(data) || utils.isBuffer(data) || utils.isStream(data) || utils.isFile(data) || utils.isBlob(data)) {
+            return data;
+          }
+          if (utils.isArrayBufferView(data)) {
+            return data.buffer;
+          }
+          if (utils.isURLSearchParams(data)) {
+            setContentTypeIfUnset(headers, "application/x-www-form-urlencoded;charset=utf-8");
+            return data.toString();
+          }
+          if (utils.isObject(data) || headers && headers["Content-Type"] === "application/json") {
+            setContentTypeIfUnset(headers, "application/json");
+            return stringifySafely(data);
+          }
+          return data;
+        }],
+        transformResponse: [function transformResponse(data) {
+          var transitional = this.transitional || defaults.transitional;
+          var silentJSONParsing = transitional && transitional.silentJSONParsing;
+          var forcedJSONParsing = transitional && transitional.forcedJSONParsing;
+          var strictJSONParsing = !silentJSONParsing && this.responseType === "json";
+          if (strictJSONParsing || forcedJSONParsing && utils.isString(data) && data.length) {
+            try {
+              return JSON.parse(data);
+            } catch (e) {
+              if (strictJSONParsing) {
+                if (e.name === "SyntaxError") {
+                  throw enhanceError(e, this, "E_JSON_PARSE");
                 }
-              } else {
-                val += this.buildTextNode(jObj[key], key, "", level);
+                throw e;
               }
-            }
-          } else if (Array.isArray(jObj[key])) {
-            if (this.isCDATA(key)) {
-              val += this.indentate(level);
-              if (jObj[this.options.textNodeName]) {
-                val += this.replaceCDATAarr(jObj[this.options.textNodeName], jObj[key]);
-              } else {
-                val += this.replaceCDATAarr("", jObj[key]);
-              }
-            } else {
-              const arrLen = jObj[key].length;
-              for (let j = 0; j < arrLen; j++) {
-                const item = jObj[key][j];
-                if (typeof item === "undefined") {
-                } else if (item === null) {
-                  val += this.indentate(level) + "<" + key + "/" + this.tagEndChar;
-                } else if (typeof item === "object") {
-                  val += this.processTextOrObjNode(item, key, level);
-                } else {
-                  val += this.buildTextNode(item, key, "", level);
-                }
-              }
-            }
-          } else {
-            if (this.options.attrNodeName && key === this.options.attrNodeName) {
-              const Ks = Object.keys(jObj[key]);
-              const L = Ks.length;
-              for (let j = 0; j < L; j++) {
-                attrStr += " " + Ks[j] + '="' + this.options.attrValueProcessor("" + jObj[key][Ks[j]]) + '"';
-              }
-            } else {
-              val += this.processTextOrObjNode(jObj[key], key, level);
             }
           }
-        }
-        return { attrStr, val };
-      };
-      function processTextOrObjNode(object, key, level) {
-        const result = this.j2x(object, level + 1);
-        if (object[this.options.textNodeName] !== void 0 && Object.keys(object).length === 1) {
-          return this.buildTextNode(result.val, key, result.attrStr, level);
-        } else {
-          return this.buildObjNode(result.val, key, result.attrStr, level);
-        }
-      }
-      function replaceCDATAstr(str, cdata) {
-        str = this.options.tagValueProcessor("" + str);
-        if (this.options.cdataPositionChar === "" || str === "") {
-          return str + "<![CDATA[" + cdata + "]]" + this.tagEndChar;
-        } else {
-          return str.replace(this.options.cdataPositionChar, "<![CDATA[" + cdata + "]]" + this.tagEndChar);
-        }
-      }
-      function replaceCDATAarr(str, cdata) {
-        str = this.options.tagValueProcessor("" + str);
-        if (this.options.cdataPositionChar === "" || str === "") {
-          return str + "<![CDATA[" + cdata.join("]]><![CDATA[") + "]]" + this.tagEndChar;
-        } else {
-          for (let v in cdata) {
-            str = str.replace(this.options.cdataPositionChar, "<![CDATA[" + cdata[v] + "]]>");
+          return data;
+        }],
+        timeout: 0,
+        xsrfCookieName: "XSRF-TOKEN",
+        xsrfHeaderName: "X-XSRF-TOKEN",
+        maxContentLength: -1,
+        maxBodyLength: -1,
+        validateStatus: function validateStatus(status) {
+          return status >= 200 && status < 300;
+        },
+        headers: {
+          common: {
+            "Accept": "application/json, text/plain, */*"
           }
-          return str + this.newLine;
         }
-      }
-      function buildObjectNode(val, key, attrStr, level) {
-        if (attrStr && val.indexOf("<") === -1) {
-          return this.indentate(level) + "<" + key + attrStr + ">" + val + "</" + key + this.tagEndChar;
-        } else {
-          return this.indentate(level) + "<" + key + attrStr + this.tagEndChar + val + this.indentate(level) + "</" + key + this.tagEndChar;
-        }
-      }
-      function buildEmptyObjNode(val, key, attrStr, level) {
-        if (val !== "") {
-          return this.buildObjectNode(val, key, attrStr, level);
-        } else {
-          return this.indentate(level) + "<" + key + attrStr + "/" + this.tagEndChar;
-        }
-      }
-      function buildTextValNode(val, key, attrStr, level) {
-        return this.indentate(level) + "<" + key + attrStr + ">" + this.options.tagValueProcessor(val) + "</" + key + this.tagEndChar;
-      }
-      function buildEmptyTextNode(val, key, attrStr, level) {
-        if (val !== "") {
-          return this.buildTextValNode(val, key, attrStr, level);
-        } else {
-          return this.indentate(level) + "<" + key + attrStr + "/" + this.tagEndChar;
-        }
-      }
-      function indentate(level) {
-        return this.options.indentBy.repeat(level);
-      }
-      function isAttribute(name) {
-        if (name.startsWith(this.options.attributeNamePrefix)) {
-          return name.substr(this.attrPrefixLen);
-        } else {
-          return false;
-        }
-      }
-      function isCDATA(name) {
-        return name === this.options.cdataTagName;
-      }
-      module.exports = Parser;
+      };
+      utils.forEach(["delete", "get", "head"], function forEachMethodNoData(method) {
+        defaults.headers[method] = {};
+      });
+      utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
+        defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
+      });
+      module.exports = defaults;
     }
   });
 
-  // node_modules/fast-xml-parser/src/parser.js
-  var require_parser = __commonJS({
-    "node_modules/fast-xml-parser/src/parser.js"(exports) {
+  // node_modules/axios/lib/core/transformData.js
+  var require_transformData = __commonJS({
+    "node_modules/axios/lib/core/transformData.js"(exports, module) {
       "use strict";
       init_define_process();
-      var nodeToJson = require_node2json();
-      var xmlToNodeobj = require_xmlstr2xmlnode();
-      var x2xmlnode = require_xmlstr2xmlnode();
-      var buildOptions = require_util().buildOptions;
-      var validator = require_validator2();
-      exports.parse = function(xmlData, givenOptions = {}, validationOption) {
-        if (validationOption) {
-          if (validationOption === true)
-            validationOption = {};
-          const result = validator.validate(xmlData, validationOption);
-          if (result !== true) {
-            throw Error(result.err.msg);
-          }
-        }
-        if (givenOptions.parseTrueNumberOnly && givenOptions.parseNodeValue !== false && !givenOptions.numParseOptions) {
-          givenOptions.numParseOptions = {
-            leadingZeros: false
-          };
-        }
-        let options = buildOptions(givenOptions, x2xmlnode.defaultOptions, x2xmlnode.props);
-        const traversableObj = xmlToNodeobj.getTraversalObj(xmlData, options);
-        return nodeToJson.convertToJson(traversableObj, options);
-      };
-      exports.convertTonimn = require_nimndata().convert2nimn;
-      exports.getTraversalObj = xmlToNodeobj.getTraversalObj;
-      exports.convertToJson = nodeToJson.convertToJson;
-      exports.convertToJsonString = require_node2json_str().convertToJsonString;
-      exports.validate = validator.validate;
-      exports.j2xParser = require_json2xml();
-      exports.parseToNimn = function(xmlData, schema, options) {
-        return exports.convertTonimn(exports.getTraversalObj(xmlData, options), schema, options);
+      var utils = require_utils4();
+      var defaults = require_defaults();
+      module.exports = function transformData(data, headers, fns) {
+        var context = this || defaults;
+        utils.forEach(fns, function transform(fn) {
+          data = fn.call(context, data, headers);
+        });
+        return data;
       };
     }
   });
 
-  // node_modules/is-svg/index.js
-  var require_is_svg = __commonJS({
-    "node_modules/is-svg/index.js"(exports, module) {
+  // node_modules/axios/lib/cancel/isCancel.js
+  var require_isCancel = __commonJS({
+    "node_modules/axios/lib/cancel/isCancel.js"(exports, module) {
       "use strict";
       init_define_process();
-      var parser = require_parser();
-      var isSvg = (input) => {
-        if (input === void 0 || input === null) {
-          return false;
-        }
-        input = input.toString().trim().replace(/\n/g, " ");
-        if (input.length === 0) {
-          return false;
-        }
-        if (parser.validate(input) !== true) {
-          return false;
-        }
-        let jsonObject;
-        try {
-          jsonObject = parser.parse(input);
-        } catch (_) {
-          return false;
-        }
-        if (!jsonObject) {
-          return false;
-        }
-        if (!("svg" in jsonObject)) {
-          return false;
-        }
-        return true;
+      module.exports = function isCancel(value) {
+        return !!(value && value.__CANCEL__);
       };
-      module.exports = isSvg;
-      module.exports.default = isSvg;
     }
   });
 
-  // node_modules/url-join/lib/url-join.js
-  var require_url_join = __commonJS({
-    "node_modules/url-join/lib/url-join.js"(exports, module) {
+  // node_modules/axios/lib/core/dispatchRequest.js
+  var require_dispatchRequest = __commonJS({
+    "node_modules/axios/lib/core/dispatchRequest.js"(exports, module) {
+      "use strict";
       init_define_process();
-      (function(name, context, definition) {
-        if (typeof module !== "undefined" && module.exports)
-          module.exports = definition();
-        else if (typeof define === "function" && define.amd)
-          define(definition);
-        else
-          context[name] = definition();
-      })("urljoin", exports, function() {
-        function normalize(strArray) {
-          var resultArray = [];
-          if (strArray.length === 0) {
-            return "";
-          }
-          if (typeof strArray[0] !== "string") {
-            throw new TypeError("Url must be a string. Received " + strArray[0]);
-          }
-          if (strArray[0].match(/^[^/:]+:\/*$/) && strArray.length > 1) {
-            var first = strArray.shift();
-            strArray[0] = first + strArray[0];
-          }
-          if (strArray[0].match(/^file:\/\/\//)) {
-            strArray[0] = strArray[0].replace(/^([^/:]+):\/*/, "$1:///");
-          } else {
-            strArray[0] = strArray[0].replace(/^([^/:]+):\/*/, "$1://");
-          }
-          for (var i = 0; i < strArray.length; i++) {
-            var component = strArray[i];
-            if (typeof component !== "string") {
-              throw new TypeError("Url must be a string. Received " + component);
-            }
-            if (component === "") {
-              continue;
-            }
-            if (i > 0) {
-              component = component.replace(/^[\/]+/, "");
-            }
-            if (i < strArray.length - 1) {
-              component = component.replace(/[\/]+$/, "");
-            } else {
-              component = component.replace(/[\/]+$/, "/");
-            }
-            resultArray.push(component);
-          }
-          var str = resultArray.join("/");
-          str = str.replace(/\/(\?|&|#[^!])/g, "$1");
-          var parts = str.split("?");
-          str = parts.shift() + (parts.length > 0 ? "?" : "") + parts.join("&");
-          return str;
+      var utils = require_utils4();
+      var transformData = require_transformData();
+      var isCancel = require_isCancel();
+      var defaults = require_defaults();
+      var Cancel = require_Cancel();
+      function throwIfCancellationRequested(config) {
+        if (config.cancelToken) {
+          config.cancelToken.throwIfRequested();
         }
-        return function() {
-          var input;
-          if (typeof arguments[0] === "object") {
-            input = arguments[0];
-          } else {
-            input = [].slice.call(arguments);
+        if (config.signal && config.signal.aborted) {
+          throw new Cancel("canceled");
+        }
+      }
+      module.exports = function dispatchRequest(config) {
+        throwIfCancellationRequested(config);
+        config.headers = config.headers || {};
+        config.data = transformData.call(config, config.data, config.headers, config.transformRequest);
+        config.headers = utils.merge(config.headers.common || {}, config.headers[config.method] || {}, config.headers);
+        utils.forEach(["delete", "get", "head", "post", "put", "patch", "common"], function cleanHeaderConfig(method) {
+          delete config.headers[method];
+        });
+        var adapter = config.adapter || defaults.adapter;
+        return adapter(config).then(function onAdapterResolution(response) {
+          throwIfCancellationRequested(config);
+          response.data = transformData.call(config, response.data, response.headers, config.transformResponse);
+          return response;
+        }, function onAdapterRejection(reason) {
+          if (!isCancel(reason)) {
+            throwIfCancellationRequested(config);
+            if (reason && reason.response) {
+              reason.response.data = transformData.call(config, reason.response.data, reason.response.headers, config.transformResponse);
+            }
           }
-          return normalize(input);
+          return Promise.reject(reason);
+        });
+      };
+    }
+  });
+
+  // node_modules/axios/lib/core/mergeConfig.js
+  var require_mergeConfig = __commonJS({
+    "node_modules/axios/lib/core/mergeConfig.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      module.exports = function mergeConfig(config1, config2) {
+        config2 = config2 || {};
+        var config = {};
+        function getMergedValue(target, source) {
+          if (utils.isPlainObject(target) && utils.isPlainObject(source)) {
+            return utils.merge(target, source);
+          } else if (utils.isPlainObject(source)) {
+            return utils.merge({}, source);
+          } else if (utils.isArray(source)) {
+            return source.slice();
+          }
+          return source;
+        }
+        function mergeDeepProperties(prop) {
+          if (!utils.isUndefined(config2[prop])) {
+            return getMergedValue(config1[prop], config2[prop]);
+          } else if (!utils.isUndefined(config1[prop])) {
+            return getMergedValue(void 0, config1[prop]);
+          }
+        }
+        function valueFromConfig2(prop) {
+          if (!utils.isUndefined(config2[prop])) {
+            return getMergedValue(void 0, config2[prop]);
+          }
+        }
+        function defaultToConfig2(prop) {
+          if (!utils.isUndefined(config2[prop])) {
+            return getMergedValue(void 0, config2[prop]);
+          } else if (!utils.isUndefined(config1[prop])) {
+            return getMergedValue(void 0, config1[prop]);
+          }
+        }
+        function mergeDirectKeys(prop) {
+          if (prop in config2) {
+            return getMergedValue(config1[prop], config2[prop]);
+          } else if (prop in config1) {
+            return getMergedValue(void 0, config1[prop]);
+          }
+        }
+        var mergeMap = {
+          "url": valueFromConfig2,
+          "method": valueFromConfig2,
+          "data": valueFromConfig2,
+          "baseURL": defaultToConfig2,
+          "transformRequest": defaultToConfig2,
+          "transformResponse": defaultToConfig2,
+          "paramsSerializer": defaultToConfig2,
+          "timeout": defaultToConfig2,
+          "timeoutMessage": defaultToConfig2,
+          "withCredentials": defaultToConfig2,
+          "adapter": defaultToConfig2,
+          "responseType": defaultToConfig2,
+          "xsrfCookieName": defaultToConfig2,
+          "xsrfHeaderName": defaultToConfig2,
+          "onUploadProgress": defaultToConfig2,
+          "onDownloadProgress": defaultToConfig2,
+          "decompress": defaultToConfig2,
+          "maxContentLength": defaultToConfig2,
+          "maxBodyLength": defaultToConfig2,
+          "transport": defaultToConfig2,
+          "httpAgent": defaultToConfig2,
+          "httpsAgent": defaultToConfig2,
+          "cancelToken": defaultToConfig2,
+          "socketPath": defaultToConfig2,
+          "responseEncoding": defaultToConfig2,
+          "validateStatus": mergeDirectKeys
+        };
+        utils.forEach(Object.keys(config1).concat(Object.keys(config2)), function computeConfigValue(prop) {
+          var merge = mergeMap[prop] || mergeDeepProperties;
+          var configValue = merge(prop);
+          utils.isUndefined(configValue) && merge !== mergeDirectKeys || (config[prop] = configValue);
+        });
+        return config;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/env/data.js
+  var require_data = __commonJS({
+    "node_modules/axios/lib/env/data.js"(exports, module) {
+      init_define_process();
+      module.exports = {
+        "version": "0.25.0"
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/validator.js
+  var require_validator2 = __commonJS({
+    "node_modules/axios/lib/helpers/validator.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var VERSION = require_data().version;
+      var validators = {};
+      ["object", "boolean", "number", "function", "string", "symbol"].forEach(function(type, i) {
+        validators[type] = function validator(thing) {
+          return typeof thing === type || "a" + (i < 1 ? "n " : " ") + type;
         };
       });
+      var deprecatedWarnings = {};
+      validators.transitional = function transitional(validator, version2, message) {
+        function formatMessage(opt, desc) {
+          return "[Axios v" + VERSION + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
+        }
+        return function(value, opt, opts) {
+          if (validator === false) {
+            throw new Error(formatMessage(opt, " has been removed" + (version2 ? " in " + version2 : "")));
+          }
+          if (version2 && !deprecatedWarnings[opt]) {
+            deprecatedWarnings[opt] = true;
+            console.warn(formatMessage(opt, " has been deprecated since v" + version2 + " and will be removed in the near future"));
+          }
+          return validator ? validator(value, opt, opts) : true;
+        };
+      };
+      function assertOptions(options, schema, allowUnknown) {
+        if (typeof options !== "object") {
+          throw new TypeError("options must be an object");
+        }
+        var keys = Object.keys(options);
+        var i = keys.length;
+        while (i-- > 0) {
+          var opt = keys[i];
+          var validator = schema[opt];
+          if (validator) {
+            var value = options[opt];
+            var result = value === void 0 || validator(value, opt, options);
+            if (result !== true) {
+              throw new TypeError("option " + opt + " must be " + result);
+            }
+            continue;
+          }
+          if (allowUnknown !== true) {
+            throw Error("Unknown option " + opt);
+          }
+        }
+      }
+      module.exports = {
+        assertOptions,
+        validators
+      };
+    }
+  });
+
+  // node_modules/axios/lib/core/Axios.js
+  var require_Axios = __commonJS({
+    "node_modules/axios/lib/core/Axios.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      var buildURL = require_buildURL();
+      var InterceptorManager = require_InterceptorManager();
+      var dispatchRequest = require_dispatchRequest();
+      var mergeConfig = require_mergeConfig();
+      var validator = require_validator2();
+      var validators = validator.validators;
+      function Axios(instanceConfig) {
+        this.defaults = instanceConfig;
+        this.interceptors = {
+          request: new InterceptorManager(),
+          response: new InterceptorManager()
+        };
+      }
+      Axios.prototype.request = function request(configOrUrl, config) {
+        if (typeof configOrUrl === "string") {
+          config = config || {};
+          config.url = configOrUrl;
+        } else {
+          config = configOrUrl || {};
+        }
+        if (!config.url) {
+          throw new Error("Provided config url is not valid");
+        }
+        config = mergeConfig(this.defaults, config);
+        if (config.method) {
+          config.method = config.method.toLowerCase();
+        } else if (this.defaults.method) {
+          config.method = this.defaults.method.toLowerCase();
+        } else {
+          config.method = "get";
+        }
+        var transitional = config.transitional;
+        if (transitional !== void 0) {
+          validator.assertOptions(transitional, {
+            silentJSONParsing: validators.transitional(validators.boolean),
+            forcedJSONParsing: validators.transitional(validators.boolean),
+            clarifyTimeoutError: validators.transitional(validators.boolean)
+          }, false);
+        }
+        var requestInterceptorChain = [];
+        var synchronousRequestInterceptors = true;
+        this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+          if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config) === false) {
+            return;
+          }
+          synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
+          requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
+        });
+        var responseInterceptorChain = [];
+        this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+          responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
+        });
+        var promise;
+        if (!synchronousRequestInterceptors) {
+          var chain = [dispatchRequest, void 0];
+          Array.prototype.unshift.apply(chain, requestInterceptorChain);
+          chain = chain.concat(responseInterceptorChain);
+          promise = Promise.resolve(config);
+          while (chain.length) {
+            promise = promise.then(chain.shift(), chain.shift());
+          }
+          return promise;
+        }
+        var newConfig = config;
+        while (requestInterceptorChain.length) {
+          var onFulfilled = requestInterceptorChain.shift();
+          var onRejected = requestInterceptorChain.shift();
+          try {
+            newConfig = onFulfilled(newConfig);
+          } catch (error) {
+            onRejected(error);
+            break;
+          }
+        }
+        try {
+          promise = dispatchRequest(newConfig);
+        } catch (error) {
+          return Promise.reject(error);
+        }
+        while (responseInterceptorChain.length) {
+          promise = promise.then(responseInterceptorChain.shift(), responseInterceptorChain.shift());
+        }
+        return promise;
+      };
+      Axios.prototype.getUri = function getUri(config) {
+        if (!config.url) {
+          throw new Error("Provided config url is not valid");
+        }
+        config = mergeConfig(this.defaults, config);
+        return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, "");
+      };
+      utils.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
+        Axios.prototype[method] = function(url, config) {
+          return this.request(mergeConfig(config || {}, {
+            method,
+            url,
+            data: (config || {}).data
+          }));
+        };
+      });
+      utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
+        Axios.prototype[method] = function(url, data, config) {
+          return this.request(mergeConfig(config || {}, {
+            method,
+            url,
+            data
+          }));
+        };
+      });
+      module.exports = Axios;
+    }
+  });
+
+  // node_modules/axios/lib/cancel/CancelToken.js
+  var require_CancelToken = __commonJS({
+    "node_modules/axios/lib/cancel/CancelToken.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var Cancel = require_Cancel();
+      function CancelToken(executor) {
+        if (typeof executor !== "function") {
+          throw new TypeError("executor must be a function.");
+        }
+        var resolvePromise;
+        this.promise = new Promise(function promiseExecutor(resolve) {
+          resolvePromise = resolve;
+        });
+        var token = this;
+        this.promise.then(function(cancel) {
+          if (!token._listeners)
+            return;
+          var i;
+          var l = token._listeners.length;
+          for (i = 0; i < l; i++) {
+            token._listeners[i](cancel);
+          }
+          token._listeners = null;
+        });
+        this.promise.then = function(onfulfilled) {
+          var _resolve;
+          var promise = new Promise(function(resolve) {
+            token.subscribe(resolve);
+            _resolve = resolve;
+          }).then(onfulfilled);
+          promise.cancel = function reject() {
+            token.unsubscribe(_resolve);
+          };
+          return promise;
+        };
+        executor(function cancel(message) {
+          if (token.reason) {
+            return;
+          }
+          token.reason = new Cancel(message);
+          resolvePromise(token.reason);
+        });
+      }
+      CancelToken.prototype.throwIfRequested = function throwIfRequested() {
+        if (this.reason) {
+          throw this.reason;
+        }
+      };
+      CancelToken.prototype.subscribe = function subscribe(listener) {
+        if (this.reason) {
+          listener(this.reason);
+          return;
+        }
+        if (this._listeners) {
+          this._listeners.push(listener);
+        } else {
+          this._listeners = [listener];
+        }
+      };
+      CancelToken.prototype.unsubscribe = function unsubscribe(listener) {
+        if (!this._listeners) {
+          return;
+        }
+        var index = this._listeners.indexOf(listener);
+        if (index !== -1) {
+          this._listeners.splice(index, 1);
+        }
+      };
+      CancelToken.source = function source() {
+        var cancel;
+        var token = new CancelToken(function executor(c) {
+          cancel = c;
+        });
+        return {
+          token,
+          cancel
+        };
+      };
+      module.exports = CancelToken;
+    }
+  });
+
+  // node_modules/axios/lib/helpers/spread.js
+  var require_spread = __commonJS({
+    "node_modules/axios/lib/helpers/spread.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      module.exports = function spread(callback) {
+        return function wrap(arr) {
+          return callback.apply(null, arr);
+        };
+      };
+    }
+  });
+
+  // node_modules/axios/lib/helpers/isAxiosError.js
+  var require_isAxiosError = __commonJS({
+    "node_modules/axios/lib/helpers/isAxiosError.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      module.exports = function isAxiosError(payload) {
+        return utils.isObject(payload) && payload.isAxiosError === true;
+      };
+    }
+  });
+
+  // node_modules/axios/lib/axios.js
+  var require_axios = __commonJS({
+    "node_modules/axios/lib/axios.js"(exports, module) {
+      "use strict";
+      init_define_process();
+      var utils = require_utils4();
+      var bind = require_bind();
+      var Axios = require_Axios();
+      var mergeConfig = require_mergeConfig();
+      var defaults = require_defaults();
+      function createInstance(defaultConfig) {
+        var context = new Axios(defaultConfig);
+        var instance = bind(Axios.prototype.request, context);
+        utils.extend(instance, Axios.prototype, context);
+        utils.extend(instance, context);
+        instance.create = function create2(instanceConfig) {
+          return createInstance(mergeConfig(defaultConfig, instanceConfig));
+        };
+        return instance;
+      }
+      var axios = createInstance(defaults);
+      axios.Axios = Axios;
+      axios.Cancel = require_Cancel();
+      axios.CancelToken = require_CancelToken();
+      axios.isCancel = require_isCancel();
+      axios.VERSION = require_data().version;
+      axios.all = function all(promises) {
+        return Promise.all(promises);
+      };
+      axios.spread = require_spread();
+      axios.isAxiosError = require_isAxiosError();
+      module.exports = axios;
+      module.exports.default = axios;
+    }
+  });
+
+  // node_modules/axios/index.js
+  var require_axios2 = __commonJS({
+    "node_modules/axios/index.js"(exports, module) {
+      init_define_process();
+      module.exports = require_axios();
     }
   });
 
@@ -35832,13 +35832,13 @@ if (cid) {
       Object.defineProperty(exports, "__esModule", { value: true });
       var e = require_lib24();
       var r = require_buffer2();
-      var n = t(require_axios2());
-      var o = t(require_purify());
-      var a = (init_src(), __toCommonJS(src_exports));
-      var i = t(require_is_svg());
-      var u = t(require_url_join());
-      function c() {
-        c = function(t3, e3) {
+      var n = t(require_purify());
+      var o = t(require_is_svg());
+      var a = t(require_url_join());
+      var i = (init_src(), __toCommonJS(src_exports));
+      var u = t(require_axios2());
+      function s() {
+        s = function(t3, e3) {
           return new r2(t3, void 0, e3);
         };
         var t2 = RegExp.prototype, e2 = /* @__PURE__ */ new WeakMap();
@@ -35870,15 +35870,15 @@ if (cid) {
             });
           }
           return t2[Symbol.replace].call(this, r3, o2);
-        }, c.apply(this, arguments);
+        }, s.apply(this, arguments);
       }
-      function s(t2, e2, r2, n2, o2, a2, i2) {
+      function c(t2, e2, r2, n2, o2, a2, i2) {
         try {
-          var u2 = t2[a2](i2), c2 = u2.value;
+          var u2 = t2[a2](i2), s2 = u2.value;
         } catch (t3) {
           return void r2(t3);
         }
-        u2.done ? e2(c2) : Promise.resolve(c2).then(n2, o2);
+        u2.done ? e2(s2) : Promise.resolve(s2).then(n2, o2);
       }
       function l(t2) {
         return function() {
@@ -35886,10 +35886,10 @@ if (cid) {
           return new Promise(function(n2, o2) {
             var a2 = t2.apply(e2, r2);
             function i2(t3) {
-              s(a2, n2, o2, i2, u2, "next", t3);
+              c(a2, n2, o2, i2, u2, "next", t3);
             }
             function u2(t3) {
-              s(a2, n2, o2, i2, u2, "throw", t3);
+              c(a2, n2, o2, i2, u2, "throw", t3);
             }
             i2(void 0);
           });
@@ -36003,7 +36003,7 @@ if (cid) {
               return t5[e4] = r3;
             };
           }
-          function c2(t4, e4, r3, n3) {
+          function s2(t4, e4, r3, n3) {
             var o3 = Object.create((e4 && e4.prototype instanceof p2 ? e4 : p2).prototype), a3 = new _2(n3 || []);
             return o3._invoke = function(t5, e5, r4) {
               var n4 = "suspendedStart";
@@ -36034,25 +36034,25 @@ if (cid) {
                   } else
                     r4.method === "return" && r4.abrupt("return", r4.arg);
                   n4 = "executing";
-                  var c3 = s2(t5, e5, r4);
-                  if (c3.type === "normal") {
-                    if (n4 = r4.done ? "completed" : "suspendedYield", c3.arg === l2)
+                  var s3 = c2(t5, e5, r4);
+                  if (s3.type === "normal") {
+                    if (n4 = r4.done ? "completed" : "suspendedYield", s3.arg === l2)
                       continue;
-                    return { value: c3.arg, done: r4.done };
+                    return { value: s3.arg, done: r4.done };
                   }
-                  c3.type === "throw" && (n4 = "completed", r4.method = "throw", r4.arg = c3.arg);
+                  s3.type === "throw" && (n4 = "completed", r4.method = "throw", r4.arg = s3.arg);
                 }
               };
             }(t4, r3, a3), o3;
           }
-          function s2(t4, e4, r3) {
+          function c2(t4, e4, r3) {
             try {
               return { type: "normal", arg: t4.call(e4, r3) };
             } catch (t5) {
               return { type: "throw", arg: t5 };
             }
           }
-          t3.wrap = c2;
+          t3.wrap = s2;
           var l2 = {};
           function p2() {
           }
@@ -36080,9 +36080,9 @@ if (cid) {
               function i3() {
                 return new e4(function(n4, i4) {
                   !function n5(o4, a4, i5, u3) {
-                    var c3 = s2(t4[o4], t4, a4);
-                    if (c3.type !== "throw") {
-                      var l3 = c3.arg, p3 = l3.value;
+                    var s3 = c2(t4[o4], t4, a4);
+                    if (s3.type !== "throw") {
+                      var l3 = s3.arg, p3 = l3.value;
                       return p3 && typeof p3 == "object" && r2.call(p3, "__await") ? e4.resolve(p3.__await).then(function(t5) {
                         n5("next", t5, i5, u3);
                       }, function(t5) {
@@ -36093,7 +36093,7 @@ if (cid) {
                         return n5("throw", t5, i5, u3);
                       });
                     }
-                    u3(c3.arg);
+                    u3(s3.arg);
                   }(o3, a3, n4, i4);
                 });
               }
@@ -36110,7 +36110,7 @@ if (cid) {
               }
               return l2;
             }
-            var n3 = s2(r3, t4.iterator, e4.arg);
+            var n3 = c2(r3, t4.iterator, e4.arg);
             if (n3.type === "throw")
               return e4.method = "throw", e4.arg = n3.arg, e4.delegate = null, l2;
             var o3 = n3.arg;
@@ -36144,9 +36144,9 @@ if (cid) {
                 return a3.next = a3;
               }
             }
-            return { next: E2 };
+            return { next: I2 };
           }
-          function E2() {
+          function I2() {
             return { value: void 0, done: true };
           }
           return f2.prototype = h2, u2(g2, "constructor", h2), u2(h2, "constructor", f2), f2.displayName = u2(h2, i2, "GeneratorFunction"), t3.isGeneratorFunction = function(t4) {
@@ -36160,7 +36160,7 @@ if (cid) {
             return this;
           }), t3.AsyncIterator = w2, t3.async = function(e4, r3, n3, o3, a3) {
             a3 === void 0 && (a3 = Promise);
-            var i3 = new w2(c2(e4, r3, n3, o3), a3);
+            var i3 = new w2(s2(e4, r3, n3, o3), a3);
             return t3.isGeneratorFunction(r3) ? i3 : i3.next().then(function(t4) {
               return t4.done ? t4.value : i3.next();
             });
@@ -36202,8 +36202,8 @@ if (cid) {
               if (a3.tryLoc === "root")
                 return n3("end");
               if (a3.tryLoc <= this.prev) {
-                var u3 = r2.call(a3, "catchLoc"), c3 = r2.call(a3, "finallyLoc");
-                if (u3 && c3) {
+                var u3 = r2.call(a3, "catchLoc"), s3 = r2.call(a3, "finallyLoc");
+                if (u3 && s3) {
                   if (this.prev < a3.catchLoc)
                     return n3(a3.catchLoc, true);
                   if (this.prev < a3.finallyLoc)
@@ -36212,7 +36212,7 @@ if (cid) {
                   if (this.prev < a3.catchLoc)
                     return n3(a3.catchLoc, true);
                 } else {
-                  if (!c3)
+                  if (!s3)
                     throw new Error("try statement without catch or finally");
                   if (this.prev < a3.finallyLoc)
                     return n3(a3.finallyLoc);
@@ -36254,7 +36254,7 @@ if (cid) {
             }
             throw new Error("illegal catch attempt");
           }, delegateYield: function(t4, e4, r3) {
-            return this.delegate = { iterator: j2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), l2;
+            return this.delegate = { iterator: E2(t4), resultName: e4, nextLoc: r3 }, this.method === "next" && (this.arg = void 0), l2;
           } }, t3;
         }(t2.exports);
         try {
@@ -36263,25 +36263,15 @@ if (cid) {
           typeof globalThis == "object" ? globalThis.regeneratorRuntime = e2 : Function("r", "regeneratorRuntime = r")(e2);
         }
       }(x = { exports: {} }), x.exports);
-      var _ = c(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
-      var j = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var E = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
-      var L = function(t2) {
-        function e2(r2) {
-          var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
-          return (n2 = t2.call(this, r2) || this).__proto__ = o2, n2;
-        }
-        return h(e2, t2), e2;
-      }(m(Error));
-      function I(t2, e2) {
+      function _(t2, e2) {
         if (!t2)
           throw e2;
       }
-      function k(t2) {
-        return S.apply(this, arguments);
+      function E(t2) {
+        return I.apply(this, arguments);
       }
-      function S() {
-        return (S = l(O.mark(function t2(e2) {
+      function I() {
+        return (I = l(O.mark(function t2(e2) {
           var r2, n2, o2, a2;
           return O.wrap(function(t3) {
             for (; ; )
@@ -36299,22 +36289,146 @@ if (cid) {
           }, t2);
         }))).apply(this, arguments);
       }
-      var R = function(t2) {
+      var L = function(t2) {
+        function e2(r2) {
+          var n2, o2 = (this instanceof e2 ? this.constructor : void 0).prototype;
+          return (n2 = t2.call(this, r2) || this).__proto__ = o2, n2;
+        }
+        return h(e2, t2), e2;
+      }(m(Error));
+      var j = function(t2) {
         function e2() {
           return t2.apply(this, arguments) || this;
         }
         return h(e2, t2), e2;
       }(L);
-      function P(t2) {
+      function k(t2, e2) {
+        e2 === void 0 && (e2 = "/");
+        try {
+          _(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
+          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], a2 = r2[0].split(":"), i2 = a2[0], u2 = a2[1], s2 = n2.split(":"), c2 = s2[0], l2 = s2[1];
+          return _(i2 && i2.toLowerCase() === "eip155", "Only EIP-155 is supported"), _(u2, "chainID not found"), _(l2, "contractAddress not found"), _(c2, "erc namespace not found"), _(o2, "tokenID not found"), { chainID: Number(u2), namespace: c2.toLowerCase(), contractAddress: l2, tokenID: o2 };
+        } catch (e3) {
+          throw new j(e3 + " - " + t2);
+        }
+      }
+      function S(t2) {
+        try {
+          return typeof t2 == "string" ? Boolean(i.CID.parse(t2)) : Boolean(i.CID.asCID(t2));
+        } catch (t3) {
+          return false;
+        }
+      }
+      var R = s(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, { protocol: 1, root: 2, subpath: 3, target: 4, subtarget: 5 });
+      var P = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var A = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
+      function C(t2, e2, r2) {
+        if (t2.startsWith(e2) && r2)
+          try {
+            var n2 = new URL(t2);
+            return n2.hostname = new URL(r2).hostname, n2.toString();
+          } catch (e3) {
+            return t2;
+          }
+        return t2;
+      }
+      function U(t2, e2, r2) {
+        var n2, o2, i2, u2, s2, c2 = P.test(t2);
+        if (c2 || t2.startsWith("http"))
+          return t2 = C(t2, "https://ipfs.io/", (u2 = e2) == null ? void 0 : u2.ipfs), { uri: t2 = C(t2, "https://arweave.net/", (s2 = e2) == null ? void 0 : s2.arweave), isOnChain: c2, isEncoded: c2 };
+        (n2 = e2) != null && n2.ipfs || !r2 || (console.warn("'customGateway' option depreciated, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"), e2 = p({}, e2, { ipfs: r2 }));
+        var l2 = ((o2 = e2) == null ? void 0 : o2.ipfs) || "https://ipfs.io", f2 = ((i2 = e2) == null ? void 0 : i2.arweave) || "https://arweave.net", h2 = t2.match(R), d2 = (h2 == null ? void 0 : h2.groups) || {}, v2 = d2.protocol, y2 = d2.target, g2 = d2.subtarget, m2 = g2 === void 0 ? "" : g2;
+        return v2 !== "ipns:/" && d2.subpath !== "ipns/" || !y2 ? S(y2) ? { uri: a(l2, "/ipfs/", y2, m2), isOnChain: false, isEncoded: false } : v2 === "ar:/" && y2 ? { uri: a(f2, y2, m2 || ""), isOnChain: false, isEncoded: false } : { uri: t2.replace(A, ""), isOnChain: true, isEncoded: false } : { uri: a(l2, "/ipns/", y2, m2), isOnChain: false, isEncoded: false };
+      }
+      function D(t2) {
+        if (t2.startsWith("data:image/svg+xml;base64,")) {
+          var e2 = t2.substring("data:image/svg+xml;base64,".length);
+          try {
+            return Buffer.from(e2, "base64").toString();
+          } catch (t3) {
+            return console.error("Invalid base64 encoded SVG"), null;
+          }
+        } else {
+          if (!t2.startsWith("data:image/svg+xml,"))
+            return t2;
+          var r2 = t2.substring("data:image/svg+xml,".length);
+          try {
+            return decodeURIComponent(r2);
+          } catch (t3) {
+            return console.error("Invalid URL encoded SVG"), null;
+          }
+        }
+      }
+      function T(t2) {
+        var e2 = t2.metadata, r2 = t2.customGateway, a2 = t2.gateways, i2 = t2.jsdomWindow, u2 = t2.urlDenyList, s2 = e2.image || e2.image_url || e2.image_data;
+        _(s2, "Image is not available");
+        var c2 = U(s2, a2, r2).uri;
+        if (o(c2) || c2.startsWith("data:image/svg+xml")) {
+          var l2 = D(c2);
+          return l2 ? "data:image/svg+xml;base64," + function(t3, e3) {
+            var r3;
+            try {
+              r3 = window;
+            } catch (t4) {
+              if (!e3)
+                throw Error("In node environment JSDOM window is required");
+              r3 = e3;
+            }
+            var o2 = n(r3).sanitize(t3);
+            return Buffer.from(o2);
+          }(l2, i2).toString("base64") : null;
+        }
+        return function(t3) {
+          var e3 = t3.match(/^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/);
+          if (!e3 || e3.length < 2)
+            return false;
+          var r3 = e3[1].toLowerCase();
+          return ["jpeg", "png", "gif", "bmp", "webp"].includes(r3);
+        }(c2) || c2.startsWith("http") ? u2 != null && u2.includes(new URL(c2).hostname) ? null : c2 : null;
+      }
+      function W(t2, e2) {
+        (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
+      }
+      function G(t2) {
+        var e2 = t2.ttl, r2 = u.create({ proxy: false });
+        return e2 && e2 > 0 && W(r2, e2), r2;
+      }
+      var N = G({});
+      function M() {
+        return (M = l(O.mark(function t2(e2) {
+          var n2, o2, a2, i2, s2, c2;
+          return O.wrap(function(t3) {
+            for (; ; )
+              switch (t3.prev = t3.next) {
+                case 0:
+                  return t3.prev = 0, n2 = u.CancelToken.source(), t3.next = 4, N.get(e2, { responseType: "arraybuffer", headers: { Range: "bytes=0-1023" }, cancelToken: n2.token, onDownloadProgress: function(t4) {
+                    t4.loaded > 1024 && n2.cancel("Aborted to prevent downloading the entire file.");
+                  } });
+                case 4:
+                  return a2 = (o2 = t3.sent).data instanceof ArrayBuffer ? new DataView(o2.data).getUint32(0).toString(16) : o2.data.readUInt32BE(0).toString(16), i2 = ["ffd8ff", "89504e47", "47494638", "49492a00", "4d4d002a", "424d"].some(function(t4) {
+                    return a2.startsWith(t4);
+                  }), s2 = r.Buffer.from(o2.data).toString(), c2 = /<svg[\s\S]*?xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(s2), t3.abrupt("return", i2 || c2);
+                case 13:
+                  return t3.prev = 13, t3.t0 = t3.catch(0), u.isCancel(t3.t0) ? console.error("Stream request was canceled:", t3.t0.message) : console.error("Error checking stream:", t3.t0), t3.abrupt("return", false);
+                case 17:
+                case "end":
+                  return t3.stop();
+              }
+          }, t2, null, [[0, 13]]);
+        }))).apply(this, arguments);
+      }
+      function B(t2) {
         return new Promise(function(e2) {
-          G({ url: t2, method: "HEAD" }).then(function(t3) {
-            if (t3.status === 200) {
-              var r2 = t3.headers["content-type"];
-              e2(r2 == null ? void 0 : r2.startsWith("image/"));
+          N({ url: encodeURI(t2), method: "HEAD" }).then(function(r2) {
+            if (r2.status === 200) {
+              var n2 = r2.headers["content-type"];
+              n2 != null && n2.startsWith("application/octet-stream") && e2(function(t3) {
+                return M.apply(this, arguments);
+              }(t2)), e2(n2 == null ? void 0 : n2.startsWith("image/"));
             } else
               e2(false);
           }).catch(function(r2) {
-            if (r2.response === void 0)
+            if (console.warn("isImageURI: fetch error", r2), r2.response === void 0)
               if (globalThis.hasOwnProperty("Image")) {
                 var n2 = new Image();
                 n2.onload = function() {
@@ -36329,118 +36443,36 @@ if (cid) {
           });
         });
       }
-      function A(t2, e2) {
-        e2 === void 0 && (e2 = "/");
-        try {
-          I(t2, "parameter URI cannot be empty"), t2.startsWith("did:nft:") && (t2 = t2.replace("did:nft:", "").replace(/_/g, "/"));
-          var r2 = t2.split(e2), n2 = r2[1], o2 = r2[2], a2 = r2[0].split(":"), i2 = a2[0], u2 = a2[1], c2 = n2.split(":"), s2 = c2[0], l2 = c2[1];
-          return I(i2 && i2.toLowerCase() === "eip155", "Only EIP-155 is supported"), I(u2, "chainID not found"), I(l2, "contractAddress not found"), I(s2, "erc namespace not found"), I(o2, "tokenID not found"), { chainID: Number(u2), namespace: s2.toLowerCase(), contractAddress: l2, tokenID: o2 };
-        } catch (e3) {
-          throw new R(e3 + " - " + t2);
-        }
+      var q = { __proto__: null, BaseError: L, assert: _, convertToRawSVG: D, createCacheAdapter: W, fetch: N, getImageURI: T, handleSettled: E, isCID: S, isImageURI: B, parseNFT: k, resolveURI: U };
+      var F = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
+      function z(t2, e2) {
+        var r2;
+        return !(!t2.startsWith("https://api.opensea.io") || e2 == null || (r2 = e2.apiKey) == null || !r2.opensea) && { "X-API-KEY": e2.apiKey.opensea };
       }
-      function C(t2, e2, r2) {
-        var n2, o2, i2, c2, s2, l2 = j.test(t2);
-        if (l2 || t2.startsWith("http"))
-          return t2 = U(t2, "https://ipfs.io/", (c2 = e2) == null ? void 0 : c2.ipfs), { uri: t2 = U(t2, "https://arweave.net/", (s2 = e2) == null ? void 0 : s2.arweave), isOnChain: l2, isEncoded: l2 };
-        (n2 = e2) != null && n2.ipfs || !r2 || (console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead"), e2 = p({}, e2, { ipfs: r2 }));
-        var f2 = ((o2 = e2) == null ? void 0 : o2.ipfs) || "https://ipfs.io", h2 = ((i2 = e2) == null ? void 0 : i2.arweave) || "https://arweave.net", d2 = t2.match(_), v2 = (d2 == null ? void 0 : d2.groups) || {}, y2 = v2.protocol, g2 = v2.target, m2 = v2.subtarget, w2 = m2 === void 0 ? "" : m2;
-        return y2 !== "ipns:/" && v2.subpath !== "ipns/" || !g2 ? function(t3) {
-          try {
-            return typeof t3 == "string" ? Boolean(a.CID.parse(t3)) : Boolean(a.CID.asCID(t3));
-          } catch (t4) {
-            return false;
-          }
-        }(g2) ? { uri: u(f2, "/ipfs/", g2, w2), isOnChain: false, isEncoded: false } : y2 === "ar:/" && g2 ? { uri: u(h2, g2, w2 || ""), isOnChain: false, isEncoded: false } : { uri: t2.replace(E, ""), isOnChain: true, isEncoded: false } : { uri: u(f2, "/ipns/", g2, w2), isOnChain: false, isEncoded: false };
-      }
-      function U(t2, e2, r2) {
-        if (t2.startsWith(e2) && r2)
-          try {
-            var n2 = new URL(t2);
-            return n2.hostname = new URL(r2).hostname, n2.toString();
-          } catch (e3) {
-            return t2;
-          }
-        return t2;
-      }
-      function W(t2) {
-        var e2 = t2.metadata, n2 = t2.customGateway, a2 = t2.gateways, u2 = t2.jsdomWindow, c2 = e2.image || e2.image_url || e2.image_data;
-        I(c2, "Image is not available");
-        var s2 = C(c2, a2, n2).uri;
-        if (i(s2) || s2.startsWith("data:image/svg+xml")) {
-          var l2 = function(t3) {
-            if (t3.startsWith("data:image/svg+xml;base64,")) {
-              var e3 = t3.substring("data:image/svg+xml;base64,".length);
-              try {
-                return r.Buffer.from(e3, "base64").toString();
-              } catch (t4) {
-                return console.error("Invalid base64 encoded SVG"), null;
-              }
-            } else {
-              if (!t3.startsWith("data:image/svg+xml,"))
-                return t3;
-              var n3 = t3.substring("data:image/svg+xml,".length);
-              try {
-                return decodeURIComponent(n3);
-              } catch (t4) {
-                return console.error("Invalid URL encoded SVG"), null;
-              }
-            }
-          }(s2);
-          return l2 ? "data:image/svg+xml;base64," + function(t3, e3) {
-            var n3;
-            try {
-              n3 = window;
-            } catch (t4) {
-              if (!e3)
-                throw Error("In node environment JSDOM window is required");
-              n3 = e3;
-            }
-            var a3 = o(n3).sanitize(t3);
-            return r.Buffer.from(a3);
-          }(l2, u2).toString("base64") : null;
-        }
-        return function(t3) {
-          var e3 = t3.match(/^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/);
-          if (!e3 || e3.length < 2)
-            return false;
-          var r2 = e3[1].toLowerCase();
-          return ["jpeg", "png", "gif", "bmp", "webp"].includes(r2);
-        }(s2) || s2.startsWith("http") ? s2 : null;
-      }
-      function N(t2, e2) {
-        (0, require_cjs().setupCache)(t2, { ttl: 1e3 * e2 });
-      }
-      function T(t2) {
-        var e2 = t2.ttl, r2 = n.create({ proxy: false });
-        return e2 && e2 > 0 && N(r2, e2), r2;
-      }
-      var G = T({});
-      var M = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
-      var D = function() {
+      var Y = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
           var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
-            var c2, s2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
+            var s2, c2, l2, f2, h2, d2, v2, y2, g2, m2, w2, b2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return c2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), s2 = new e.Contract(a2, M, n2), t5.next = 4, Promise.all([s2.uri(i2), o2 && s2.balanceOf(o2, i2)]);
+                    return s2 = i2.startsWith("https://api.opensea.io") ? i2 : i2.replace("0x", "").padStart(64, "0"), c2 = new e.Contract(a2, F, n2), t5.next = 4, Promise.all([c2.uri(i2), o2 && c2.balanceOf(o2, i2)]);
                   case 4:
-                    if (f2 = (l2 = t5.sent)[0], h2 = l2[1], d2 = !(!o2 || !h2.gt(0)), v2 = C(f2, u2), g2 = v2.isEncoded, m2 = y2 = v2.uri, !v2.isOnChain) {
+                    if (f2 = (l2 = t5.sent)[0], h2 = l2[1], d2 = !(!o2 || !h2.gt(0)), v2 = U(f2, u2), g2 = v2.isEncoded, m2 = y2 = v2.uri, !v2.isOnChain) {
                       t5.next = 13;
                       break;
                     }
                     return g2 && (m2 = r.Buffer.from(y2.replace("data:application/json;base64,", ""), "base64").toString()), t5.abrupt("return", JSON.parse(m2));
                   case 13:
-                    return t5.next = 15, G(y2.replace(/(?:0x)?{id}/, c2));
-                  case 15:
-                    return w2 = t5.sent, t5.next = 18, w2 == null ? void 0 : w2.data;
-                  case 18:
+                    return w2 = z(y2, u2), t5.next = 16, N.get(encodeURI(y2.replace(/(?:0x)?{id}/, s2)), w2 ? { headers: w2 } : {});
+                  case 16:
+                    return b2 = t5.sent, t5.next = 19, b2 == null ? void 0 : b2.data;
+                  case 19:
                     return t5.abrupt("return", p({}, t5.sent, { is_owner: d2 }));
-                  case 20:
+                  case 21:
                   case "end":
                     return t5.stop();
                 }
@@ -36451,26 +36483,26 @@ if (cid) {
           };
         }(), t2;
       }();
-      var F = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
-      var q = function() {
+      var Z = ["function tokenURI(uint256 tokenId) external view returns (string memory)", "function ownerOf(uint256 tokenId) public view returns (address)"];
+      var V = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
           var t3 = l(O.mark(function t4(n2, o2, a2, i2, u2) {
-            var c2, s2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
+            var s2, c2, l2, f2, h2, d2, v2, y2, g2, m2, w2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return c2 = new e.Contract(a2, F, n2), t5.next = 3, Promise.all([c2.tokenURI(i2), o2 && c2.ownerOf(i2)]);
+                    return s2 = new e.Contract(a2, Z, n2), t5.next = 3, Promise.all([s2.tokenURI(i2), o2 && s2.ownerOf(i2)]);
                   case 3:
-                    if (l2 = (s2 = t5.sent)[0], f2 = s2[1], h2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), d2 = C(l2, u2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
+                    if (l2 = (c2 = t5.sent)[0], f2 = c2[1], h2 = !(!o2 || f2.toLowerCase() !== o2.toLowerCase()), d2 = U(l2, u2), y2 = d2.isEncoded, g2 = v2 = d2.uri, !d2.isOnChain) {
                       t5.next = 13;
                       break;
                     }
                     return y2 && (g2 = r.Buffer.from(v2.replace("data:application/json;base64,", ""), "base64").toString()), m2 = JSON.parse(decodeURI(g2)), t5.abrupt("return", p({}, m2, { is_owner: h2 }));
                   case 13:
-                    return t5.next = 15, G(v2.replace(/(?:0x)?{id}/, i2));
+                    return t5.next = 15, N(encodeURI(v2.replace(/(?:0x)?{id}/, i2)));
                   case 15:
                     return w2 = t5.sent, t5.next = 18, w2 == null ? void 0 : w2.data;
                   case 18:
@@ -36486,36 +36518,42 @@ if (cid) {
           };
         }(), t2;
       }();
-      var B = function() {
+      var J = function() {
         function t2() {
         }
         return t2.prototype.getMetadata = function() {
           var t3 = l(O.mark(function t4(e2, r2) {
-            var n2, o2, a2;
+            var n2, o2, a2, i2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    if (n2 = C(e2, r2), o2 = n2.uri, !n2.isOnChain) {
+                    if (o2 = U(e2, r2), a2 = o2.uri, !o2.isOnChain) {
                       t5.next = 3;
                       break;
                     }
-                    return t5.abrupt("return", o2);
+                    return t5.abrupt("return", a2);
                   case 3:
-                    return t5.next = 5, P(o2);
-                  case 5:
-                    if (!t5.sent) {
-                      t5.next = 8;
+                    if (r2 == null || (n2 = r2.urlDenyList) == null || !n2.includes(new URL(a2).hostname)) {
+                      t5.next = 5;
                       break;
                     }
-                    return t5.abrupt("return", { image: o2 });
-                  case 8:
-                    return t5.next = 10, G(o2);
+                    return t5.abrupt("return", { image: null });
+                  case 5:
+                    return t5.next = 7, B(a2);
+                  case 7:
+                    if (!t5.sent) {
+                      t5.next = 10;
+                      break;
+                    }
+                    return t5.abrupt("return", { image: a2 });
                   case 10:
-                    return a2 = t5.sent, t5.next = 13, a2 == null ? void 0 : a2.data;
-                  case 13:
+                    return t5.next = 12, N(encodeURI(a2));
+                  case 12:
+                    return i2 = t5.sent, t5.next = 15, i2 == null ? void 0 : i2.data;
+                  case 15:
                     return t5.abrupt("return", t5.sent);
-                  case 14:
+                  case 16:
                   case "end":
                     return t5.stop();
                 }
@@ -36526,26 +36564,26 @@ if (cid) {
           };
         }(), t2;
       }();
-      var z = Object.freeze({ erc721: q, erc1155: D });
-      var Z = function(t2) {
+      var K = Object.freeze({ erc721: V, erc1155: Y });
+      var $ = function(t2) {
         function e2() {
           return t2.apply(this, arguments) || this;
         }
         return h(e2, t2), e2;
       }(L);
-      var Y = function() {
+      exports.AvatarResolver = function() {
         function t2(t3, e3) {
-          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && N(G, e3 == null ? void 0 : e3.cache);
+          this.provider = t3, this.options = e3, e3 != null && e3.cache && (e3 == null ? void 0 : e3.cache) > 0 && W(N, e3 == null ? void 0 : e3.cache);
         }
         var e2 = t2.prototype;
         return e2.getMetadata = function() {
           var t3 = l(O.mark(function t4(e3) {
-            var r2, n2, o2, a2, i2, u2, c2, s2, l2, f2, h2, d2, v2;
+            var r2, n2, o2, a2, i2, u2, s2, c2, l2, f2, h2, d2, v2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
                   case 0:
-                    return t5.next = 2, k([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
+                    return t5.next = 2, E([this.provider.resolveName(e3), this.provider.getResolver(e3)]);
                   case 2:
                     if (n2 = (r2 = t5.sent)[0], o2 = r2[1]) {
                       t5.next = 7;
@@ -36565,17 +36603,17 @@ if (cid) {
                       t5.next = 18;
                       break;
                     }
-                    return i2 = new B(), t5.next = 16, i2.getMetadata(a2, this.options);
+                    return i2 = new J(), t5.next = 16, i2.getMetadata(a2, this.options);
                   case 16:
                     return t5.abrupt("return", p({ uri: e3 }, t5.sent));
                   case 18:
-                    if (u2 = A(a2), c2 = u2.chainID, l2 = u2.contractAddress, f2 = u2.tokenID, h2 = z[s2 = u2.namespace]) {
+                    if (u2 = k(a2), s2 = u2.chainID, l2 = u2.contractAddress, f2 = u2.tokenID, h2 = K[c2 = u2.namespace]) {
                       t5.next = 22;
                       break;
                     }
-                    throw new Z("Unsupported namespace: " + s2);
+                    throw new $("Unsupported namespace: " + c2);
                   case 22:
-                    return d2 = new h2(), v2 = { chain_id: c2, namespace: s2, contract_address: l2, token_id: f2, reference_url: "https://opensea.io/assets/" + l2 + "/" + f2 }, t5.next = 26, d2.getMetadata(this.provider, n2, l2, f2, this.options);
+                    return d2 = new h2(), v2 = { chain_id: s2, namespace: c2, contract_address: l2, token_id: f2, reference_url: "https://opensea.io/assets/" + l2 + "/" + f2 }, t5.next = 26, d2.getMetadata(this.provider, n2, l2, f2, this.options);
                   case 26:
                     return t5.abrupt("return", p({ uri: e3, host_meta: v2 }, t5.sent));
                   case 28:
@@ -36589,7 +36627,7 @@ if (cid) {
           };
         }(), e2.getAvatar = function() {
           var t3 = l(O.mark(function t4(e3, r2) {
-            var n2, o2, a2, i2;
+            var n2, o2, a2, i2, u2;
             return O.wrap(function(t5) {
               for (; ; )
                 switch (t5.prev = t5.next) {
@@ -36602,15 +36640,15 @@ if (cid) {
                     }
                     return t5.abrupt("return", null);
                   case 5:
-                    if (i2 = W({ metadata: a2, gateways: { ipfs: (n2 = this.options) == null ? void 0 : n2.ipfs, arweave: (o2 = this.options) == null ? void 0 : o2.arweave }, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow }), !a2.hasOwnProperty("host_meta") || i2 == null || !i2.startsWith("http")) {
+                    if (u2 = T({ metadata: i2, gateways: { ipfs: (n2 = this.options) == null ? void 0 : n2.ipfs, arweave: (o2 = this.options) == null ? void 0 : o2.arweave }, jsdomWindow: r2 == null ? void 0 : r2.jsdomWindow, urlDenyList: (a2 = this.options) == null ? void 0 : a2.urlDenyList }), !i2.hasOwnProperty("host_meta") || u2 == null || !u2.startsWith("http")) {
                       t5.next = 11;
                       break;
                     }
-                    return t5.next = 9, P(i2);
+                    return t5.next = 9, B(u2);
                   case 9:
-                    return t5.abrupt("return", t5.sent ? i2 : null);
+                    return t5.abrupt("return", t5.sent ? u2 : null);
                   case 11:
-                    return t5.abrupt("return", i2);
+                    return t5.abrupt("return", u2);
                   case 12:
                   case "end":
                     return t5.stop();
@@ -36621,9 +36659,7 @@ if (cid) {
             return t3.apply(this, arguments);
           };
         }(), t2;
-      }();
-      var J = { getImageURI: W, parseNFT: A, resolveURI: C, isImageURI: P };
-      exports.AvatarResolver = Y, exports.UnsupportedNamespace = Z, exports.specs = z, exports.utils = J;
+      }(), exports.UnsupportedNamespace = $, exports.specs = K, exports.utils = q;
     }
   });
 
@@ -36638,11 +36674,11 @@ if (cid) {
       }
       var contracts = require_lib24();
       var _ = require_buffer2();
-      var axios = _interopDefault(require_axios2());
       var createDOMPurify = _interopDefault(require_purify());
-      var multiformats = (init_src(), __toCommonJS(src_exports));
       var isSVG = _interopDefault(require_is_svg());
       var urlJoin = _interopDefault(require_url_join());
+      var multiformats = (init_src(), __toCommonJS(src_exports));
+      var axios = _interopDefault(require_axios2());
       function _wrapRegExp() {
         _wrapRegExp = function(re, groups) {
           return new BabelRegExp(re, void 0, groups);
@@ -37333,28 +37369,6 @@ if (cid) {
           }
         }
       });
-      var IPFS_SUBPATH = "/ipfs/";
-      var IPNS_SUBPATH = "/ipns/";
-      var networkRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
-        protocol: 1,
-        root: 2,
-        subpath: 3,
-        target: 4,
-        subtarget: 5
-      });
-      var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
-      var BaseError = /* @__PURE__ */ function(_Error) {
-        _inheritsLoose(BaseError2, _Error);
-        function BaseError2(message) {
-          var _this;
-          var trueProto = (this instanceof BaseError2 ? this.constructor : void 0).prototype;
-          _this = _Error.call(this, message) || this;
-          _this.__proto__ = trueProto;
-          return _this;
-        }
-        return BaseError2;
-      }(/* @__PURE__ */ _wrapNativeSuper(Error));
       function assert(condition, message) {
         if (!condition) {
           throw message;
@@ -37392,6 +37406,17 @@ if (cid) {
         }));
         return _handleSettled.apply(this, arguments);
       }
+      var BaseError = /* @__PURE__ */ function(_Error) {
+        _inheritsLoose(BaseError2, _Error);
+        function BaseError2(message) {
+          var _this;
+          var trueProto = (this instanceof BaseError2 ? this.constructor : void 0).prototype;
+          _this = _Error.call(this, message) || this;
+          _this.__proto__ = trueProto;
+          return _this;
+        }
+        return BaseError2;
+      }(/* @__PURE__ */ _wrapNativeSuper(Error));
       var NFTURIParsingError = /* @__PURE__ */ function(_BaseError) {
         _inheritsLoose(NFTURIParsingError2, _BaseError);
         function NFTURIParsingError2() {
@@ -37399,48 +37424,6 @@ if (cid) {
         }
         return NFTURIParsingError2;
       }(BaseError);
-      function isCID(hash) {
-        try {
-          if (typeof hash === "string") {
-            return Boolean(multiformats.CID.parse(hash));
-          }
-          return Boolean(multiformats.CID.asCID(hash));
-        } catch (_error) {
-          return false;
-        }
-      }
-      function isImageURI(url) {
-        return new Promise(function(resolve) {
-          fetch2({
-            url,
-            method: "HEAD"
-          }).then(function(result) {
-            if (result.status === 200) {
-              var contentType = result.headers["content-type"];
-              resolve(contentType == null ? void 0 : contentType.startsWith("image/"));
-            } else {
-              resolve(false);
-            }
-          })["catch"](function(error) {
-            if (typeof error.response !== "undefined") {
-              resolve(false);
-              return;
-            }
-            if (!globalThis.hasOwnProperty("Image")) {
-              resolve(false);
-              return;
-            }
-            var img = new Image();
-            img.onload = function() {
-              resolve(true);
-            };
-            img.onerror = function() {
-              resolve(false);
-            };
-            img.src = url;
-          });
-        });
-      }
       function parseNFT(uri, seperator) {
         if (seperator === void 0) {
           seperator = "/";
@@ -37468,6 +37451,39 @@ if (cid) {
           throw new NFTURIParsingError(error + " - " + uri);
         }
       }
+      function isCID(hash) {
+        try {
+          if (typeof hash === "string") {
+            return Boolean(multiformats.CID.parse(hash));
+          }
+          return Boolean(multiformats.CID.asCID(hash));
+        } catch (_error) {
+          return false;
+        }
+      }
+      var IPFS_SUBPATH = "/ipfs/";
+      var IPNS_SUBPATH = "/ipns/";
+      var networkRegex = /* @__PURE__ */ _wrapRegExp(/(ipfs:\/|ipns:\/|ar:\/)?(\/)?(ipfs\/|ipns\/)?([\x2D\.0-9A-Z_a-z]+)(\/.*)?/, {
+        protocol: 1,
+        root: 2,
+        subpath: 3,
+        target: 4,
+        subtarget: 5
+      });
+      var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+      var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
+      function _replaceGateway(uri, source, target) {
+        if (uri.startsWith(source) && target) {
+          try {
+            var _uri = new URL(uri);
+            _uri.hostname = new URL(target).hostname;
+            return _uri.toString();
+          } catch (_error) {
+            return uri;
+          }
+        }
+        return uri;
+      }
       function resolveURI(uri, gateways, customGateway) {
         var _gateways3, _gateways4, _gateways5;
         var isEncoded = base64Regex.test(uri);
@@ -37482,7 +37498,7 @@ if (cid) {
           };
         }
         if (!((_gateways3 = gateways) != null && _gateways3.ipfs) && !!customGateway) {
-          console.warn("'customGateway' option will be depreciated soon, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead");
+          console.warn("'customGateway' option depreciated, please use 'gateways: {ipfs: YOUR_IPFS_GATEWAY }' instead");
           gateways = _extends({}, gateways, {
             ipfs: customGateway
           });
@@ -37517,6 +37533,43 @@ if (cid) {
           };
         }
       }
+      function isSVGDataUri(uri) {
+        var svgDataUriPrefix = "data:image/svg+xml";
+        return uri.startsWith(svgDataUriPrefix);
+      }
+      function isImageDataUri(uri) {
+        var imageFormats = ["jpeg", "png", "gif", "bmp", "webp"];
+        var dataUriPattern = /^data:image\/([a-zA-Z0-9]+)(?:;base64)?,/;
+        var match = uri.match(dataUriPattern);
+        if (!match || match.length < 2) {
+          return false;
+        }
+        var format = match[1].toLowerCase();
+        return imageFormats.includes(format);
+      }
+      function convertToRawSVG(input) {
+        var base64Prefix = "data:image/svg+xml;base64,";
+        var encodedPrefix = "data:image/svg+xml,";
+        if (input.startsWith(base64Prefix)) {
+          var base64Data = input.substring(base64Prefix.length);
+          try {
+            return Buffer.from(base64Data, "base64").toString();
+          } catch (error) {
+            console.error("Invalid base64 encoded SVG");
+            return null;
+          }
+        } else if (input.startsWith(encodedPrefix)) {
+          var encodedData = input.substring(encodedPrefix.length);
+          try {
+            return decodeURIComponent(encodedData);
+          } catch (error) {
+            console.error("Invalid URL encoded SVG");
+            return null;
+          }
+        } else {
+          return input;
+        }
+      }
       function _sanitize(data, jsDomWindow) {
         var domWindow;
         try {
@@ -37529,22 +37582,10 @@ if (cid) {
         }
         var DOMPurify = createDOMPurify(domWindow);
         var cleanDOM = DOMPurify.sanitize(data);
-        return _.Buffer.from(cleanDOM);
+        return Buffer.from(cleanDOM);
       }
-      function _replaceGateway(uri, source, target) {
-        if (uri.startsWith(source) && target) {
-          try {
-            var _uri = new URL(uri);
-            _uri.hostname = new URL(target).hostname;
-            return _uri.toString();
-          } catch (_error) {
-            return uri;
-          }
-        }
-        return uri;
-      }
-      function getImageURI(_ref2) {
-        var metadata = _ref2.metadata, customGateway = _ref2.customGateway, gateways = _ref2.gateways, jsdomWindow = _ref2.jsdomWindow;
+      function getImageURI(_ref) {
+        var metadata = _ref.metadata, customGateway = _ref.customGateway, gateways = _ref.gateways, jsdomWindow = _ref.jsdomWindow, urlDenyList = _ref.urlDenyList;
         var image = metadata.image, image_url = metadata.image_url, image_data = metadata.image_data;
         var _image = image || image_url || image_data;
         assert(_image, "Image is not available");
@@ -37557,6 +37598,8 @@ if (cid) {
           return "data:image/svg+xml;base64," + data.toString("base64");
         }
         if (isImageDataUri(parsedURI) || parsedURI.startsWith("http")) {
+          if (urlDenyList != null && urlDenyList.includes(new URL(parsedURI).hostname))
+            return null;
           return parsedURI;
         }
         return null;
@@ -37604,8 +37647,8 @@ if (cid) {
           ttl: ttl * 1e3
         });
       }
-      function createFetcher(_ref3) {
-        var ttl = _ref3.ttl;
+      function createFetcher(_ref) {
+        var ttl = _ref.ttl;
         var _fetch = axios.create({
           proxy: false
         });
@@ -37615,14 +37658,130 @@ if (cid) {
         return _fetch;
       }
       var fetch2 = /* @__PURE__ */ createFetcher({});
+      function isStreamAnImage(_x) {
+        return _isStreamAnImage.apply(this, arguments);
+      }
+      function _isStreamAnImage() {
+        _isStreamAnImage = _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(url) {
+          var source, response, magicNumbers, imageSignatures, isBinaryImage, chunkAsString, isSvgImage;
+          return runtime_1.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.prev = 0;
+                  source = axios.CancelToken.source();
+                  _context.next = 4;
+                  return fetch2.get(url, {
+                    responseType: "arraybuffer",
+                    headers: {
+                      Range: "bytes=0-1023"
+                    },
+                    cancelToken: source.token,
+                    onDownloadProgress: function onDownloadProgress(progressEvent) {
+                      if (progressEvent.loaded > 1024) {
+                        source.cancel("Aborted to prevent downloading the entire file.");
+                      }
+                    }
+                  });
+                case 4:
+                  response = _context.sent;
+                  if (response.data instanceof ArrayBuffer) {
+                    magicNumbers = new DataView(response.data).getUint32(0).toString(16);
+                  } else {
+                    magicNumbers = response.data.readUInt32BE(0).toString(16);
+                  }
+                  imageSignatures = ["ffd8ff", "89504e47", "47494638", "49492a00", "4d4d002a", "424d"];
+                  isBinaryImage = imageSignatures.some(function(signature) {
+                    return magicNumbers.startsWith(signature);
+                  });
+                  chunkAsString = _.Buffer.from(response.data).toString();
+                  isSvgImage = /<svg[\s\S]*?xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(chunkAsString);
+                  return _context.abrupt("return", isBinaryImage || isSvgImage);
+                case 13:
+                  _context.prev = 13;
+                  _context.t0 = _context["catch"](0);
+                  if (axios.isCancel(_context.t0)) {
+                    console.error("Stream request was canceled:", _context.t0.message);
+                  } else {
+                    console.error("Error checking stream:", _context.t0);
+                  }
+                  return _context.abrupt("return", false);
+                case 17:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, null, [[0, 13]]);
+        }));
+        return _isStreamAnImage.apply(this, arguments);
+      }
+      function isImageURI(url) {
+        return new Promise(function(resolve) {
+          fetch2({
+            url: encodeURI(url),
+            method: "HEAD"
+          }).then(function(result) {
+            if (result.status === 200) {
+              var contentType = result.headers["content-type"];
+              if (contentType != null && contentType.startsWith("application/octet-stream")) {
+                resolve(isStreamAnImage(url));
+              }
+              resolve(contentType == null ? void 0 : contentType.startsWith("image/"));
+            } else {
+              resolve(false);
+            }
+          })["catch"](function(error) {
+            console.warn("isImageURI: fetch error", error);
+            if (typeof error.response !== "undefined") {
+              resolve(false);
+              return;
+            }
+            if (!globalThis.hasOwnProperty("Image")) {
+              resolve(false);
+              return;
+            }
+            var img = new Image();
+            img.onload = function() {
+              resolve(true);
+            };
+            img.onerror = function() {
+              resolve(false);
+            };
+            img.src = url;
+          });
+        });
+      }
+      var index = {
+        __proto__: null,
+        BaseError,
+        assert,
+        convertToRawSVG,
+        createCacheAdapter,
+        fetch: fetch2,
+        getImageURI,
+        handleSettled,
+        isCID,
+        isImageURI,
+        parseNFT,
+        resolveURI
+      };
       var abi = ["function uri(uint256 _id) public view returns (string memory)", "function balanceOf(address account, uint256 id) public view returns (uint256)"];
+      function getMarketplaceAPIKey(uri, options) {
+        var _options$apiKey;
+        if (uri.startsWith("https://api.opensea.io") && options != null && (_options$apiKey = options.apiKey) != null && _options$apiKey["opensea"]) {
+          return {
+            "X-API-KEY": options.apiKey.opensea
+          };
+        }
+        return false;
+      }
       var ERC1155 = /* @__PURE__ */ function() {
         function ERC11552() {
         }
         var _proto = ERC11552.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
           var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(provider2, ownerAddress, contractAddress, tokenID, options) {
-            var tokenIDHex, contract, _yield$Promise$all, tokenURI, balance, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, response, metadata;
+            var tokenIDHex, contract, _yield$Promise$all, tokenURI, balance, isOwner, _resolveURI, resolvedURI, isOnChain, isEncoded, _resolvedUri, marketplaceKey, response, metadata;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
@@ -37647,18 +37806,21 @@ if (cid) {
                     }
                     return _context.abrupt("return", JSON.parse(_resolvedUri));
                   case 13:
-                    _context.next = 15;
-                    return fetch2(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex));
-                  case 15:
+                    marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);
+                    _context.next = 16;
+                    return fetch2.get(encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)), marketplaceKey ? {
+                      headers: marketplaceKey
+                    } : {});
+                  case 16:
                     response = _context.sent;
-                    _context.next = 18;
+                    _context.next = 19;
                     return response == null ? void 0 : response.data;
-                  case 18:
+                  case 19:
                     metadata = _context.sent;
                     return _context.abrupt("return", _extends({}, metadata, {
                       is_owner: isOwner
                     }));
-                  case 20:
+                  case 21:
                   case "end":
                     return _context.stop();
                 }
@@ -37707,7 +37869,7 @@ if (cid) {
                     }));
                   case 13:
                     _context.next = 15;
-                    return fetch2(resolvedURI.replace(/(?:0x)?{id}/, tokenID));
+                    return fetch2(encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID)));
                   case 15:
                     response = _context.sent;
                     _context.next = 18;
@@ -37737,6 +37899,7 @@ if (cid) {
         var _proto = URI2.prototype;
         _proto.getMetadata = /* @__PURE__ */ function() {
           var _getMetadata = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee(uri, options) {
+            var _options$urlDenyList;
             var _resolveURI, resolvedURI, isOnChain, isImage, response;
             return runtime_1.wrap(function _callee$(_context) {
               while (1) {
@@ -37749,27 +37912,35 @@ if (cid) {
                     }
                     return _context.abrupt("return", resolvedURI);
                   case 3:
-                    _context.next = 5;
-                    return isImageURI(resolvedURI);
+                    if (!(options != null && (_options$urlDenyList = options.urlDenyList) != null && _options$urlDenyList.includes(new URL(resolvedURI).hostname))) {
+                      _context.next = 5;
+                      break;
+                    }
+                    return _context.abrupt("return", {
+                      image: null
+                    });
                   case 5:
+                    _context.next = 7;
+                    return isImageURI(resolvedURI);
+                  case 7:
                     isImage = _context.sent;
                     if (!isImage) {
-                      _context.next = 8;
+                      _context.next = 10;
                       break;
                     }
                     return _context.abrupt("return", {
                       image: resolvedURI
                     });
-                  case 8:
-                    _context.next = 10;
-                    return fetch2(resolvedURI);
                   case 10:
+                    _context.next = 12;
+                    return fetch2(encodeURI(resolvedURI));
+                  case 12:
                     response = _context.sent;
-                    _context.next = 13;
+                    _context.next = 15;
                     return response == null ? void 0 : response.data;
-                  case 13:
+                  case 15:
                     return _context.abrupt("return", _context.sent);
-                  case 14:
+                  case 16:
                   case "end":
                     return _context.stop();
                 }
@@ -37883,7 +38054,7 @@ if (cid) {
         }();
         _proto.getAvatar = /* @__PURE__ */ function() {
           var _getAvatar = /* @__PURE__ */ _asyncToGenerator(/* @__PURE__ */ runtime_1.mark(function _callee2(ens, data) {
-            var _this$options, _this$options2;
+            var _this$options, _this$options2, _this$options3;
             var metadata, imageURI, isImage;
             return runtime_1.wrap(function _callee2$(_context2) {
               while (1) {
@@ -37905,7 +38076,8 @@ if (cid) {
                         ipfs: (_this$options = this.options) == null ? void 0 : _this$options.ipfs,
                         arweave: (_this$options2 = this.options) == null ? void 0 : _this$options2.arweave
                       },
-                      jsdomWindow: data == null ? void 0 : data.jsdomWindow
+                      jsdomWindow: data == null ? void 0 : data.jsdomWindow,
+                      urlDenyList: (_this$options3 = this.options) == null ? void 0 : _this$options3.urlDenyList
                     });
                     if (!(metadata.hasOwnProperty("host_meta") && imageURI != null && imageURI.startsWith("http"))) {
                       _context2.next = 11;
@@ -37932,16 +38104,10 @@ if (cid) {
         }();
         return AvatarResolver3;
       }();
-      var utils = {
-        getImageURI,
-        parseNFT,
-        resolveURI,
-        isImageURI
-      };
       exports.AvatarResolver = AvatarResolver2;
       exports.UnsupportedNamespace = UnsupportedNamespace;
       exports.specs = specs;
-      exports.utils = utils;
+      exports.utils = index;
     }
   });
 
@@ -37985,9 +38151,9 @@ if (cid) {
   ];
   var notFoundImage = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzAwcHgiIGhlaWdodD0iMzAwcHgiIHZpZXdCb3g9IjAgMCAzMDAgMzAwIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPHRpdGxlPkdyb3VwPC90aXRsZT4KICAgIDxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJHcm91cCI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIGZpbGw9IiMwMDAwMDAiIHg9IjAiIHk9IjAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48L3JlY3Q+CiAgICAgICAgICAgIDx0ZXh0IGlkPSJDb3VsZC1ub3QtbG9hZC06KCIgZm9udC1mYW1pbHk9IlBsdXNKYWthcnRhU2Fucy1Cb2xkLCBQbHVzIEpha2FydGEgU2FucyIgZm9udC1zaXplPSIzMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNGRkZGRkYiPgogICAgICAgICAgICAgICAgPHRzcGFuIHg9IjEwNi4wMDUiIHk9IjEyNCI+Q291bGQgPC90c3Bhbj4KICAgICAgICAgICAgICAgIDx0c3BhbiB4PSIxMjUuMjgiIHk9IjE2MiI+bm90IDwvdHNwYW4+CiAgICAgICAgICAgICAgICA8dHNwYW4geD0iMTAzLjYzNSIgeT0iMjAwIj5sb2FkIDooPC90c3Bhbj4KICAgICAgICAgICAgPC90ZXh0PgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+";
   var provider = new StaticJsonRpcProvider(`https://mainnet.infura.io/v3/${define_process_default.env.INFURA_KEY}`);
-  var avt = new AvatarResolver(provider, {
-    ipfs: "https://cloudflare-ipfs.com"
-  });
+  var avt = new AvatarResolver(provider, { apiKey: {
+    opensea: define_process_default.env.OPENSEA_KEY
+  } });
   for (let ens of ensNames) {
     avt.getMetadata(ens).then((metadata) => {
       const avatar = avtUtils.getImageURI({
