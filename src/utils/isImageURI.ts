@@ -61,7 +61,7 @@ async function isStreamAnImage(url: string) {
 
 export function isImageURI(url: string) {
   return new Promise(resolve => {
-    fetch({ url: encodeURI(url), method: 'HEAD' })
+    fetch({ url, method: 'HEAD' })
       .then(result => {
         if (result.status === 200) {
           // retrieve content type header to check if content is image
