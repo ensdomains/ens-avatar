@@ -3,6 +3,14 @@ import { Buffer } from 'buffer/';
 
 import { fetch } from './fetch';
 
+function isURIEncoded(uri: string) {
+  try {
+    return uri !== decodeURIComponent(uri);
+  } catch {
+    return false;
+  }
+}
+
 async function isStreamAnImage(url: string) {
   try {
     const source = axios.CancelToken.source();
@@ -61,7 +69,7 @@ async function isStreamAnImage(url: string) {
 
 export function isImageURI(url: string) {
   return new Promise(resolve => {
-    fetch({ url, method: 'HEAD' })
+    fetch({ url: isURIEncoded(url) ? url : encodeURI(url), method: 'HEAD' })
       .then(result => {
         if (result.status === 200) {
           // retrieve content type header to check if content is image
