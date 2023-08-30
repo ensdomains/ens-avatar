@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -14,12 +14,11 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build",
-    "postbuild": "./patch.sh",
+    "build": "tsdx build && ./patch.sh",
     "build:demo": "node ./example/build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "prepare": "tsdx build && ./patch.sh",
     "size": "size-limit"
   },
   "husky": {
