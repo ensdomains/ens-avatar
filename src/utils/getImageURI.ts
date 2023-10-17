@@ -61,6 +61,15 @@ function _sanitize(data: string, jsDomWindow?: any): Buffer {
     domWindow = jsDomWindow;
   }
   const DOMPurify = createDOMPurify(domWindow as any);
+
+  DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+    if (data.tagName === 'meta') {
+      if (node.getAttribute('http-equiv') === 'refresh') {
+        node.remove();
+      }
+    }
+  });
+
   // purges malicious scripting from svg content
   const cleanDOM = DOMPurify.sanitize(data);
   return Buffer.from(cleanDOM);
@@ -82,7 +91,7 @@ export function getImageURI({
 
   if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
-    const rawSVG = convertToRawSVG(parsedURI);
+    const rawSVG = convertToRawSVG(parsedURI)?.replace(/\s*(<[^>]+>)\s*/g, '$1');
     if (!rawSVG) return null;
 
     const data = _sanitize(rawSVG, jsdomWindow);
