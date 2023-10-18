@@ -68,8 +68,10 @@ async function isStreamAnImage(url: string) {
 }
 
 export function isImageURI(url: string) {
+  const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
+
   return new Promise(resolve => {
-    fetch({ url: isURIEncoded(url) ? url : encodeURI(url), method: 'HEAD' })
+    fetch({ url: encodedURI, method: 'HEAD' })
       .then(result => {
         if (result.status === 200) {
           // retrieve content type header to check if content is image
@@ -77,7 +79,7 @@ export function isImageURI(url: string) {
 
           if (contentType?.startsWith('application/octet-stream')) {
             // if image served with generic mimetype, do additional check
-            resolve(isStreamAnImage(url));
+            resolve(isStreamAnImage(encodedURI));
           }
 
           resolve(contentType?.startsWith('image/'));
@@ -105,7 +107,7 @@ export function isImageURI(url: string) {
         img.onerror = () => {
           resolve(false);
         };
-        img.src = url;
+        img.src = encodedURI;
       });
   });
 }

@@ -1,5 +1,5 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -70,11 +70,11 @@
   "dependencies": {
     "@ethersproject/contracts": "^5.7.0",
     "@ethersproject/providers": "^5.7.0",
-    "assert": "^2.0.0",
-    "axios": "^0.25.0",
+    "assert": "^2.1.0",
+    "axios": "^0.27.2",
     "axios-cache-interceptor": "^0.9.3",
     "buffer": "^6.0.3",
-    "dompurify": "^3.0.1",
+    "dompurify": "^3.0.6",
     "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"
