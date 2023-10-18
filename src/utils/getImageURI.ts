@@ -91,7 +91,10 @@ export function getImageURI({
 
   if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
-    const rawSVG = convertToRawSVG(parsedURI)?.replace(/\s*(<[^>]+>)\s*/g, '$1');
+    const rawSVG = convertToRawSVG(parsedURI)?.replace(
+      /\s*(<[^>]+>)\s*/g,
+      '$1'
+    );
     if (!rawSVG) return null;
 
     const data = _sanitize(rawSVG, jsdomWindow);
