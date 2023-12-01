@@ -10,14 +10,14 @@
     "src"
   ],
   "engines": {
-    "node": ">=12"
+    "node": ">=16"
   },
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build && ./patch.sh",
     "build:demo": "node ./example/build.js",
     "test": "tsdx test",
-    "lint": "tsdx lint",
+    "lint": "tsdx lint src test",
     "prepare": "tsdx build && ./patch.sh",
     "size": "size-limit"
   },

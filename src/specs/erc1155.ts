@@ -31,9 +31,9 @@ export default class ERC1155 {
       ? tokenID.replace('0x', '').padStart(64, '0')
       : tokenID;
     const contract = new Contract(contractAddress, abi, provider);
-    const [tokenURI, balance]: [string, bigint] = await Promise.all([
+    const [tokenURI, balance] = await Promise.all([
       contract.uri(tokenID),
-      ownerAddress && contract.balanceOf(ownerAddress, tokenID),
+      ownerAddress ? contract.balanceOf(ownerAddress, tokenID) : BigInt(0),
     ]);
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance > BigInt(0));
