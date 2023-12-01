@@ -11,7 +11,7 @@ const abi = [
 
 function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
   if (
-    uri.startsWith('https://api.opensea.io') &&
+    uri.startsWith('https://api.opensea.io/') &&
     options?.apiKey?.['opensea']
   ) {
     return { 'X-API-KEY': options.apiKey.opensea };
@@ -28,7 +28,7 @@ export default class ERC1155 {
     options?: AvatarResolverOpts
   ) {
     // exclude opensea api which does not follow erc1155 spec
-    const tokenIDHex = !tokenID.startsWith('https://api.opensea.io')
+    const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
       ? tokenID.replace('0x', '').padStart(64, '0')
       : tokenID;
     const contract = new Contract(contractAddress, abi, provider);
