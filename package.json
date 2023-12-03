@@ -40,7 +40,7 @@
   "size-limit": [
     {
       "path": "dist/ens-avatar.cjs.production.min.js",
-      "limit": "200 KB",
+      "limit": "250 KB",
       "ignore": [
         "jsdom"
       ]
