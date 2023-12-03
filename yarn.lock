@@ -4970,11 +4970,6 @@ lodash.merge@^4.6.2:
   resolved "https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.2.tgz"
   integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
 
-lodash.set@^4.3.2:
-  version "4.3.2"
-  resolved "https://registry.npmjs.org/lodash.set/-/lodash.set-4.3.2.tgz"
-  integrity sha1-2HV7HagH3eJIFrDWqEvqGnYjCyM=
-
 lodash.sortby@^4.7.0:
   version "4.7.0"
   resolved "https://registry.npmjs.org/lodash.sortby/-/lodash.sortby-4.7.0.tgz"
@@ -5247,14 +5242,13 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-nock@^13.2.2:
-  version "13.2.2"
-  resolved "https://registry.npmjs.org/nock/-/nock-13.2.2.tgz"
-  integrity sha512-PcBHuvl9i6zfaJ50A7LS55oU+nFLv8htXIhffJO+FxyfibdZ4jEvd9kTuvkrJireBFIGMZ+oUIRpMK5gU9h//g==
+nock@^13.4.0:
+  version "13.4.0"
+  resolved "https://registry.yarnpkg.com/nock/-/nock-13.4.0.tgz#60aa3f7a4afa9c12052e74d8fb7550f682ef0115"
+  integrity sha512-W8NVHjO/LCTNA64yxAPHV/K47LpGYcVzgKd3Q0n6owhwvD0Dgoterc25R4rnZbckJEb6Loxz1f5QMuJpJnbSyQ==
   dependencies:
     debug "^4.1.0"
     json-stringify-safe "^5.0.1"
-    lodash.set "^4.3.2"
     propagate "^2.0.0"
 
 node-int64@^0.4.0:

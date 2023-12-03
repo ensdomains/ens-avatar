@@ -23,7 +23,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "tsdx lint src test"
     }
   },
   "prettier": {
@@ -61,7 +61,7 @@
     "dotenv": "^16.0.0",
     "esbuild": "^0.14.21",
     "husky": "^7.0.4",
-    "nock": "^13.2.2",
+    "nock": "^13.4.0",
     "size-limit": "^7.0.5",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
