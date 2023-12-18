@@ -9,7 +9,7 @@ require('esbuild')
     },
     outfile: 'example/dist/index.js',
     define: {
-      "process": `{
+      process: `{
         "env": {
           "INFURA_KEY": '${process.env.INFURA_KEY}',
           "OPENSEA_KEY": '${process.env.OPENSEA_KEY}'
