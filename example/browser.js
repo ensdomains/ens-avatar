@@ -28,11 +28,9 @@ const notFoundImage =
 const provider = new StaticJsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
-const avt = new AvatarResolver(provider, 
-  { apiKey: {
-    opensea: process.env.OPENSEA_KEY
-  }}
-  );
+const avt = new AvatarResolver(provider, {
+  apiKey: { opensea: process.env.OPENSEA_KEY },
+});
 for (let ens of ensNames) {
   avt
     .getMetadata(ens)

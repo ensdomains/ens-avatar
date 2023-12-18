@@ -15,7 +15,7 @@ const IPFS = 'https://cf-ipfs.com';
 const provider = new StaticJsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
-const avt = new AvatarResolver(provider, { ipfs: IPFS});
+const avt = new AvatarResolver(provider, { ipfs: IPFS, apiKey: { opensea: process.env.OPENSEA_KEY }});
 avt
   .getMetadata(ensName)
   .then(metadata => {
