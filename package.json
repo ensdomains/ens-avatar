@@ -13,12 +13,11 @@
     "node": ">=12"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build && ./patch.sh",
+    "start": "rollup -c --watch",
+    "build": "rollup -c",
     "build:demo": "node ./example/build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build && ./patch.sh",
     "size": "size-limit"
   },
   "husky": {
@@ -39,7 +38,7 @@
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
   "size-limit": [
     {
-      "path": "dist/ens-avatar.cjs.production.min.js",
+      "path": "dist/index.js",
       "limit": "200 KB",
       "ignore": [
         "jsdom"
@@ -54,14 +53,16 @@
     }
   ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.5",
-    "@types/dompurify": "^2.3.3",
-    "@types/jsdom": "^16.2.14",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@size-limit/preset-small-lib": "^11.0.1",
+    "@types/dompurify": "^3.0.5",
+    "@types/jsdom": "^21.1.6",
     "@types/url-join": "^4.0.1",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.3.1",
     "esbuild": "^0.14.21",
     "nock": "^13.2.2",
-    "size-limit": "^7.0.5",
+    "rollup": "^4.9.1",
+    "size-limit": "^11.0.1",
     "tsdx": "^0.14.1",
     "typescript": "^4.5.5"
   },
@@ -78,6 +79,6 @@
     "url-join": "^4.0.1"
   },
   "volta": {
-    "node": "16.14.0"
+    "node": "18.14.0"
   }
 }
