@@ -35,8 +35,8 @@ function removeDist(options = {}) {
     name: 'remove-dist',
     [hook]: async () => {
       const folderPath = path.join(process.cwd(), buildDir);
-      fs.accessSync(folderPath, fs.F_OK);
       try {
+        fs.accessSync(folderPath, fs.F_OK);
         fs.rmSync(folderPath, { recursive: true, force: true });
       } catch (err) {
         if (err.code !== 'ENOENT') throw err;
