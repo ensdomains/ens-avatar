@@ -1,8 +1,8 @@
-import { BaseProvider } from '@ethersproject/providers';
+import { Provider } from 'ethers';
 
 export interface Spec {
   getMetadata: (
-    provider: BaseProvider,
+    provider: Provider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
