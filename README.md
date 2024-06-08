@@ -2,6 +2,8 @@
 
 Avatar resolver library for both nodejs and browser.
 
+## Note!: ENS-Avatar >= 1.0.0  is only compatible with ethers v6. If your project is using v5, keep your ens-avatar on latest 0.x version.
+
 ## Getting started
 
 ### Prerequisites
