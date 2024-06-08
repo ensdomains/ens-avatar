@@ -1,5 +1,5 @@
 {
-  "version": "0.3.6",
+  "version": "1.0.0-alpha.1.ethers.6",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -22,7 +22,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "tsdx lint src test"
     }
   },
   "prettier": {
@@ -74,6 +74,7 @@
     "axios-cache-interceptor": "^0.9.3",
     "buffer": "^6.0.3",
     "dompurify": "^3.0.6",
+    "ethers": "6.12.0",
     "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
     "url-join": "^4.0.1"

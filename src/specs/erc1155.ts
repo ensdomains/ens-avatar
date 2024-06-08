@@ -1,5 +1,4 @@
-import { BaseProvider } from '@ethersproject/providers';
-import { Contract } from '@ethersproject/contracts';
+import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
 import { AvatarResolverOpts } from '../types';
@@ -21,7 +20,7 @@ function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
 
 export default class ERC1155 {
   async getMetadata(
-    provider: BaseProvider,
+    provider: Provider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
@@ -34,10 +33,10 @@ export default class ERC1155 {
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, balance] = await Promise.all([
       contract.uri(tokenID),
-      ownerAddress && contract.balanceOf(ownerAddress, tokenID),
+      ownerAddress ? contract.balanceOf(ownerAddress, tokenID) : BigInt(0),
     ]);
     // if user has valid address and if token balance of given address is greater than 0
-    const isOwner = !!(ownerAddress && balance.gt(0));
+    const isOwner = !!(ownerAddress && balance > BigInt(0));
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
       tokenURI,

@@ -1,5 +1,4 @@
-import { BaseProvider } from '@ethersproject/providers';
-import { Contract } from '@ethersproject/contracts';
+import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
 import { fetch, resolveURI } from '../utils';
 import { AvatarResolverOpts } from '../types';
@@ -11,7 +10,7 @@ const abi = [
 
 export default class ERC721 {
   async getMetadata(
-    provider: BaseProvider,
+    provider: Provider,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,

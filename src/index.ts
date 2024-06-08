@@ -1,4 +1,4 @@
-import { BaseProvider } from '@ethersproject/providers';
+import { JsonRpcProvider } from 'ethers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
 import URI from './specs/uri';
@@ -23,14 +23,14 @@ export interface UnsupportedNamespace {}
 export class UnsupportedNamespace extends BaseError {}
 
 export interface AvatarResolver {
-  provider: BaseProvider;
+  provider: JsonRpcProvider;
   options?: AvatarResolverOpts;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
   getMetadata(ens: string): Promise<any | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
-  constructor(provider: BaseProvider, options?: AvatarResolverOpts) {
+  constructor(provider: JsonRpcProvider, options?: AvatarResolverOpts) {
     this.provider = provider;
     this.options = options;
     if (options?.cache && options?.cache > 0) {
