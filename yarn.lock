@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@adraffy/ens-normalize@1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.0.tgz#d2a39395c587e092d77cbbc80acf956a54f38bf7"
-  integrity sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==
+"@adraffy/ens-normalize@1.10.1":
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz#63430d04bd8c5e74f8d7d049338f1cd9d4f02069"
+  integrity sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.5.5":
   version "7.16.7"
@@ -3454,12 +3454,12 @@ esutils@^2.0.2:
   resolved "https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
 
-ethers@^6.9.0:
-  version "6.9.0"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.9.0.tgz#a4534bdcdfde306aee94ef32f3d5c70d7e33fcb9"
-  integrity sha512-pmfNyQzc2mseLe91FnT2vmNaTt8dDzhxZ/xItAV7uGsF4dI4ek2ufMu3rAkgQETL/TIs0GS5A+U05g9QyWnv3Q==
+ethers@6.12.0:
+  version "6.12.0"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.12.0.tgz#b0c2ce207ae5a3b5125be966e32ffea7c1f2481a"
+  integrity sha512-zL5NlOTjML239gIvtVJuaSk0N9GQLi1Hom3ZWUszE5lDTQE/IVB62mrPkQ2W1bGcZwVGSLaetQbWNQSvI4rGDQ==
   dependencies:
-    "@adraffy/ens-normalize" "1.10.0"
+    "@adraffy/ens-normalize" "1.10.1"
     "@noble/curves" "1.2.0"
     "@noble/hashes" "1.3.2"
     "@types/node" "18.15.13"
@@ -5474,10 +5474,10 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-nock@^13.4.0:
-  version "13.4.0"
-  resolved "https://registry.yarnpkg.com/nock/-/nock-13.4.0.tgz#60aa3f7a4afa9c12052e74d8fb7550f682ef0115"
-  integrity sha512-W8NVHjO/LCTNA64yxAPHV/K47LpGYcVzgKd3Q0n6owhwvD0Dgoterc25R4rnZbckJEb6Loxz1f5QMuJpJnbSyQ==
+nock@^13.2.2:
+  version "13.5.0"
+  resolved "https://registry.yarnpkg.com/nock/-/nock-13.5.0.tgz#82cd33b0dba6095d3f5a28d0ff2edac970fa05ec"
+  integrity sha512-9hc1eCS2HtOz+sE9W7JQw/tXJktg0zoPSu48s/pYe73e25JW9ywiowbqnUSd7iZPeVawLcVpPZeZS312fwSY+g==
   dependencies:
     debug "^4.1.0"
     json-stringify-safe "^5.0.1"
