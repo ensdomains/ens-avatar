@@ -1,6 +1,11 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import { fetch, resolveURI } from '../utils';
+import {
+  createAgentAdapter,
+  createCacheAdapter,
+  fetch,
+  resolveURI,
+} from '../utils';
 import { AvatarResolverOpts } from '../types';
 
 const abi = [
@@ -26,6 +31,13 @@ export default class ERC1155 {
     tokenID: string,
     options?: AvatarResolverOpts
   ) {
+    if (options?.cache && options?.cache > 0) {
+      createCacheAdapter(fetch, options?.cache);
+    }
+    if (options?.agents) {
+      createAgentAdapter(fetch, options?.agents);
+    }
+
     // exclude opensea api which does not follow erc1155 spec
     const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
       ? tokenID.replace('0x', '').padStart(64, '0')

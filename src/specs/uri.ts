@@ -1,8 +1,21 @@
 import { AvatarResolverOpts } from '../types';
-import { fetch, isImageURI, resolveURI } from '../utils';
+import {
+  createAgentAdapter,
+  createCacheAdapter,
+  fetch,
+  isImageURI,
+  resolveURI,
+} from '../utils';
 
 export default class URI {
   async getMetadata(uri: string, options?: AvatarResolverOpts) {
+    if (options?.cache && options?.cache > 0) {
+      createCacheAdapter(fetch, options?.cache);
+    }
+    if (options?.agents) {
+      createAgentAdapter(fetch, options?.agents);
+    }
+
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);
     if (isOnChain) {
       return resolvedURI;
