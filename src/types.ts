@@ -17,12 +17,18 @@ export type MarketplaceAPIKey = Partial<
   }
 >;
 
+export interface AxiosAgents {
+  httpAgent?: Function;
+  httpsAgent?: Function;
+}
+
 export interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
   arweave?: string;
   apiKey?: MarketplaceAPIKey;
   urlDenyList?: string[];
+  agents?: AxiosAgents;
 }
 
 export interface AvatarRequestOpts {

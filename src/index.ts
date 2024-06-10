@@ -5,6 +5,7 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
+  createAgentAdapter,
   createCacheAdapter,
   fetch,
   getImageURI,
@@ -35,6 +36,9 @@ export class AvatarResolver implements AvatarResolver {
     this.options = options;
     if (options?.cache && options?.cache > 0) {
       createCacheAdapter(fetch, options?.cache);
+    }
+    if (options?.agents) {
+      createAgentAdapter(fetch, options?.agents);
     }
   }
 
