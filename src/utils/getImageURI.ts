@@ -71,7 +71,9 @@ function _sanitize(data: string, jsDomWindow?: any): Buffer {
   });
 
   // purges malicious scripting from svg content
-  const cleanDOM = DOMPurify.sanitize(data);
+  const cleanDOM = DOMPurify.sanitize(data, {
+    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link'],
+  });
   return Buffer.from(cleanDOM);
 }
 
