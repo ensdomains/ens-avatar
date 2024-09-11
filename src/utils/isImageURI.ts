@@ -1,9 +1,24 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Buffer } from 'buffer/';
 
 import { fetch } from './fetch';
 
-function isURIEncoded(uri: string) {
+export const ALLOWED_IMAGE_MIMETYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
+  'image/avif',
+  'image/heic',
+  'image/heif',
+  'image/jxl',
+];
+
+const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
+
+function isURIEncoded(uri: string): boolean {
   try {
     return uri !== decodeURIComponent(uri);
   } catch {
@@ -11,10 +26,9 @@ function isURIEncoded(uri: string) {
   }
 }
 
-async function isStreamAnImage(url: string) {
+async function isStreamAnImage(url: string): Promise<boolean> {
   try {
     const source = axios.CancelToken.source();
-
     const response = await fetch.get(url, {
       responseType: 'arraybuffer',
       headers: {
@@ -29,6 +43,14 @@ async function isStreamAnImage(url: string) {
       },
     });
 
+    if (response.headers['content-length']) {
+      const contentLength = parseInt(response.headers['content-length'], 10);
+      if (contentLength > MAX_FILE_SIZE) {
+        console.warn(`isStreamAnImage: File too large ${contentLength} bytes`);
+        return false;
+      }
+    }
+
     let magicNumbers: string;
     // Check the binary signature (magic numbers) of the data
     if (response.data instanceof ArrayBuffer) {
@@ -41,9 +63,8 @@ async function isStreamAnImage(url: string) {
       'ffd8ff', // JPEG
       '89504e47', // PNG
       '47494638', // GIF
-      '49492a00', // TIFF (little endian)
-      '4d4d002a', // TIFF (big endian)
       '424d', // BMP
+      'ff0a', // JPEG XL
     ];
 
     const isBinaryImage = imageSignatures.some(signature =>
@@ -67,47 +88,62 @@ async function isStreamAnImage(url: string) {
   }
 }
 
-export function isImageURI(url: string) {
+export async function isImageURI(url: string): Promise<boolean> {
   const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
 
-  return new Promise(resolve => {
-    fetch({ url: encodedURI, method: 'HEAD' })
-      .then(result => {
-        if (result.status === 200) {
-          // retrieve content type header to check if content is image
-          const contentType = result.headers['content-type'];
+  try {
+    const result = await fetch({ url: encodedURI, method: 'HEAD' });
 
-          if (contentType?.startsWith('application/octet-stream')) {
-            // if image served with generic mimetype, do additional check
-            resolve(isStreamAnImage(encodedURI));
-          }
+    if (result.status === 200) {
+      const contentType = result.headers['content-type']?.toLowerCase();
 
-          resolve(contentType?.startsWith('image/'));
-        } else {
-          resolve(false);
-        }
-      })
-      .catch(error => {
-        console.warn('isImageURI: fetch error', error);
-        // if error is not cors related then fail
-        if (typeof error.response !== 'undefined') {
-          // in case of cors, use image api to validate if given url is an actual image
-          resolve(false);
-          return;
-        }
-        if (!globalThis.hasOwnProperty('Image')) {
-          // fail in NodeJS, since the error is not cors but any other network issue
-          resolve(false);
-          return;
-        }
-        const img = new Image();
-        img.onload = () => {
-          resolve(true);
-        };
-        img.onerror = () => {
-          resolve(false);
-        };
-        img.src = encodedURI;
-      });
-  });
+      if (!contentType || !ALLOWED_IMAGE_MIMETYPES.includes(contentType)) {
+        console.warn(`isImageURI: Invalid content type ${contentType}`);
+        return false;
+      }
+
+      const contentLength = parseInt(
+        result.headers['content-length'] || '0',
+        10
+      );
+      if (contentLength > MAX_FILE_SIZE) {
+        console.warn(`isImageURI: File too large ${contentLength} bytes`);
+        return false;
+      }
+
+      if (contentType === 'application/octet-stream') {
+        // if image served with generic mimetype, do additional check
+        return isStreamAnImage(encodedURI);
+      }
+
+      return true;
+    } else {
+      console.warn(`isImageURI: HTTP error ${result.status}`);
+      return false;
+    }
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.warn('isImageURI: ', error.toString(), '-', error.config.url);
+    } else {
+      console.warn('isImageURI: ', error.toString());
+    }
+
+    // if error is not cors related then fail
+    if (typeof error.response !== 'undefined') {
+      // in case of cors, use image api to validate if given url is an actual image
+      return false;
+    }
+
+    if (!globalThis.hasOwnProperty('Image')) {
+      // fail in NodeJS, since the error is not cors but any other network issue
+      return false;
+    }
+
+    return new Promise<boolean>(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = encodedURI;
+    });
+  }
 }

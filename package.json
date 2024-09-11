@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-alpha.3.ethers.6",
+  "version": "1.0.0",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
