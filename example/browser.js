@@ -64,10 +64,12 @@ function fadeImg() {
   this.style.opacity = '1';
 }
 
-function setImage(ens, avatarUri = notFoundImage, warn = false) {
+function setImage(ens, avatarUri = notFoundImage, warn = false, headerUri) {
   const elem = document.getElementById('queryImage');
+  const headerContainer = document.getElementById('headerContainer');
   elem.setAttribute('src', avatarUri);
   elem.setAttribute('alt', ens);
+  headerContainer.style.backgroundImage = headerUri ? `url("${headerUri}")` : 'none';
   const warnText = document.getElementById('warnText');
   if (warn) {
     if (warnText) return;
@@ -112,7 +114,9 @@ document.getElementById('queryInput').addEventListener('change', event => {
     .getMetadata(ens)
     .then(metadata => {
       const avatar = avtUtils.getImageURI({ metadata });
-      setImage(ens, avatar);
+      avt.getHeader(ens).then(header => {
+        setImage(ens, avatar, false, header);
+      });
       elem.style.filter = 'none';
     })
     .catch(error => {
