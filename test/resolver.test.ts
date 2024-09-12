@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from 'ethers';
-import nock from 'nock';
+import nock, { RequestBodyMatcher } from 'nock';
 import { AvatarResolver } from '../src';
 
 require('dotenv').config();
@@ -16,14 +16,14 @@ const CORS_HEADERS = {
 
 interface ChainIdParams {
   method: 'eth_chainId';
-  params: [];
+  params: Array<undefined>;
   id: number;
   jsonrpc: string;
 }
 
 interface EthCallParams {
   method: 'eth_call';
-  params: [{ to: string; data: string }, string];
+  params: Array<{ to: string; data: string } | string>;
   id: number;
   jsonrpc: string;
 }
@@ -35,12 +35,12 @@ interface JsonRpcResult {
 }
 
 function nockInfuraBatch(
-  body: Array<ChainIdParams | EthCallParams>,
+  body: Array<ChainIdParams | EthCallParams | null>,
   response: JsonRpcResult[]
 ) {
   nock(INFURA_URL.origin)
     .persist(false)
-    .post(INFURA_URL.pathname, body as [])
+    .post(INFURA_URL.pathname, body as RequestBodyMatcher)
     .reply(200, response);
 }
 
