@@ -14,19 +14,18 @@ const CORS_HEADERS = {
   'access-control-allow-origin': 'http://localhost',
 };
 
-
 interface ChainIdParams {
   method: 'eth_chainId';
   params: [];
   id: number;
-  jsonrpc: string,
+  jsonrpc: string;
 }
 
 interface EthCallParams {
-  method: 'eth_call',
-  params: [{ to: string, data: string }, string],
-  id: number,
-  jsonrpc: string,
+  method: 'eth_call';
+  params: [{ to: string; data: string }, string];
+  id: number;
+  jsonrpc: string;
 }
 
 interface JsonRpcResult {
@@ -35,7 +34,10 @@ interface JsonRpcResult {
   result: string;
 }
 
-function nockInfuraBatch(body: Array<ChainIdParams | EthCallParams>, response: JsonRpcResult[]) {
+function nockInfuraBatch(
+  body: Array<ChainIdParams | EthCallParams>,
+  response: JsonRpcResult[]
+) {
   nock(INFURA_URL.origin)
     .persist(false)
     .post(INFURA_URL.pathname, body as [])
@@ -61,7 +63,7 @@ function mockInfuraChainId() {
       },
       CORS_HEADERS as any
     );
-    nonceJsonRpc++;
+  nonceJsonRpc++;
 }
 
 function ethCallParams(to: string, data: string): EthCallParams {
