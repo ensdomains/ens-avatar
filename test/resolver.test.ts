@@ -92,13 +92,14 @@ function jsonRpcResult(result: string): JsonRpcResult {
   };
 }
 
+const provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+const avt = new AvatarResolver(provider, {
+  apiKey: {
+    opensea: 'api-key',
+  },
+});
+
 describe('get avatar', () => {
-  const provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-  const avt = new AvatarResolver(provider, {
-    apiKey: {
-      opensea: 'a2b184238ee8460d9d2f58b0d3177c23',
-    },
-  });
   it('retrieves image uri with erc721 spec', async () => {
     mockInfuraChainId();
 
@@ -517,4 +518,117 @@ describe('get avatar', () => {
   // it('retrieves image uri with custom nested uri', async () => {
   //   expect(await avt.getAvatar({ ens: 'testname.eth' })).toMatch(/^(data:image\/svg\+xml;base64,).*$/);
   // });
+});
+
+describe('get banner/header', () => {
+  it('retrieves image uri with custom spec', async () => {
+    mockInfuraChainId();
+
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          ENSRegistryWithFallback.toString(),
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+        chainIdParams(),
+        ethCallParams(
+          ENSRegistryWithFallback.toString(),
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        ),
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        ),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066865616465720000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000'
+        ), // Encoded HEADER URI
+        jsonRpcResult('0x1'),
+      ]
+    );
+
+
+    const HEADER_URI_TANRIKULU = new URL(
+      'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
+    );
+
+    /* mock head call */
+    nock(HEADER_URI_TANRIKULU.origin)
+      .head(HEADER_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    /* mock get call */
+    nock(HEADER_URI_TANRIKULU.origin)
+      .get(HEADER_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    expect(await avt.getHeader('tanrikulu.eth')).toEqual(
+      'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
+    );
+  });
 });
