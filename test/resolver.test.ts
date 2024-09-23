@@ -608,7 +608,6 @@ describe('get banner/header', () => {
       ]
     );
 
-
     const HEADER_URI_TANRIKULU = new URL(
       'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
     );

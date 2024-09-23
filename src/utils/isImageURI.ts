@@ -18,11 +18,11 @@ export const ALLOWED_IMAGE_MIMETYPES = [
 ];
 
 export const IMAGE_SIGNATURES = {
-  'FFD8FF': 'image/jpeg',
+  FFD8FF: 'image/jpeg',
   '89504E47': 'image/png',
   '47494638': 'image/gif',
   '424D': 'image/bmp',
-  'FF0A': 'image/jxl',
+  FF0A: 'image/jxl',
 };
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB

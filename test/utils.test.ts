@@ -61,7 +61,9 @@ describe('resolve ipfs', () => {
 
   it('resolve different ipfs uri cases with custom gateway', () => {
     for (let uri of ipfsCases) {
-      const { uri: resolvedURI } = resolveURI(uri, { ipfs: 'https://custom-ipfs.io' });
+      const { uri: resolvedURI } = resolveURI(uri, {
+        ipfs: 'https://custom-ipfs.io',
+      });
       expect(resolvedURI).toMatch(/^https:\/\/custom-ipfs.io\/?/);
     }
   });
@@ -321,7 +323,10 @@ describe('getImageURI', () => {
 
   it('should handle errors in base64 decoding', () => {
     const invalidBase64 = 'data:image/svg+xml;base64,Invalid Base64!!!';
-    const result = getImageURI({ metadata: { image: invalidBase64 }, jsdomWindow });
+    const result = getImageURI({
+      metadata: { image: invalidBase64 },
+      jsdomWindow,
+    });
     expect(result).toBeNull();
   });
 
