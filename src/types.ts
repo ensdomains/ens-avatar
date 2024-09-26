@@ -29,6 +29,7 @@ export interface AvatarResolverOpts {
   apiKey?: MarketplaceAPIKey;
   urlDenyList?: string[];
   agents?: AxiosAgents;
+  maxContentLength?: number;
 }
 
 export interface AvatarRequestOpts {

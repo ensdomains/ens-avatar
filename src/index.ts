@@ -49,6 +49,10 @@ export class AvatarResolver implements AvatarResolver {
     if (options?.agents) {
       createAgentAdapter(fetch, options?.agents);
     }
+
+    if (options?.maxContentLength && options?.maxContentLength > 0) {
+      fetch.defaults.maxContentLength = options?.maxContentLength;
+    }
   }
 
   async getMetadata(ens: string, key: string = 'avatar') {

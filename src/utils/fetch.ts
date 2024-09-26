@@ -23,12 +23,15 @@ export function createCacheAdapter(fetch: Axios, ttl: number) {
 function createFetcher({
   ttl,
   agents,
+  maxContentLength
 }: {
   ttl?: number;
   agents?: AxiosAgents;
+  maxContentLength?: number;
 }) {
   const _fetch = axios.create({
     proxy: false,
+    ...(maxContentLength && { maxContentLength }),
   });
   if (ttl && ttl > 0) {
     createCacheAdapter(_fetch, ttl);
