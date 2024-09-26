@@ -4,6 +4,7 @@ import { Buffer } from 'buffer/';
 import { fetch } from './fetch';
 
 export const ALLOWED_IMAGE_MIMETYPES = [
+  'application/octet-stream',
   'image/jpeg',
   'image/png',
   'image/gif',
@@ -15,6 +16,14 @@ export const ALLOWED_IMAGE_MIMETYPES = [
   'image/heif',
   'image/jxl',
 ];
+
+export const IMAGE_SIGNATURES = {
+  FFD8FF: 'image/jpeg',
+  '89504E47': 'image/png',
+  '47494638': 'image/gif',
+  '424D': 'image/bmp',
+  FF0A: 'image/jxl',
+};
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
 
@@ -56,19 +65,18 @@ async function isStreamAnImage(url: string): Promise<boolean> {
     if (response.data instanceof ArrayBuffer) {
       magicNumbers = new DataView(response.data).getUint32(0).toString(16);
     } else {
+      if (
+        !response.data ||
+        typeof response.data === 'string' ||
+        !('readUInt32BE' in response.data)
+      ) {
+        throw 'isStreamAnImage: unsupported data, instance is not BufferLike';
+      }
       magicNumbers = response.data.readUInt32BE(0).toString(16);
     }
 
-    const imageSignatures = [
-      'ffd8ff', // JPEG
-      '89504e47', // PNG
-      '47494638', // GIF
-      '424d', // BMP
-      'ff0a', // JPEG XL
-    ];
-
-    const isBinaryImage = imageSignatures.some(signature =>
-      magicNumbers.startsWith(signature)
+    const isBinaryImage = Object.keys(IMAGE_SIGNATURES).some(signature =>
+      magicNumbers.toUpperCase().startsWith(signature)
     );
 
     // Check for SVG image

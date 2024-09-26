@@ -35,6 +35,11 @@ export interface AvatarRequestOpts {
   jsdomWindow?: any;
 }
 
+export interface HeaderRequestOpts {
+  jsdomWindow?: any;
+  mediaKey?: 'header' | 'banner';
+}
+
 export type Gateways = {
   ipfs?: string;
   arweave?: string;

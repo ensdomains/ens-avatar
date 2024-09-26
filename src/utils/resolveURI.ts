@@ -2,12 +2,74 @@ import urlJoin from 'url-join';
 
 import { Gateways } from '../types';
 import { isCID } from './isCID';
+import { IMAGE_SIGNATURES } from './isImageURI';
 
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
 const networkRegex = /(?<protocol>ipfs:\/|ipns:\/|ar:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
 const base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
 const dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
+
+function _getImageMimeType(uri: string) {
+  const base64Data = uri.replace(base64Regex, '$2');
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  if (buffer.length < 12) {
+    return null; // not enough data to determine the type
+  }
+
+  // get the hex representation of the first 12 bytes
+  const hex = buffer.toString('hex', 0, 12).toUpperCase();
+
+  // check against magic number mapping
+  for (const [magicNumber, mimeType] of Object.entries({
+    ...IMAGE_SIGNATURES,
+    '52494646': 'special_webp_check',
+    '3C737667': 'image/svg+xml',
+  })) {
+    if (hex.startsWith(magicNumber.toUpperCase())) {
+      if (mimeType === 'special_webp_check') {
+        return hex.slice(8, 12) === '5745' ? 'image/webp' : null;
+      }
+      return mimeType;
+    }
+  }
+
+  return null;
+}
+
+function _isValidBase64(uri: string) {
+  if (typeof uri !== 'string') {
+    return false;
+  }
+
+  // check if the string matches the Base64 pattern
+  if (!base64Regex.test(uri)) {
+    return false;
+  }
+
+  const [header, str] = uri.split('base64,');
+
+  const mimeType = _getImageMimeType(uri);
+
+  if (!mimeType || !header.includes(mimeType)) {
+    return false;
+  }
+
+  // length must be multiple of 4
+  if (str.length % 4 !== 0) {
+    return false;
+  }
+
+  try {
+    // try to encode/decode the string, to see if matches
+    const buffer = Buffer.from(str, 'base64');
+    const encoded = buffer.toString('base64');
+    return encoded === str;
+  } catch (e) {
+    return false;
+  }
+}
 
 function _replaceGateway(uri: string, source: string, target?: string) {
   if (uri.startsWith(source) && target) {
@@ -28,7 +90,7 @@ export function resolveURI(
   customGateway?: string
 ): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
-  const isEncoded = base64Regex.test(uri);
+  const isEncoded = _isValidBase64(uri);
   if (isEncoded || uri.startsWith('http')) {
     uri = _replaceGateway(uri, 'https://ipfs.io/', gateways?.ipfs);
     uri = _replaceGateway(uri, 'https://arweave.net/', gateways?.arweave);

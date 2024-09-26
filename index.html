@@ -9,20 +9,28 @@
     <div class="container">
       <div id="avatars"></div>
       <div class="queryContainer">
-        <h2>Query ENS Avatar</h2>
-        <div>
-          <img class="queryImage" id="queryImage" width="300" height="300" src="./example/ens.png" />
+        <div id="headerContainer">
+          <h2>Query ENS Avatar</h2>
           <div>
-            <input
-              class="queryInput"
-              id="queryInput"
-              type="text"
-              placeholder="vitalik.eth"
-              autofocus
-              autocomplete="off"
+            <img
+              class="queryImage"
+              id="queryImage"
+              width="300"
+              height="300"
+              src="./example/ens.png"
             />
-            <div class="hint">
-              (type ENS name and hit the enter button)
+            <div>
+              <input
+                class="queryInput"
+                id="queryInput"
+                type="text"
+                placeholder="vitalik.eth"
+                autofocus
+                autocomplete="off"
+              />
+              <div class="hint">
+                (type ENS name and hit the enter button)
+              </div>
             </div>
           </div>
         </div>
@@ -48,6 +56,12 @@
       overflow: hidden;
       pointer-events: none;
       user-select: none;
+    }
+    #headerContainer {
+      height: 100%;
+      background-position: 0 55px;
+      background-repeat: no-repeat;
+      background-size: contain;
     }
     .hint {
       margin-top: 0.5rem;
@@ -76,6 +90,9 @@
     }
     .queryImage {
       object-fit: contain;
+      border: 5px solid white;
+      border-radius: 5px;
+      outline: #d6d6d6 solid 2px;
     }
     .queryInput {
       width: 19rem;

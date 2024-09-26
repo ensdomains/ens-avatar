@@ -13,7 +13,12 @@ import {
   isImageURI,
   parseNFT,
 } from './utils';
-import { AvatarRequestOpts, AvatarResolverOpts, Spec } from './types';
+import {
+  AvatarRequestOpts,
+  AvatarResolverOpts,
+  HeaderRequestOpts,
+  Spec,
+} from './types';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
@@ -23,10 +28,14 @@ export const specs: { [key: string]: new () => Spec } = Object.freeze({
 export interface UnsupportedNamespace {}
 export class UnsupportedNamespace extends BaseError {}
 
+export interface UnsupportedMediaKey {}
+export class UnsupportedMediaKey extends BaseError {}
+
 export interface AvatarResolver {
   provider: JsonRpcProvider;
   options?: AvatarResolverOpts;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
+  getHeader(ens: string, data: HeaderRequestOpts): Promise<string | null>;
   getMetadata(ens: string): Promise<any | null>;
 }
 
@@ -42,7 +51,7 @@ export class AvatarResolver implements AvatarResolver {
     }
   }
 
-  async getMetadata(ens: string) {
+  async getMetadata(ens: string, key: string = 'avatar') {
     // retrieve registrar address and resolver object from ens name
     const [resolvedAddress, resolver] = await handleSettled([
       this.provider.resolveName(ens),
@@ -51,20 +60,18 @@ export class AvatarResolver implements AvatarResolver {
     if (!resolver) return null;
 
     // retrieve 'avatar' text recored from resolver
-    const avatarURI = await resolver.getText('avatar');
-    if (!avatarURI) return null;
+    const mediaURI = await resolver.getText(key);
+    if (!mediaURI) return null;
 
     // test case-insensitive in case of uppercase records
-    if (!/eip155:/i.test(avatarURI)) {
+    if (!/eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(avatarURI, this.options);
+      const metadata = await uriSpec.getMetadata(mediaURI, this.options);
       return { uri: ens, ...metadata };
     }
 
     // parse retrieved avatar uri
-    const { chainID, namespace, contractAddress, tokenID } = parseNFT(
-      avatarURI
-    );
+    const { chainID, namespace, contractAddress, tokenID } = parseNFT(mediaURI);
     // detect avatar spec by namespace
     const Spec = specs[namespace];
     if (!Spec)
@@ -95,7 +102,26 @@ export class AvatarResolver implements AvatarResolver {
     ens: string,
     data?: AvatarRequestOpts
   ): Promise<string | null> {
-    const metadata = await this.getMetadata(ens);
+    return this._getMedia(ens, 'avatar', data);
+  }
+
+  async getHeader(
+    ens: string,
+    data?: HeaderRequestOpts
+  ): Promise<string | null> {
+    const mediaKey = data?.mediaKey || 'header';
+    if (!['header', 'banner'].includes(mediaKey)) {
+      throw new UnsupportedMediaKey('Unsupported media key');
+    }
+    return this._getMedia(ens, mediaKey, data);
+  }
+
+  async _getMedia(
+    ens: string,
+    mediaKey: string = 'avatar',
+    data?: HeaderRequestOpts
+  ) {
+    const metadata = await this.getMetadata(ens, mediaKey);
     if (!metadata) return null;
     const imageURI = getImageURI({
       metadata,
