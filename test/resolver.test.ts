@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from 'ethers';
-import nock from 'nock';
+import nock, { RequestBodyMatcher } from 'nock';
 import { AvatarResolver } from '../src';
 
 require('dotenv').config();
@@ -14,14 +14,39 @@ const CORS_HEADERS = {
   'access-control-allow-origin': 'http://localhost',
 };
 
-function nockInfuraBatch(body: any[], response: any) {
+interface ChainIdParams {
+  method: 'eth_chainId';
+  params: Array<undefined>;
+  id: number;
+  jsonrpc: string;
+}
+
+interface EthCallParams {
+  method: 'eth_call';
+  params: Array<{ to: string; data: string } | string>;
+  id: number;
+  jsonrpc: string;
+}
+
+interface JsonRpcResult {
+  jsonrpc: string;
+  id: number;
+  result: string;
+}
+
+function nockInfuraBatch(
+  body: Array<ChainIdParams | EthCallParams | null>,
+  response: JsonRpcResult[]
+) {
   nock(INFURA_URL.origin)
     .persist(false)
-    .post(INFURA_URL.pathname, body)
+    .post(INFURA_URL.pathname, body as RequestBodyMatcher)
     .reply(200, response);
 }
 
-function mockInfuraChainId(id: number) {
+let nonceCall = 1,
+  nonceJsonRpc = 1;
+function mockInfuraChainId() {
   nock(INFURA_URL.origin)
     .post(INFURA_URL.pathname, {
       method: 'eth_chainId',
@@ -33,72 +58,70 @@ function mockInfuraChainId(id: number) {
       200,
       {
         jsonrpc: '2.0',
-        id: id,
+        id: nonceCall++,
         result: '0x1',
       },
       CORS_HEADERS as any
     );
+  nonceJsonRpc++;
 }
 
-function ethCallParams(to: string, data: string, id: number) {
+function ethCallParams(to: string, data: string): EthCallParams {
   return {
     method: 'eth_call',
     params: [{ to, data }, 'latest'],
-    id,
+    id: nonceCall++,
     jsonrpc: '2.0',
   };
 }
 
-function chainIdParams(id: number) {
+function chainIdParams(): ChainIdParams {
   return {
     method: 'eth_chainId',
     params: [],
-    id,
+    id: nonceCall++,
     jsonrpc: '2.0',
   };
 }
 
-function jsonRPCresult(result: string, id: number) {
+function jsonRpcResult(result: string): JsonRpcResult {
   return {
     jsonrpc: '2.0',
-    id,
+    id: nonceJsonRpc++,
     result,
   };
 }
 
+const provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+const avt = new AvatarResolver(provider, {
+  apiKey: {
+    opensea: 'api-key',
+  },
+});
+
 describe('get avatar', () => {
-  const provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-  const avt = new AvatarResolver(provider, {
-    apiKey: {
-      opensea: 'a2b184238ee8460d9d2f58b0d3177c23',
-    },
-  });
   it('retrieves image uri with erc721 spec', async () => {
-    mockInfuraChainId(1);
+    mockInfuraChainId();
 
     nockInfuraBatch(
       [
-        chainIdParams(2),
+        chainIdParams(),
         ethCallParams(
           ENSRegistryWithFallback,
-          '0x0178b8bf80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae',
-          3
+          '0x0178b8bf80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae'
         ),
         ethCallParams(
           ENSRegistryWithFallback,
-          '0x0178b8bf80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae',
-          4
+          '0x0178b8bf80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae'
         ),
       ],
       [
-        jsonRPCresult('0x1', 2),
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          3
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          4
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
       ]
     );
@@ -106,93 +129,81 @@ describe('get avatar', () => {
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          5
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(6),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          5
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 6),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x3b3b57de80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae',
-          7
+          '0x3b3b57de80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae'
         ),
-        chainIdParams(8),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615',
-          7
+        jsonRpcResult(
+          '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615'
         ),
-        jsonRPCresult('0x1', 8),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          9
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(10),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          9
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 10),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x59d1d43c80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000',
-          11
+          '0x59d1d43c80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(12),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003f6569703135353a312f6572633732313a3078333133383564333532306263656439346637376161653130346234303639393464386632313638632f3934323100',
-          11
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003f6569703135353a312f6572633732313a3078333133383564333532306263656439346637376161653130346234303639393464386632313638632f3934323100'
         ),
-        jsonRPCresult('0x1', 12),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           '0x31385d3520bced94f77aae104b406994d8f2168c',
-          '0xc87b56dd00000000000000000000000000000000000000000000000000000000000024cd',
-          13
+          '0xc87b56dd00000000000000000000000000000000000000000000000000000000000024cd'
         ),
-        chainIdParams(14),
+        chainIdParams(),
         ethCallParams(
           '0x31385d3520bced94f77aae104b406994d8f2168c',
-          '0x6352211e00000000000000000000000000000000000000000000000000000000000024cd',
-          15
+          '0x6352211e00000000000000000000000000000000000000000000000000000000000024cd'
         ),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002568747470733a2f2f6170692e6261737461726467616e70756e6b732e636c75622f39343231000000000000000000000000000000000000000000000000000000',
-          13
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002568747470733a2f2f6170692e6261737461726467616e70756e6b732e636c75622f39343231000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 14),
-        jsonRPCresult(
-          '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615',
-          15
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615'
         ),
       ]
     );
@@ -231,31 +242,27 @@ describe('get avatar', () => {
     );
   });
   it('retrieves image uri with custom spec', async () => {
-    mockInfuraChainId(16);
+    mockInfuraChainId();
 
     nockInfuraBatch(
       [
         ethCallParams(
           ENSRegistryWithFallback.toString(),
-          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f',
-          17
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
         ),
-        chainIdParams(18),
+        chainIdParams(),
         ethCallParams(
           ENSRegistryWithFallback.toString(),
-          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f',
-          19
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
         ),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          17
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
-        jsonRPCresult('0x1', 18),
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          19
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
       ]
     );
@@ -263,68 +270,60 @@ describe('get avatar', () => {
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          20
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(21),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          20
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 21),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f',
-          22
+          '0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
         ),
-        chainIdParams(23),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
-          22
+        jsonRpcResult(
+          '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c'
         ),
-        jsonRPCresult('0x1', 23),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          24
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(25),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          24
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 25),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000',
-          26
+          '0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(27),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000',
-          26
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 27),
+        jsonRpcResult('0x1'),
       ]
     );
     const MANIFEST_URI_TANRIKULU = new URL(
@@ -349,31 +348,27 @@ describe('get avatar', () => {
     );
   });
   it('retrieves image uri with erc1155 spec', async () => {
-    mockInfuraChainId(28);
+    mockInfuraChainId();
 
     nockInfuraBatch(
       [
         ethCallParams(
           ENSRegistryWithFallback.toLowerCase(),
-          '0x0178b8bf05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00',
-          29
+          '0x0178b8bf05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00'
         ),
-        chainIdParams(30),
+        chainIdParams(),
         ethCallParams(
           ENSRegistryWithFallback.toLowerCase(),
-          '0x0178b8bf05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00',
-          31
+          '0x0178b8bf05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00'
         ),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          29
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
-        jsonRPCresult('0x1', 30),
-        jsonRPCresult(
-          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-          31
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
         ),
       ]
     );
@@ -381,93 +376,81 @@ describe('get avatar', () => {
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          32
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(33),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          32
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 33),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x3b3b57de05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00',
-          34
+          '0x3b3b57de05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00'
         ),
-        chainIdParams(35),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d5',
-          34
+        jsonRpcResult(
+          '0x000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d5'
         ),
-        jsonRPCresult('0x1', 35),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000',
-          36
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(37),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          36
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 37),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           PublicResolver.toLowerCase(),
-          '0x59d1d43c05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000',
-          38
+          '0x59d1d43c05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000'
         ),
-        chainIdParams(39),
+        chainIdParams(),
       ],
       [
-        jsonRPCresult(
-          '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000886569703135353a312f657263313135353a3078343935663934373237363734396365363436663638616338633234383432303034356362376235652f38313132333136303235383733393237373337353035393337383938393135313533373332353830313033393133373034333334303438353132333830343930373937303038353531393337000000000000000000000000000000000000000000000000',
-          38
+        jsonRpcResult(
+          '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000886569703135353a312f657263313135353a3078343935663934373237363734396365363436663638616338633234383432303034356362376235652f38313132333136303235383733393237373337353035393337383938393135313533373332353830313033393133373034333334303438353132333830343930373937303038353531393337000000000000000000000000000000000000000000000000'
         ),
-        jsonRPCresult('0x1', 39),
+        jsonRpcResult('0x1'),
       ]
     );
     nockInfuraBatch(
       [
         ethCallParams(
           '0x495f947276749ce646f68ac8c248420045cb7b5e',
-          '0x0e89341c11ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001',
-          40
+          '0x0e89341c11ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001'
         ),
-        chainIdParams(41),
+        chainIdParams(),
         ethCallParams(
           '0x495f947276749ce646f68ac8c248420045cb7b5e',
-          '0x00fdd58e000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d511ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001',
-          42
+          '0x00fdd58e000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d511ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001'
         ),
       ],
       [
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000005868747470733a2f2f6170692e6f70656e7365612e696f2f6170692f76312f6d657461646174612f3078343935663934373237363734394365363436663638414338633234383432303034356362376235652f30787b69647d0000000000000000',
-          40
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000005868747470733a2f2f6170692e6f70656e7365612e696f2f6170692f76312f6d657461646174612f3078343935663934373237363734394365363436663638414338633234383432303034356362376235652f30787b69647d0000000000000000'
         ),
-        jsonRPCresult('0x1', 41),
-        jsonRPCresult(
-          '0x0000000000000000000000000000000000000000000000000000000000000001',
-          42
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000001'
         ),
       ]
     );
@@ -535,4 +518,116 @@ describe('get avatar', () => {
   // it('retrieves image uri with custom nested uri', async () => {
   //   expect(await avt.getAvatar({ ens: 'testname.eth' })).toMatch(/^(data:image\/svg\+xml;base64,).*$/);
   // });
+});
+
+describe('get banner/header', () => {
+  it('retrieves image uri with custom spec', async () => {
+    mockInfuraChainId();
+
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          ENSRegistryWithFallback.toString(),
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+        chainIdParams(),
+        ethCallParams(
+          ENSRegistryWithFallback.toString(),
+          '0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        ),
+        jsonRpcResult('0x1'),
+        jsonRpcResult(
+          '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41'
+        ),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ),
+        jsonRpcResult('0x1'),
+      ]
+    );
+
+    nockInfuraBatch(
+      [
+        ethCallParams(
+          PublicResolver.toLowerCase(),
+          '0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066865616465720000000000000000000000000000000000000000000000000000'
+        ),
+        chainIdParams(),
+      ],
+      [
+        jsonRpcResult(
+          '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000'
+        ), // Encoded HEADER URI
+        jsonRpcResult('0x1'),
+      ]
+    );
+
+    const HEADER_URI_TANRIKULU = new URL(
+      'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
+    );
+
+    /* mock head call */
+    nock(HEADER_URI_TANRIKULU.origin)
+      .head(HEADER_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    /* mock get call */
+    nock(HEADER_URI_TANRIKULU.origin)
+      .get(HEADER_URI_TANRIKULU.pathname)
+      .reply(200, {}, {
+        ...CORS_HEADERS,
+        'content-type': 'image/png',
+      } as any);
+    expect(await avt.getHeader('tanrikulu.eth')).toEqual(
+      'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
+    );
+  });
 });

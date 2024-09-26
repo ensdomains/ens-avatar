@@ -29,10 +29,16 @@ export interface AvatarResolverOpts {
   apiKey?: MarketplaceAPIKey;
   urlDenyList?: string[];
   agents?: AxiosAgents;
+  maxContentLength?: number;
 }
 
 export interface AvatarRequestOpts {
   jsdomWindow?: any;
+}
+
+export interface HeaderRequestOpts {
+  jsdomWindow?: any;
+  mediaKey?: 'header' | 'banner';
 }
 
 export type Gateways = {

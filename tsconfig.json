@@ -4,6 +4,7 @@
   "compilerOptions": {
     "module": "esnext",
     "lib": ["dom", "esnext"],
+    "target": "ES2018",
     "importHelpers": true,
     // output .d.ts declaration files for consumers
     "declaration": true,
@@ -19,6 +20,7 @@
     // noUnused* overlap with @typescript-eslint/no-unused-vars, can disable if duplicative
     "noUnusedLocals": false,
     "noUnusedParameters": true,
+    "useUnknownInCatchVariables": false,
     // use Node's module resolution algorithm, instead of the legacy TS one
     "moduleResolution": "node",
     // transpile JSX to React.createElement
