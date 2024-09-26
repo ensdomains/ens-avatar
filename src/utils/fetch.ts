@@ -23,7 +23,7 @@ export function createCacheAdapter(fetch: Axios, ttl: number) {
 function createFetcher({
   ttl,
   agents,
-  maxContentLength
+  maxContentLength,
 }: {
   ttl?: number;
   agents?: AxiosAgents;
