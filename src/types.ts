@@ -22,6 +22,8 @@ export interface AxiosAgents {
   httpsAgent?: Function;
 }
 
+export type MediaKey = 'avatar' | 'header' | 'banner';
+
 export interface AvatarResolverOpts {
   cache?: number;
   ipfs?: string;
@@ -38,7 +40,7 @@ export interface AvatarRequestOpts {
 
 export interface HeaderRequestOpts {
   jsdomWindow?: any;
-  mediaKey?: 'header' | 'banner';
+  mediaKey?: Exclude<MediaKey, 'avatar'>;
 }
 
 export type Gateways = {

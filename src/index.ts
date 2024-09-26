@@ -17,6 +17,7 @@ import {
   AvatarRequestOpts,
   AvatarResolverOpts,
   HeaderRequestOpts,
+  MediaKey,
   Spec,
 } from './types';
 
@@ -36,7 +37,7 @@ export interface AvatarResolver {
   options?: AvatarResolverOpts;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
   getHeader(ens: string, data: HeaderRequestOpts): Promise<string | null>;
-  getMetadata(ens: string): Promise<any | null>;
+  getMetadata(ens: string, key?: MediaKey): Promise<any | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
@@ -55,7 +56,7 @@ export class AvatarResolver implements AvatarResolver {
     }
   }
 
-  async getMetadata(ens: string, key: string = 'avatar') {
+  async getMetadata(ens: string, key: MediaKey = 'avatar') {
     // retrieve registrar address and resolver object from ens name
     const [resolvedAddress, resolver] = await handleSettled([
       this.provider.resolveName(ens),
@@ -122,7 +123,7 @@ export class AvatarResolver implements AvatarResolver {
 
   async _getMedia(
     ens: string,
-    mediaKey: string = 'avatar',
+    mediaKey: MediaKey = 'avatar',
     data?: HeaderRequestOpts
   ) {
     const metadata = await this.getMetadata(ens, mediaKey);
