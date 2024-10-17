@@ -1,9 +1,9 @@
 require('dotenv').config();
 const { StaticJsonRpcProvider } = require('@ethersproject/providers');
 const { AvatarResolver, utils: avtUtils } = require('../dist/index');
-const { JSDOM } = require('jsdom');
+const { Window } = require('happy-dom');
 
-const jsdom = new JSDOM().window;
+const happyDOM = new Window();
 const ensName = process.argv[2];
 if (!ensName) {
   console.log(
@@ -31,7 +31,7 @@ avt
       gateways: {
         ipfs: IPFS,
       },
-      jsdomWindow: jsdom,
+      jsdomWindow: happyDOM,
     });
     console.log('avatar: ', avatar);
   })
