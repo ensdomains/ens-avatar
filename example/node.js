@@ -37,9 +37,11 @@ avt
   })
   .catch(console.log);
 
-avt
-  .getHeader(ensName)
+try {
+  avt
+  .getHeader(ensName, { jsdomWindow: jsdom })
   .then(header => {
     console.log('header: ', header);
   })
   .catch(console.log);
+} catch {}

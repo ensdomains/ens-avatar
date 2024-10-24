@@ -9,6 +9,7 @@ const IPNS_SUBPATH = '/ipns/';
 const networkRegex = /(?<protocol>ipfs:\/|ipns:\/|ar:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
 const base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
 const dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
+const JSON_MIMETYPE = 'data:application/json;';
 
 function _getImageMimeType(uri: string) {
   const base64Data = uri.replace(base64Regex, '$2');
@@ -49,11 +50,11 @@ function _isValidBase64(uri: string) {
   }
 
   const [header, str] = uri.split('base64,');
-
-  const mimeType = _getImageMimeType(uri);
-
-  if (!mimeType || !header.includes(mimeType)) {
-    return false;
+  if (header != JSON_MIMETYPE) {
+    const mimeType = _getImageMimeType(uri);
+    if (!mimeType || !header.includes(mimeType)) {
+      return false;
+    }
   }
 
   // length must be multiple of 4
