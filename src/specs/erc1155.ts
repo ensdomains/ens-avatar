@@ -62,7 +62,8 @@ export default class ERC1155 {
           'base64'
         ).toString();
       }
-      return JSON.parse(_resolvedUri);
+      const metadata = JSON.parse(_resolvedUri);
+      return { ...metadata, is_owner: isOwner };
     }
 
     const marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);

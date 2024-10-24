@@ -50,7 +50,7 @@ export default class ERC721 {
           'base64'
         ).toString();
       }
-      const metadata = JSON.parse(decodeURI(_resolvedUri));
+      const metadata = JSON.parse(_resolvedUri);
       return { ...metadata, is_owner: isOwner };
     }
     const response = await fetch(
