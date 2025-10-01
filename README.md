@@ -1,8 +1,28 @@
 # ens-avatar
 
-Avatar resolver library for both nodejs and browser.
+Avatar resolver library for Node.js, browsers, and edge runtimes (Cloudflare Workers etc.).
 
-## Note!: ENS-Avatar >= 1.0.0 is only compatible with ethers v6. If your project is using v5, keep your ens-avatar on latest 0.x version.
+## Important Notes
+
+- **ENS-Avatar >= 1.0.0** is only compatible with ethers v6. If your project is using v5, keep your ens-avatar on latest 0.x version.
+- **Version 1.0.4+** uses the native Fetch API for maximum compatibility across platforms including Cloudflare Workers and other edge runtimes.
+
+## Platform Support
+
+This library works seamlessly across:
+- ✅ **Node.js** 18+ (uses native fetch or http adapter)
+- ✅ **Browsers** (all modern browsers)
+- ✅ **Cloudflare Workers**
+- ✅ **Other edge runtimes** that support standard Fetch API
+
+## Security
+
+All user-generated SVG content is automatically sanitized to prevent XSS attacks:
+
+- **Browser/Node.js**: Uses [DOMPurify](https://github.com/cure53/DOMPurify) (8.74 KB, battle-tested)
+- **Cloudflare Workers**: Uses [sanitize-html](https://github.com/apostrophecms/sanitize-html) (parser-based, no DOM dependency)
+
+Both sanitizers are production-ready, actively maintained, and specifically configured for secure SVG handling.
 
 ## Getting started
 
