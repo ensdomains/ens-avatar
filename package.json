@@ -1,5 +1,5 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -32,7 +32,17 @@
     "trailingComma": "es5"
   },
   "jest": {
-    "testTimeout": 20000
+    "testTimeout": 20000,
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios|axios-cache-interceptor))"
+    ],
+    "moduleNameMapper": {
+      "^axios$": "axios/dist/node/axios.cjs"
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup.js"
+    ]
   },
   "name": "@ensdomains/ens-avatar",
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
@@ -58,22 +68,25 @@
     "@types/dompurify": "^3.0.5",
     "@types/jsdom": "^21.1.6",
     "@types/moxios": "^0.4.17",
+    "@types/sanitize-html": "^2.16.0",
     "@types/url-join": "^4.0.1",
     "dotenv": "^16.3.1",
     "esbuild": "^0.14.21",
     "moxios": "^0.4.0",
     "nock": "^13.2.2",
     "rollup": "^4.9.1",
+    "sanitize-html": "^2.17.0",
     "size-limit": "^11.0.1",
     "tsdx": "^0.14.1",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "undici": "^7.16.0"
   },
   "dependencies": {
     "@ethersproject/contracts": "^5.7.0",
     "@ethersproject/providers": "^5.7.0",
     "assert": "^2.1.0",
-    "axios": "^0.27.2",
-    "axios-cache-interceptor": "^0.9.3",
+    "axios": "^1.12.2",
+    "axios-cache-interceptor": "^1.8.3",
     "buffer": "^6.0.3",
     "dompurify": "^3.0.6",
     "ethers": "6.12.0",

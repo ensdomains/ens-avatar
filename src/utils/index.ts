@@ -4,9 +4,15 @@ import { parseNFT } from './parseNFT';
 import { BaseError } from './error';
 import { convertToRawSVG, getImageURI } from './getImageURI';
 import { resolveURI } from './resolveURI';
-import { createAgentAdapter, createCacheAdapter, fetch } from './fetch';
+import {
+  createAgentAdapter,
+  createCacheAdapter,
+  createFetcher,
+  fetch,
+} from './fetch';
 import { isCID } from './isCID';
 import { ALLOWED_IMAGE_MIMETYPES, isImageURI } from './isImageURI';
+import { sanitizeSVG } from './sanitize';
 
 export {
   ALLOWED_IMAGE_MIMETYPES,
@@ -15,6 +21,7 @@ export {
   convertToRawSVG,
   createAgentAdapter,
   createCacheAdapter,
+  createFetcher,
   fetch,
   getImageURI,
   handleSettled,
@@ -22,4 +29,5 @@ export {
   isImageURI,
   parseNFT,
   resolveURI,
+  sanitizeSVG,
 };

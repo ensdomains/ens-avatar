@@ -1,20 +1,13 @@
 import { AvatarResolverOpts } from '../types';
-import {
-  createAgentAdapter,
-  createCacheAdapter,
-  fetch,
-  isImageURI,
-  resolveURI,
-} from '../utils';
+import { createFetcher, isImageURI, resolveURI } from '../utils';
 
 export default class URI {
   async getMetadata(uri: string, options?: AvatarResolverOpts) {
-    if (options?.cache && options?.cache > 0) {
-      createCacheAdapter(fetch, options?.cache);
-    }
-    if (options?.agents) {
-      createAgentAdapter(fetch, options?.agents);
-    }
+    // Create a configured fetch instance for this request
+    const fetch = createFetcher({
+      ttl: options?.cache,
+      agents: options?.agents,
+    });
 
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);
     if (isOnChain) {
@@ -32,7 +25,7 @@ export default class URI {
     }
 
     // if resolvedURI is not an image, try retrieve the data.
-    const response = await fetch(encodeURI(resolvedURI));
+    const response = await fetch.get(encodeURI(resolvedURI));
     return await response?.data;
   }
 }

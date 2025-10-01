@@ -1,9 +1,9 @@
-import createDOMPurify from 'dompurify';
 import isSVG from 'is-svg';
 
 import { ImageURIOpts } from '../types';
 import { assert } from './assert';
 import { resolveURI } from './resolveURI';
+import { sanitizeSVG } from './sanitize';
 
 function isSVGDataUri(uri: string): boolean {
   const svgDataUriPrefix = 'data:image/svg+xml';
@@ -50,31 +50,9 @@ export function convertToRawSVG(input: string): string | null {
 }
 
 function _sanitize(data: string, jsDomWindow?: any): Buffer {
-  let domWindow;
-  try {
-    domWindow = window;
-  } catch {
-    // if js process run under nodejs require jsdom window
-    if (!jsDomWindow) {
-      throw Error('In node environment JSDOM window is required');
-    }
-    domWindow = jsDomWindow;
-  }
-  const DOMPurify = createDOMPurify(domWindow as any);
-
-  DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-    if (data.tagName === 'meta') {
-      if (node.getAttribute('http-equiv') === 'refresh') {
-        node.remove();
-      }
-    }
-  });
-
-  // purges malicious scripting from svg content
-  const cleanDOM = DOMPurify.sanitize(data, {
-    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link'],
-  });
-  return Buffer.from(cleanDOM);
+  // Use platform-specific sanitization (DOMPurify or sanitize-html)
+  const cleanSVG = sanitizeSVG(data, jsDomWindow);
+  return Buffer.from(cleanSVG);
 }
 
 export function getImageURI({
