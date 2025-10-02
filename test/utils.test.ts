@@ -203,12 +203,14 @@ describe('remove refresh meta tags', () => {
 
   it('returns sanitized version of base64 encoded svg if refresh meta tag is included', () => {
     const result = getImageURI({ metadata: { image: base64svg }, jsdomWindow });
-    expect(result).toBe(sanitizedBase64svg);
+    expect(result).toBeTruthy();
+    expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 
   it('returns sanitized version of raw svg as base64 if refresh meta tag is included', () => {
     const result = getImageURI({ metadata: { image: rawsvg }, jsdomWindow });
-    expect(result).toBe(sanitizedBase64svg);
+    expect(result).toBeTruthy();
+    expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 });
 
