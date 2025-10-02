@@ -1,5 +1,3 @@
-import { isBrowser } from './detectPlatform';
-
 /**
  * Platform-specific SVG sanitization
  *
@@ -12,7 +10,8 @@ import { isBrowser } from './detectPlatform';
 // Detect runtime environment
 const hasWindow = typeof window !== 'undefined';
 const hasGlobalThis = typeof globalThis !== 'undefined';
-const isCloudflareWorker = hasGlobalThis && !hasWindow && typeof globalThis.fetch === 'function';
+const isCloudflareWorker =
+  hasGlobalThis && !hasWindow && typeof globalThis.fetch === 'function';
 
 /**
  * Sanitize SVG content to prevent XSS attacks
@@ -43,7 +42,9 @@ function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
   } catch {
     // Node.js environment - require JSDOM window
     if (!jsdomWindow) {
-      throw Error('In Node.js environment, JSDOM window is required for DOMPurify');
+      throw Error(
+        'In Node.js environment, JSDOM window is required for DOMPurify'
+      );
     }
     domWindow = jsdomWindow;
   }
@@ -80,57 +81,184 @@ function sanitizeWithSanitizeHtml(svg: string): string {
   // Based on DOMPurify's SVG profile and SVG 1.1/2.0 specs
   const allowedTags = [
     // SVG root and structure
-    'svg', 'g', 'defs', 'symbol', 'use', 'marker', 'clipPath', 'mask', 'pattern',
+    'svg',
+    'g',
+    'defs',
+    'symbol',
+    'use',
+    'marker',
+    'clipPath',
+    'mask',
+    'pattern',
     // Shapes
-    'circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect',
+    'circle',
+    'ellipse',
+    'line',
+    'path',
+    'polygon',
+    'polyline',
+    'rect',
     // Text
-    'text', 'tspan', 'textPath',
+    'text',
+    'tspan',
+    'textPath',
     // Gradients and filters
-    'linearGradient', 'radialGradient', 'stop',
-    'filter', 'feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite',
-    'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feFlood',
-    'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology',
-    'feOffset', 'feSpecularLighting', 'feTile', 'feTurbulence',
-    'feDistantLight', 'fePointLight', 'feSpotLight', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA',
+    'linearGradient',
+    'radialGradient',
+    'stop',
+    'filter',
+    'feBlend',
+    'feColorMatrix',
+    'feComponentTransfer',
+    'feComposite',
+    'feConvolveMatrix',
+    'feDiffuseLighting',
+    'feDisplacementMap',
+    'feFlood',
+    'feGaussianBlur',
+    'feImage',
+    'feMerge',
+    'feMergeNode',
+    'feMorphology',
+    'feOffset',
+    'feSpecularLighting',
+    'feTile',
+    'feTurbulence',
+    'feDistantLight',
+    'fePointLight',
+    'feSpotLight',
+    'feFuncR',
+    'feFuncG',
+    'feFuncB',
+    'feFuncA',
     // Other
-    'image', 'foreignObject', 'title', 'desc', 'metadata',
+    'image',
+    'foreignObject',
+    'title',
+    'desc',
+    'metadata',
   ];
 
   const allowedAttributes: { [key: string]: string[] } = {
     // Global SVG attributes (apply to all tags)
     '*': [
-      'id', 'class', 'style', 'transform', 'fill', 'fill-opacity', 'fill-rule',
-      'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
-      'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'visibility', 'display',
-      'clip-path', 'clip-rule', 'mask', 'filter', 'color', 'color-interpolation',
+      'id',
+      'class',
+      'style',
+      'transform',
+      'fill',
+      'fill-opacity',
+      'fill-rule',
+      'stroke',
+      'stroke-width',
+      'stroke-opacity',
+      'stroke-linecap',
+      'stroke-linejoin',
+      'stroke-dasharray',
+      'stroke-dashoffset',
+      'opacity',
+      'visibility',
+      'display',
+      'clip-path',
+      'clip-rule',
+      'mask',
+      'filter',
+      'color',
+      'color-interpolation',
     ],
-    'svg': [
-      'xmlns', 'xmlns:xlink', 'viewBox', 'preserveAspectRatio', 'width', 'height',
-      'x', 'y', 'version', 'baseProfile',
+    svg: [
+      'xmlns',
+      'xmlns:xlink',
+      'viewBox',
+      'preserveAspectRatio',
+      'width',
+      'height',
+      'x',
+      'y',
+      'version',
+      'baseProfile',
     ],
-    'circle': ['cx', 'cy', 'r'],
-    'ellipse': ['cx', 'cy', 'rx', 'ry'],
-    'line': ['x1', 'y1', 'x2', 'y2'],
-    'path': ['d', 'pathLength'],
-    'polygon': ['points'],
-    'polyline': ['points'],
-    'rect': ['x', 'y', 'width', 'height', 'rx', 'ry'],
-    'text': ['x', 'y', 'dx', 'dy', 'text-anchor', 'font-family', 'font-size', 'font-weight'],
-    'tspan': ['x', 'y', 'dx', 'dy', 'text-anchor'],
-    'textPath': ['href', 'xlink:href', 'startOffset', 'method', 'spacing'],
-    'use': ['href', 'xlink:href', 'x', 'y', 'width', 'height'],
-    'image': ['href', 'xlink:href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
-    'linearGradient': ['id', 'x1', 'y1', 'x2', 'y2', 'gradientUnits', 'gradientTransform'],
-    'radialGradient': ['id', 'cx', 'cy', 'r', 'fx', 'fy', 'gradientUnits', 'gradientTransform'],
-    'stop': ['offset', 'stop-color', 'stop-opacity'],
-    'pattern': ['id', 'x', 'y', 'width', 'height', 'patternUnits', 'patternTransform'],
-    'marker': ['id', 'markerWidth', 'markerHeight', 'refX', 'refY', 'orient', 'markerUnits'],
-    'clipPath': ['id', 'clipPathUnits'],
-    'mask': ['id', 'x', 'y', 'width', 'height', 'maskUnits', 'maskContentUnits'],
-    'filter': ['id', 'x', 'y', 'width', 'height', 'filterUnits', 'primitiveUnits'],
-    'g': ['id', 'transform'],
-    'defs': ['id'],
-    'symbol': ['id', 'viewBox', 'preserveAspectRatio'],
+    circle: ['cx', 'cy', 'r'],
+    ellipse: ['cx', 'cy', 'rx', 'ry'],
+    line: ['x1', 'y1', 'x2', 'y2'],
+    path: ['d', 'pathLength'],
+    polygon: ['points'],
+    polyline: ['points'],
+    rect: ['x', 'y', 'width', 'height', 'rx', 'ry'],
+    text: [
+      'x',
+      'y',
+      'dx',
+      'dy',
+      'text-anchor',
+      'font-family',
+      'font-size',
+      'font-weight',
+    ],
+    tspan: ['x', 'y', 'dx', 'dy', 'text-anchor'],
+    textPath: ['href', 'xlink:href', 'startOffset', 'method', 'spacing'],
+    use: ['href', 'xlink:href', 'x', 'y', 'width', 'height'],
+    image: [
+      'href',
+      'xlink:href',
+      'x',
+      'y',
+      'width',
+      'height',
+      'preserveAspectRatio',
+    ],
+    linearGradient: [
+      'id',
+      'x1',
+      'y1',
+      'x2',
+      'y2',
+      'gradientUnits',
+      'gradientTransform',
+    ],
+    radialGradient: [
+      'id',
+      'cx',
+      'cy',
+      'r',
+      'fx',
+      'fy',
+      'gradientUnits',
+      'gradientTransform',
+    ],
+    stop: ['offset', 'stop-color', 'stop-opacity'],
+    pattern: [
+      'id',
+      'x',
+      'y',
+      'width',
+      'height',
+      'patternUnits',
+      'patternTransform',
+    ],
+    marker: [
+      'id',
+      'markerWidth',
+      'markerHeight',
+      'refX',
+      'refY',
+      'orient',
+      'markerUnits',
+    ],
+    clipPath: ['id', 'clipPathUnits'],
+    mask: ['id', 'x', 'y', 'width', 'height', 'maskUnits', 'maskContentUnits'],
+    filter: [
+      'id',
+      'x',
+      'y',
+      'width',
+      'height',
+      'filterUnits',
+      'primitiveUnits',
+    ],
+    g: ['id', 'transform'],
+    defs: ['id'],
+    symbol: ['id', 'viewBox', 'preserveAspectRatio'],
   };
 
   const cleanSVG = sanitizeHtml(svg, {
