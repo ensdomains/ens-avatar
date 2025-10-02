@@ -33,7 +33,6 @@
   },
   "jest": {
     "testTimeout": 20000,
-    "testEnvironment": "node",
     "transformIgnorePatterns": [
       "node_modules/(?!(axios|axios-cache-interceptor))"
     ],
