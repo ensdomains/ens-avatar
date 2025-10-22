@@ -30,6 +30,7 @@ export default class ERC1155 {
     const fetch = createFetcher({
       ttl: options?.cache,
       agents: options?.agents,
+      allowPrivateIPs: options?.allowPrivateIPs,
     });
 
     // exclude opensea api which does not follow erc1155 spec

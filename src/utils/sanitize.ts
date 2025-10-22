@@ -61,10 +61,31 @@ function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
     }
   });
 
+  // Hook to sanitize xlink:href attributes (XSS vector)
+  DOMPurify.addHook('uponSanitizeAttribute', (node: any, data: any) => {
+    // Block javascript: URLs in href and xlink:href attributes
+    if (data.attrName === 'xlink:href' || data.attrName === 'href') {
+      const value = data.attrValue;
+      if (value && typeof value === 'string') {
+        const normalized = value.toLowerCase().trim();
+        // Block javascript:, data:text/html, and vbscript: URLs
+        if (
+          normalized.startsWith('javascript:') ||
+          normalized.startsWith('data:text/html') ||
+          normalized.startsWith('vbscript:')
+        ) {
+          data.keepAttr = false;
+          node.removeAttribute(data.attrName);
+        }
+      }
+    }
+  });
+
   // Sanitize with SVG profile and forbidden tags
   const cleanDOM = DOMPurify.sanitize(svg, {
     USE_PROFILES: { svg: true, svgFilters: true },
-    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link'],
+    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link', 'script'],
+    FORBID_ATTR: ['xlink:href'], // Block xlink:href entirely (deprecated, use href)
   });
 
   return cleanDOM;
@@ -196,17 +217,9 @@ function sanitizeWithSanitizeHtml(svg: string): string {
       'font-weight',
     ],
     tspan: ['x', 'y', 'dx', 'dy', 'text-anchor'],
-    textPath: ['href', 'xlink:href', 'startOffset', 'method', 'spacing'],
-    use: ['href', 'xlink:href', 'x', 'y', 'width', 'height'],
-    image: [
-      'href',
-      'xlink:href',
-      'x',
-      'y',
-      'width',
-      'height',
-      'preserveAspectRatio',
-    ],
+    textPath: ['href', 'startOffset', 'method', 'spacing'],
+    use: ['href', 'x', 'y', 'width', 'height'],
+    image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
     linearGradient: [
       'id',
       'x1',
@@ -274,9 +287,42 @@ function sanitizeWithSanitizeHtml(svg: string): string {
     allowedSchemesByTag: {
       image: ['http', 'https', 'data'],
       use: ['http', 'https'],
+      textPath: ['http', 'https'],
     },
+    // Additional disallowed schemes to be explicit
+    disallowedTagsMode: 'discard',
     // Don't allow any iframe-related attributes
     allowIframeRelativeUrls: false,
+    // Transform URLs to remove dangerous protocols
+    transformTags: {
+      use: (tagName: string, attribs: any) => {
+        // Additional safety check for href attribute
+        if (attribs.href && typeof attribs.href === 'string') {
+          const normalized = attribs.href.toLowerCase().trim();
+          if (
+            normalized.startsWith('javascript:') ||
+            normalized.startsWith('data:text/html') ||
+            normalized.startsWith('vbscript:')
+          ) {
+            delete attribs.href;
+          }
+        }
+        return { tagName, attribs };
+      },
+      image: (tagName: string, attribs: any) => {
+        // Additional safety check for href attribute
+        if (attribs.href && typeof attribs.href === 'string') {
+          const normalized = attribs.href.toLowerCase().trim();
+          if (
+            normalized.startsWith('javascript:') ||
+            normalized.startsWith('vbscript:')
+          ) {
+            delete attribs.href;
+          }
+        }
+        return { tagName, attribs };
+      },
+    },
   });
 
   return cleanSVG;

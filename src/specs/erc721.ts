@@ -20,6 +20,7 @@ export default class ERC721 {
     const fetch = createFetcher({
       ttl: options?.cache,
       agents: options?.agents,
+      allowPrivateIPs: options?.allowPrivateIPs,
     });
 
     const contract = new Contract(contractAddress, abi, provider);

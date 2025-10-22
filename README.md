@@ -15,15 +15,6 @@ This library works seamlessly across:
 - ✅ **Cloudflare Workers**
 - ✅ **Other edge runtimes** that support standard Fetch API
 
-## Security
-
-All user-generated SVG content is automatically sanitized to prevent XSS attacks:
-
-- **Browser/Node.js**: Uses [DOMPurify](https://github.com/cure53/DOMPurify) (8.74 KB, battle-tested)
-- **Cloudflare Workers**: Uses [sanitize-html](https://github.com/apostrophecms/sanitize-html) (parser-based, no DOM dependency)
-
-Both sanitizers are production-ready, actively maintained, and specifically configured for secure SVG handling.
-
 ## Getting started
 
 ### Prerequisites
@@ -128,6 +119,98 @@ const avt = new AvatarResolver(provider, {
   urlDenyList: ['https://maliciouswebsite.com'],
 });
 ```
+
+### Custom Agents (Node.js only)
+
+You can provide custom HTTP/HTTPS agents for advanced use cases:
+
+```js
+import http from 'http';
+import https from 'https';
+
+const avt = new AvatarResolver(provider, {
+  agents: {
+    httpAgent: new http.Agent({ keepAlive: true }),
+    httpsAgent: new https.Agent({ keepAlive: true }),
+  },
+});
+```
+
+**⚠️ SECURITY WARNING**: When you provide custom agents, ens-avatar will use them as-is **without applying SSRF protection**. You are responsible for ensuring your custom agents have appropriate security measures to prevent Server-Side Request Forgery attacks.
+
+If you need SSRF protection with custom agents, wrap them with `ssrf-req-filter`:
+
+```js
+import http from 'http';
+import https from 'https';
+const { requestFilterHandler } = require('ssrf-req-filter');
+
+const avt = new AvatarResolver(provider, {
+  agents: {
+    httpAgent: requestFilterHandler(new http.Agent({ keepAlive: true })),
+    httpsAgent: requestFilterHandler(new https.Agent({ keepAlive: true })),
+  },
+});
+```
+
+### Allow Private IPs _(Default: false)_ - **Development Only**
+
+For local development when you need to access localhost or private network services:
+
+```js
+const avt = new AvatarResolver(provider, {
+  allowPrivateIPs: true, // Allows localhost, 127.0.0.1, 10.x.x.x, 192.168.x.x, etc.
+});
+```
+
+**⚠️ WARNING**: This disables SSRF protection. Only use for local development (e.g., local IPFS nodes, test servers). **NEVER enable this in production**.
+
+Common local development scenarios:
+- Local IPFS node: `http://127.0.0.1:5001`
+- Local Ethereum node: `http://localhost:8545`
+- Docker containers on private networks
+
+**Note**: This flag is ignored if you provide custom agents (you control security in that case).
+
+## Security
+
+### XSS Protection
+
+All user-generated SVG content is automatically sanitized to prevent XSS attacks:
+
+- **Browser/Node.js**: Uses [DOMPurify](https://github.com/cure53/DOMPurify) (8.74 KB, battle-tested)
+- **Cloudflare Workers**: Uses [sanitize-html](https://github.com/apostrophecms/sanitize-html) (parser-based, no DOM dependency)
+
+Both sanitizers are production-ready, actively maintained, and specifically configured for secure SVG handling.
+
+### SSRF Protection
+
+**By default**, ens-avatar includes built-in protection against Server-Side Request Forgery (SSRF) attacks in Node.js environments. This prevents malicious actors from using avatar URLs to probe internal networks.
+
+**Default behavior** (recommended for production):
+- ✅ Blocks requests to `localhost`, `127.0.0.1`
+- ✅ Blocks private IP ranges: `10.x.x.x`, `192.168.x.x`, `172.16.x.x-172.31.x.x`
+- ✅ Blocks link-local and other internal addresses
+
+**Custom agents**: If you provide your own HTTP/HTTPS agents, ens-avatar will use them as-is without applying SSRF protection. You are responsible for securing your custom agents.
+
+**Local development**: Set `allowPrivateIPs: true` to disable SSRF protection when you need to access local services (e.g., local IPFS nodes). Never use this in production.
+
+See the [Custom Agents](#custom-agents-nodejs-only) section for more details.
+
+---
+
+> **⚠️ SECURITY DISCLAIMER**
+>
+> While ens-avatar implements security measures to help protect against XSS and SSRF attacks, **you are ultimately responsible for the security of your application**. We strongly recommend:
+>
+> - Conducting your own security audits before deploying to production
+> - Implementing additional security layers appropriate for your use case
+> - Keeping the library updated to receive security patches
+> - Following security best practices when handling user-generated content
+> - Properly configuring all security-related options for your environment
+>
+> This library is provided "as-is" without warranty. The maintainers are not liable for any security vulnerabilities in applications using this library.
 
 ## Demo
 

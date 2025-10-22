@@ -7,6 +7,7 @@ export default class URI {
     const fetch = createFetcher({
       ttl: options?.cache,
       agents: options?.agents,
+      allowPrivateIPs: options?.allowPrivateIPs,
     });
 
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);

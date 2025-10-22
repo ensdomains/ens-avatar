@@ -1364,6 +1364,7 @@ __metadata:
     rollup: "npm:^4.9.1"
     sanitize-html: "npm:^2.17.0"
     size-limit: "npm:^11.0.1"
+    ssrf-req-filter: "npm:^1.1.1"
     tsdx: "npm:^0.14.1"
     typescript: "npm:^4.5.5"
     undici: "npm:^7.16.0"
@@ -6877,6 +6878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ipaddr.js@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "ipaddr.js@npm:2.2.0"
+  checksum: 10c0/e4ee875dc1bd92ac9d27e06cfd87cdb63ca786ff9fd7718f1d4f7a8ef27db6e5d516128f52d2c560408cbb75796ac2f83ead669e73507c86282d45f84c5abbb6
+  languageName: node
+  linkType: hard
+
 "is-accessor-descriptor@npm:^0.1.6":
   version: 0.1.6
   resolution: "is-accessor-descriptor@npm:0.1.6"
@@ -11036,6 +11044,15 @@ __metadata:
     sshpk-sign: bin/sshpk-sign
     sshpk-verify: bin/sshpk-verify
   checksum: 10c0/cf5e7f4c72e8a505ef41daac9f9ca26da365cfe26ae265a01ce98a8868991943857a8526c1cf98a42ef0dc4edf1dbe4e77aeea378cfeb58054beb78505e85402
+  languageName: node
+  linkType: hard
+
+"ssrf-req-filter@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "ssrf-req-filter@npm:1.1.1"
+  dependencies:
+    ipaddr.js: "npm:^2.2.0"
+  checksum: 10c0/22b49225a6ad183aa27cb168061f46ddfec7eaca8f6bfe310cbffbef2efd3af78cf30bd1db71cf1df329f82fe6f597577d8b4f4e700647e923e263eea2c96de4
   languageName: node
   linkType: hard
 
