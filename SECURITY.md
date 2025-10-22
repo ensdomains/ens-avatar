@@ -136,7 +136,12 @@ allowedSchemesByTag: {
 
 **Default Protection**: The library includes built-in Server-Side Request Forgery (SSRF) protection for **Node.js server environments** using the `ssrf-req-filter` package.
 
-> **Note**: SSRF is a server-side vulnerability. Browsers are not affected as they run in the user's context and have built-in protections (CORS, Same-Origin Policy). This protection only applies when using the library in Node.js servers, not in browser environments.
+> **Platform-Specific Protection**:
+> - ✅ **Node.js servers**: SSRF protection via `ssrf-req-filter` (blocks private IPs, localhost, cloud metadata)
+> - ✅ **Cloudflare Workers**: Infrastructure-level SSRF protection (Workers cannot access private networks by design)
+> - ✅ **Browsers**: Not vulnerable to SSRF (run in user context with CORS/Same-Origin Policy)
+>
+> The `ssrf-req-filter` package only applies to Node.js. Cloudflare Workers have built-in network restrictions that prevent access to internal networks, localhost, and private IP ranges at the infrastructure level.
 
 **Blocked by Default**:
 

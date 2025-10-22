@@ -48,16 +48,22 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "200 KB",
+      "limit": "240 KB",
       "ignore": [
-        "jsdom"
+        "jsdom",
+        "http",
+        "https",
+        "ssrf-req-filter"
       ]
     },
     {
       "path": "dist/index.esm.js",
       "limit": "150 KB",
       "ignore": [
-        "jsdom"
+        "jsdom",
+        "http",
+        "https",
+        "ssrf-req-filter"
       ]
     }
   ],

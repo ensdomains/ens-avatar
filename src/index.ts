@@ -5,9 +5,6 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
-  createAgentAdapter,
-  createCacheAdapter,
-  fetch,
   getImageURI,
   handleSettled,
   isImageURI,
