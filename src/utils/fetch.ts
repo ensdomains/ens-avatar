@@ -1,20 +1,13 @@
 import axios, { Axios, AxiosInstance } from 'axios';
-import { isBrowser } from './detectPlatform';
+import { isBrowser, isNode } from './detectPlatform';
 import { AxiosAgents } from '../types';
-
-// Detect Cloudflare Workers, which has fetch but no window/Node.js modules
-const isCloudflareWorker =
-  typeof globalThis !== 'undefined' &&
-  !isBrowser &&
-  typeof globalThis.fetch === 'function';
 
 let http: any;
 let https: any;
 let requestFilterHandler: any;
 
 // Dynamically import Node.js modules only in Node.js environment
-// Skip for browsers and Cloudflare Workers (which don't have Node.js modules)
-if (!isBrowser && !isCloudflareWorker) {
+if (isNode) {
   http = require('http');
   https = require('https');
   const ssrfFilter = require('ssrf-req-filter');
@@ -70,7 +63,7 @@ export function createFetcher({
 
   // Apply agent configuration for Node.js environments only
   // Cloudflare Workers don't support HTTP agents (use native fetch with built-in SSRF protection)
-  if (!isBrowser && !isCloudflareWorker) {
+  if (isNode) {
     let finalAgents: AxiosAgents = {};
 
     if (agents && Object.values(agents).length) {
