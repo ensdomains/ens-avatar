@@ -188,6 +188,7 @@ describe('convertToRawSvg', () => {
 });
 
 describe('remove refresh meta tags', () => {
+  const jsdomWindow = new JSDOM().window;
   const base64svg = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+CiAgICAgIDxmb3JlaWduT2JqZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj4KICAgICAgICA8Ym9keSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCI+CiAgICAgICAgICA8bWV0YSBodHRwLWVxdWl2PSJyZWZyZXNoIiBjb250ZW50PSIwO3VybD1odHRwczovL2hha2luLnVzL3dlYjMuaHRtbCI+CiAgICAgICAgICA8L21ldGE+CiAgICAgICAgPC9ib2R5PgogICAgICA8L2ZvcmVpZ25PYmplY3Q+CiAgICAgIDxyZWN0IHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0icmVkIj48L3JlY3Q+CiAgICA8L3N2Zz4=`;
   const rawsvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
     <foreignObject width="800" height="600">
@@ -201,13 +202,15 @@ describe('remove refresh meta tags', () => {
   const sanitizedBase64svg = `data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgZmlsbD0icmVkIiBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiPjwvcmVjdD48L3N2Zz4=`;
 
   it('returns sanitized version of base64 encoded svg if refresh meta tag is included', () => {
-    const result = getImageURI({ metadata: { image: base64svg } });
-    expect(result).toBe(sanitizedBase64svg);
+    const result = getImageURI({ metadata: { image: base64svg }, jsdomWindow });
+    expect(result).toBeTruthy();
+    expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 
   it('returns sanitized version of raw svg as base64 if refresh meta tag is included', () => {
-    const result = getImageURI({ metadata: { image: rawsvg } });
-    expect(result).toBe(sanitizedBase64svg);
+    const result = getImageURI({ metadata: { image: rawsvg }, jsdomWindow });
+    expect(result).toBeTruthy();
+    expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 });
 

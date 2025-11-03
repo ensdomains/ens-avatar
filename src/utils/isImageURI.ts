@@ -100,7 +100,7 @@ export async function isImageURI(url: string): Promise<boolean> {
   const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
 
   try {
-    const result = await fetch({ url: encodedURI, method: 'HEAD' });
+    const result = await fetch.head(encodedURI);
 
     if (result.status === 200) {
       const contentType = result.headers['content-type']?.toLowerCase();
@@ -131,13 +131,18 @@ export async function isImageURI(url: string): Promise<boolean> {
     }
   } catch (error) {
     if (error instanceof AxiosError) {
-      console.warn('isImageURI: ', error.toString(), '-', error.config.url);
+      console.warn(
+        'isImageURI: ',
+        error.toString(),
+        '-',
+        error.config?.url || 'unknown'
+      );
     } else {
       console.warn('isImageURI: ', error.toString());
     }
 
     // if error is not cors related then fail
-    if (typeof error.response !== 'undefined') {
+    if (typeof (error as any).response !== 'undefined') {
       // in case of cors, use image api to validate if given url is an actual image
       return false;
     }

@@ -1,11 +1,6 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import {
-  createAgentAdapter,
-  createCacheAdapter,
-  fetch,
-  resolveURI,
-} from '../utils';
+import { createFetcher, resolveURI } from '../utils';
 import { AvatarResolverOpts } from '../types';
 
 const abi = [
@@ -21,12 +16,12 @@ export default class ERC721 {
     tokenID: string,
     options?: AvatarResolverOpts
   ) {
-    if (options?.cache && options?.cache > 0) {
-      createCacheAdapter(fetch, options?.cache);
-    }
-    if (options?.agents) {
-      createAgentAdapter(fetch, options?.agents);
-    }
+    // Create a configured fetch instance for this request
+    const fetch = createFetcher({
+      ttl: options?.cache,
+      agents: options?.agents,
+      allowPrivateIPs: options?.allowPrivateIPs,
+    });
 
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
@@ -53,7 +48,7 @@ export default class ERC721 {
       const metadata = JSON.parse(_resolvedUri);
       return { ...metadata, is_owner: isOwner };
     }
-    const response = await fetch(
+    const response = await fetch.get(
       encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID))
     );
     const metadata = await response?.data;

@@ -5,9 +5,6 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
-  createAgentAdapter,
-  createCacheAdapter,
-  fetch,
   getImageURI,
   handleSettled,
   isImageURI,
@@ -44,16 +41,10 @@ export class AvatarResolver implements AvatarResolver {
   constructor(provider: JsonRpcProvider, options?: AvatarResolverOpts) {
     this.provider = provider;
     this.options = options;
-    if (options?.cache && options?.cache > 0) {
-      createCacheAdapter(fetch, options?.cache);
-    }
-    if (options?.agents) {
-      createAgentAdapter(fetch, options?.agents);
-    }
-
-    if (options?.maxContentLength && options?.maxContentLength > 0) {
-      fetch.defaults.maxContentLength = options?.maxContentLength;
-    }
+    // Note: fetch instance configuration is now handled in createFetcher
+    // The global fetch instance already has proper configuration
+    // This constructor no longer needs to modify the fetch instance
+    // as options are passed directly to API methods that create their own instances
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
