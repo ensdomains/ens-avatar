@@ -1,15 +1,15 @@
-import { JsonRpcProvider } from 'ethers';
+import {
+  Contract,
+  dnsEncode,
+  Interface,
+  JsonRpcProvider,
+  namehash,
+} from 'ethers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
 import URI from './specs/uri';
 import * as utils from './utils';
-import {
-  BaseError,
-  getImageURI,
-  handleSettled,
-  isImageURI,
-  parseNFT,
-} from './utils';
+import { BaseError, getImageURI, isImageURI, parseNFT } from './utils';
 import {
   AvatarRequestOpts,
   AvatarResolverOpts,
@@ -48,16 +48,13 @@ export class AvatarResolver implements AvatarResolver {
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
-    // retrieve registrar address and resolver object from ens name
-    const [resolvedAddress, resolver] = await handleSettled([
-      this.provider.resolveName(ens),
-      this.provider.getResolver(ens),
-    ]);
-    if (!resolver) return null;
+    const {
+      resolver,
+      resolvedAddress,
+      mediaURI,
+    } = await this._universalResolve(ens, key);
 
-    // retrieve 'avatar' text recored from resolver
-    const mediaURI = await resolver.getText(key);
-    if (!mediaURI) return null;
+    if (!resolver || !mediaURI) return null;
 
     // test case-insensitive in case of uppercase records
     if (!/eip155:/i.test(mediaURI)) {
@@ -137,6 +134,58 @@ export class AvatarResolver implements AvatarResolver {
       return isImage ? imageURI : null;
     }
     return imageURI;
+  }
+
+  async _universalResolve(ens: string, key: MediaKey) {
+    const universalResolverIface = new Interface([
+      'function resolve(bytes name, bytes data) external view returns (bytes response, address resolver)',
+    ]);
+
+    const universalResolver = new Contract(
+      '0xeEeEEEeE14D718C2B47D9923Deab1335E144EeEe',
+      universalResolverIface,
+      this.provider
+    );
+
+    const resolverIface = new Interface([
+      'function addr(bytes32 node, uint256 coinType) external view returns (bytes)',
+      'function text(bytes32 node, string memory key) external view returns (string)',
+    ]);
+
+    const multicallIface = new Interface([
+      'function multicall(bytes[] calldata data) external view returns (bytes[] memory results)',
+    ]);
+
+    // Combine the calls into a single multicall
+    const resolveCalldata = multicallIface.encodeFunctionData('multicall', [
+      [
+        resolverIface.encodeFunctionData('addr', [namehash(ens), 60]),
+        resolverIface.encodeFunctionData('text', [namehash(ens), key]),
+      ],
+    ]);
+
+    // Get back the encoded response for each call, and the resolver address
+    const [response, resolver] = await universalResolver.resolve(
+      dnsEncode(ens),
+      resolveCalldata,
+      { enableCcipRead: true }
+    );
+
+    // Decode the multicall response into the encoded responses for each call
+    const [
+      [encodedAddr, encodedMediaURI],
+    ] = multicallIface.decodeFunctionResult('multicall', response);
+
+    return {
+      resolver,
+      // Decode the encoded responses for each call
+      resolvedAddress: resolverIface
+        .decodeFunctionResult('addr', encodedAddr)
+        .toString(),
+      mediaURI: resolverIface
+        .decodeFunctionResult('text', encodedMediaURI)
+        .toString(),
+    };
   }
 }
 
