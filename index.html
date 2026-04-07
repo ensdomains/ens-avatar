@@ -2,106 +2,280 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script type="module" src="./example/dist/index.js"></script>
-    <title>ENS Avatar Resolver Library Demo</title>
+    <title>ENS Avatar</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background: #0a0a0a;
+        color: #fff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+      }
+
+      .floaters {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .floater {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        will-change: transform;
+        opacity: 0;
+        transition: opacity 1.5s ease;
+      }
+
+      .floater.visible {
+        opacity: 0.15;
+      }
+
+      .app {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 2rem;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        opacity: 0.7;
+      }
+
+      .logo img {
+        width: 28px;
+        height: 28px;
+      }
+
+      .logo span {
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .profile {
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .banner-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        border-radius: 1rem 1rem 0 0;
+        overflow: hidden;
+        background: #1a1a1a;
+        transition: height 0.5s ease;
+      }
+
+      .banner-container.visible {
+        height: 160px;
+      }
+
+      .banner-container img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .banner-container img.active {
+        opacity: 1;
+      }
+
+      .avatar-wrap {
+        position: relative;
+        z-index: 1;
+        margin-top: 0;
+        transition: margin-top 0.5s ease;
+        display: flex;
+        justify-content: center;
+      }
+
+      .profile.has-banner .avatar-wrap {
+        margin-top: -80px;
+      }
+
+      .avatar-container {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 4px solid #0a0a0a;
+        overflow: hidden;
+        background: #141414;
+        position: relative;
+        transition: width 0.5s ease, height 0.5s ease;
+      }
+
+      .profile:not(.has-banner) .avatar-container {
+        width: 200px;
+        height: 200px;
+      }
+
+      .avatar-container img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .avatar-container img.active {
+        opacity: 1;
+      }
+
+      .avatar-loading {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(82, 152, 255, 0.08) 0%,
+          rgba(82, 152, 255, 0.2) 50%,
+          rgba(82, 152, 255, 0.08) 100%
+        );
+        background-size: 200% 200%;
+        animation: pulse 1.5s ease-in-out infinite;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      .avatar-loading.visible {
+        opacity: 1;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .ens-name {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.85);
+        min-height: 1.5em;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .ens-name.visible {
+        opacity: 1;
+      }
+
+      .search {
+        width: 100%;
+        max-width: 280px;
+        padding: 0.6rem 0.2rem;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 1.2rem;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.3s ease;
+      }
+
+      .search::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      .search:focus {
+        border-bottom-color: rgba(82, 152, 255, 0.5);
+      }
+
+      .hint {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      .status {
+        font-size: 0.85rem;
+        min-height: 1.3em;
+        color: rgba(255, 255, 255, 0.5);
+        transition: opacity 0.3s ease;
+      }
+
+      .status.error {
+        color: #e85d5d;
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <div id="avatars"></div>
-      <div class="queryContainer">
-        <div id="headerContainer">
-          <h2>Query ENS Avatar</h2>
-          <div>
-            <img
-              class="queryImage"
-              id="queryImage"
-              width="300"
-              height="300"
-              src="./example/ens.png"
-            />
-            <div>
-              <input
-                class="queryInput"
-                id="queryInput"
-                type="text"
-                placeholder="vitalik.eth"
-                autofocus
-                autocomplete="off"
-              />
-              <div class="hint">
-                (type ENS name and hit the enter button)
-              </div>
-            </div>
+    <div class="floaters" id="floaters"></div>
+    <div class="app">
+      <div class="logo">
+        <img src="./example/ens.png" alt="ENS" />
+        <span>ENS Avatar</span>
+      </div>
+      <div class="profile" id="profile">
+        <div class="banner-container" id="bannerContainer">
+          <img class="banner-front" alt="" />
+          <img class="banner-back" alt="" />
+        </div>
+        <div class="avatar-wrap">
+          <div class="avatar-container">
+            <img class="avatar-front" alt="" />
+            <img class="avatar-back" alt="" />
+            <div class="avatar-loading"></div>
           </div>
         </div>
       </div>
+      <div class="ens-name"></div>
+      <input
+        class="search"
+        id="searchInput"
+        type="text"
+        placeholder="vitalik.eth"
+        autofocus
+        autocomplete="off"
+      />
+      <div class="hint">Enter an ENS name</div>
+      <div class="status" id="status"></div>
     </div>
   </body>
-  <style>
-    body {
-      font-family: 'Helvetica', serif;
-    }
-    #avatars {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      background: black;
-      grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-      grid-template-rows: repeat(auto-fill, minmax(20rem, 1fr));
-      align-items: center;
-      justify-items: center;
-
-      transition: 0.2 grid-template-columns;
-      opacity: 0.3;
-      overflow: hidden;
-      pointer-events: none;
-      user-select: none;
-    }
-    #headerContainer {
-      height: 100%;
-      background-position: 0 55px;
-      background-repeat: no-repeat;
-      background-size: contain;
-    }
-    .hint {
-      margin-top: 0.5rem;
-      color: #aaa;
-    }
-    .queryContainer {
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      opacity: 1;
-      width: 50%;
-      min-width: 20rem;
-      height: 30rem;
-      background-color: white;
-      border-radius: 1.5rem;
-      border: 1px solid #eee;
-      box-shadow: 0.2rem 0.4rem 1rem #ccc;
-      padding: 3rem 2.5rem;
-
-      /* text */
-      text-align: center;
-    }
-    .queryImage,
-    .queryInput {
-      border-radius: 0.3rem;
-    }
-    .queryImage {
-      object-fit: contain;
-      border: 5px solid white;
-      border-radius: 5px;
-      outline: #d6d6d6 solid 2px;
-    }
-    .queryInput {
-      width: 19rem;
-      box-sizing: border-box;
-      padding: 0.5rem 0.5rem;
-      margin-top: 10px;
-      text-align: center;
-      font-size: 1.4rem;
-      border: 1px solid #bbb;
-    }
-  </style>
 </html>

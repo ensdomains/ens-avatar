@@ -1,7 +1,5 @@
-import axios, { AxiosError } from 'axios';
-import { Buffer } from 'buffer/';
-
-import { fetch } from './fetch';
+import { Fetcher } from '../types';
+import { fetch as defaultFetch } from './fetch';
 
 export const ALLOWED_IMAGE_MIMETYPES = [
   'application/octet-stream',
@@ -27,7 +25,7 @@ export const IMAGE_SIGNATURES = {
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
 
-function isURIEncoded(uri: string): boolean {
+export function isURIEncoded(uri: string): boolean {
   try {
     return uri !== decodeURIComponent(uri);
   } catch {
@@ -35,20 +33,14 @@ function isURIEncoded(uri: string): boolean {
   }
 }
 
-async function isStreamAnImage(url: string): Promise<boolean> {
+async function isStreamAnImage(
+  url: string,
+  fetcher: Fetcher
+): Promise<boolean> {
   try {
-    const source = axios.CancelToken.source();
-    const response = await fetch.get(url, {
-      responseType: 'arraybuffer',
+    const response = await fetcher.getArrayBuffer(url, {
       headers: {
-        Range: 'bytes=0-1023', // Download only the first 1024 bytes
-      },
-      cancelToken: source.token,
-      onDownloadProgress: progressEvent => {
-        if (progressEvent.loaded > 1024) {
-          // Cancel the request if more than 1024 bytes have been downloaded
-          source.cancel('Aborted to prevent downloading the entire file.');
-        }
+        Range: 'bytes=0-1023',
       },
     });
 
@@ -60,34 +52,26 @@ async function isStreamAnImage(url: string): Promise<boolean> {
       }
     }
 
-    let magicNumbers: string;
     // Check the binary signature (magic numbers) of the data
-    if (response.data instanceof ArrayBuffer) {
-      magicNumbers = new DataView(response.data).getUint32(0).toString(16);
-    } else {
-      if (
-        !response.data ||
-        typeof response.data === 'string' ||
-        !('readUInt32BE' in response.data)
-      ) {
-        throw 'isStreamAnImage: unsupported data, instance is not BufferLike';
-      }
-      magicNumbers = response.data.readUInt32BE(0).toString(16);
-    }
+    const magicNumbers = new DataView(response.data).getUint32(0).toString(16);
 
     const isBinaryImage = Object.keys(IMAGE_SIGNATURES).some(signature =>
       magicNumbers.toUpperCase().startsWith(signature)
     );
 
-    // Check for SVG image
-    const chunkAsString = Buffer.from(response.data).toString();
-    const isSvgImage = /<svg[\s\S]*?xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(
-      chunkAsString
-    );
+    // Check for SVG image - must start with <svg or <?xml (after stripping whitespace/BOM)
+    const chunkAsString = new TextDecoder()
+      .decode(response.data)
+      .replace(/^\uFEFF/, '')
+      .trimStart();
+    const isSvgImage = /^<(?:svg[\s>]|\?xml\s)/.test(chunkAsString);
 
     return isBinaryImage || isSvgImage;
   } catch (error) {
-    if (axios.isCancel(error)) {
+    if (
+      error instanceof DOMException ||
+      (error instanceof Error && error.name === 'AbortError')
+    ) {
       console.error('Stream request was canceled:', (error as Error).message);
     } else {
       console.error('Error checking stream:', error);
@@ -96,14 +80,21 @@ async function isStreamAnImage(url: string): Promise<boolean> {
   }
 }
 
-export async function isImageURI(url: string): Promise<boolean> {
+export async function isImageURI(
+  url: string,
+  fetcher?: Fetcher
+): Promise<boolean> {
   const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
+  const _fetcher = fetcher || defaultFetch;
 
   try {
-    const result = await fetch.head(encodedURI);
+    const result = await _fetcher.head(encodedURI);
 
     if (result.status === 200) {
-      const contentType = result.headers['content-type']?.toLowerCase();
+      const contentType = result.headers['content-type']
+        ?.toLowerCase()
+        .split(';')[0]
+        .trim();
 
       if (!contentType || !ALLOWED_IMAGE_MIMETYPES.includes(contentType)) {
         console.warn(`isImageURI: Invalid content type ${contentType}`);
@@ -121,7 +112,7 @@ export async function isImageURI(url: string): Promise<boolean> {
 
       if (contentType === 'application/octet-stream') {
         // if image served with generic mimetype, do additional check
-        return isStreamAnImage(encodedURI);
+        return isStreamAnImage(encodedURI, _fetcher);
       }
 
       return true;
@@ -130,20 +121,11 @@ export async function isImageURI(url: string): Promise<boolean> {
       return false;
     }
   } catch (error) {
-    if (error instanceof AxiosError) {
-      console.warn(
-        'isImageURI: ',
-        error.toString(),
-        '-',
-        error.config?.url || 'unknown'
-      );
-    } else {
-      console.warn('isImageURI: ', error.toString());
-    }
+    console.warn('isImageURI: ', (error as any).toString());
 
-    // if error is not cors related then fail
+    // Native fetch throws TypeError for network/CORS errors.
+    // If error has a response property it's a non-CORS server error — fail.
     if (typeof (error as any).response !== 'undefined') {
-      // in case of cors, use image api to validate if given url is an actual image
       return false;
     }
 
@@ -154,8 +136,20 @@ export async function isImageURI(url: string): Promise<boolean> {
 
     return new Promise<boolean>(resolve => {
       const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
+      const timeout = setTimeout(() => {
+        img.src = '';
+        resolve(false);
+      }, 10000);
+      img.onload = () => {
+        clearTimeout(timeout);
+        img.src = '';
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        img.src = '';
+        resolve(false);
+      };
       img.src = encodedURI;
     });
   }

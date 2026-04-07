@@ -1,7 +1,16 @@
-const { StaticJsonRpcProvider } = require('@ethersproject/providers');
-const { AvatarResolver, utils: avtUtils } = require('../dist/index');
+const { ethers } = require('ethers');
+const { AvatarResolver } = require('../dist/index');
 
-const ensNames = [
+const provider = new ethers.JsonRpcProvider(
+  'https://ethereum-rpc.publicnode.com',
+  'mainnet',
+  { staticNetwork: true }
+);
+const avt = new AvatarResolver(provider, {
+  ipfs: 'https://ipfs.io',
+});
+
+const floaterNames = [
   'achal.eth',
   'alisha.eth',
   'jefflau.eth',
@@ -21,107 +30,236 @@ const ensNames = [
   'rainbowwallet.eth',
   'fireeyesdao.eth',
   'griff.eth',
+  'vitalik.eth',
 ];
 
-const notFoundImage =
-  'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzAwcHgiIGhlaWdodD0iMzAwcHgiIHZpZXdCb3g9IjAgMCAzMDAgMzAwIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPHRpdGxlPkdyb3VwPC90aXRsZT4KICAgIDxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJHcm91cCI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIGZpbGw9IiMwMDAwMDAiIHg9IjAiIHk9IjAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48L3JlY3Q+CiAgICAgICAgICAgIDx0ZXh0IGlkPSJDb3VsZC1ub3QtbG9hZC06KCIgZm9udC1mYW1pbHk9IlBsdXNKYWthcnRhU2Fucy1Cb2xkLCBQbHVzIEpha2FydGEgU2FucyIgZm9udC1zaXplPSIzMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNGRkZGRkYiPgogICAgICAgICAgICAgICAgPHRzcGFuIHg9IjEwNi4wMDUiIHk9IjEyNCI+Q291bGQgPC90c3Bhbj4KICAgICAgICAgICAgICAgIDx0c3BhbiB4PSIxMjUuMjgiIHk9IjE2MiI+bm90IDwvdHNwYW4+CiAgICAgICAgICAgICAgICA8dHNwYW4geD0iMTAzLjYzNSIgeT0iMjAwIj5sb2FkIDooPC90c3Bhbj4KICAgICAgICAgICAgPC90ZXh0PgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+';
-const provider = new StaticJsonRpcProvider(
-  `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
-);
-const avt = new AvatarResolver(provider, {
-  apiKey: { opensea: process.env.OPENSEA_KEY },
+const floaters = [];
+const FLOATER_SIZE = 64;
+const FLOATER_RADIUS = FLOATER_SIZE / 2;
+const COLLISION_DIST_SQ = FLOATER_SIZE * FLOATER_SIZE;
+
+let logicalW = window.innerWidth;
+let logicalH = window.innerHeight;
+window.addEventListener('resize', () => {
+  logicalW = window.innerWidth;
+  logicalH = window.innerHeight;
 });
-for (let ens of ensNames) {
-  avt
-    .getMetadata(ens)
-    .then(metadata => {
-      const avatar = avtUtils.getImageURI({
-        metadata,
-        gateways: { ipfs: 'https://ipfs.io' },
-      });
-      createImage(ens, avatar);
-    })
-    .catch(error => {
-      console.warn(error);
-      createImage(ens);
-    });
+
+function initFloaters() {
+  const container = document.getElementById('floaters');
+
+  floaterNames.forEach((name, i) => {
+    const speed = 0.3 + Math.random() * 0.4;
+    const angle = Math.random() * Math.PI * 2;
+
+    const el = document.createElement('img');
+    el.className = 'floater';
+    el.alt = '';
+    el.decoding = 'async';
+    container.appendChild(el);
+
+    const floater = {
+      x: Math.random() * (logicalW - FLOATER_SIZE),
+      y: Math.random() * (logicalH - FLOATER_SIZE),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      el,
+    };
+    floaters.push(floater);
+
+    setTimeout(() => {
+      avt
+        .getAvatar(name)
+        .then((avatar) => {
+          if (!avatar) return;
+          el.src = avatar;
+          el.onload = () => el.classList.add('visible');
+        })
+        .catch(() => {});
+    }, i * 150);
+  });
+
+  requestAnimationFrame(animateFloaters);
 }
 
-function createImage(ens, avatarUri = notFoundImage) {
-  const elem = document.createElement('img');
-  elem.setAttribute('src', avatarUri);
-  elem.setAttribute('height', '300');
-  elem.setAttribute('width', '300');
-  elem.setAttribute('alt', ens);
-  elem.style = 'border-radius: 5px;';
-  elem.style.opacity = '0';
-  elem.addEventListener('load', fadeImg);
-  document.getElementById('avatars').appendChild(elem);
+const TARGET_DT = 1000 / 60;
+let lastTime = 0;
+
+function animateFloaters(now) {
+  const rawDt = now - lastTime;
+  lastTime = now;
+  const dt = rawDt > 0 && rawDt < 100 ? rawDt / TARGET_DT : 1;
+
+  const w = logicalW;
+  const h = logicalH;
+  const len = floaters.length;
+
+  for (let i = 0; i < len; i++) {
+    const f = floaters[i];
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+
+    if (f.x <= 0) { f.x = 0; f.vx *= -1; }
+    if (f.y <= 0) { f.y = 0; f.vy *= -1; }
+    if (f.x + FLOATER_SIZE >= w) { f.x = w - FLOATER_SIZE; f.vx *= -1; }
+    if (f.y + FLOATER_SIZE >= h) { f.y = h - FLOATER_SIZE; f.vy *= -1; }
+  }
+
+  for (let i = 0; i < len; i++) {
+    const a = floaters[i];
+    const ax = a.x + FLOATER_RADIUS;
+    const ay = a.y + FLOATER_RADIUS;
+    for (let j = i + 1; j < len; j++) {
+      const b = floaters[j];
+      const dx = (b.x + FLOATER_RADIUS) - ax;
+      const dy = (b.y + FLOATER_RADIUS) - ay;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq < COLLISION_DIST_SQ && distSq > 0) {
+        const dist = Math.sqrt(distSq);
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        const dot = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+        if (dot > 0) {
+          a.vx -= dot * nx;
+          a.vy -= dot * ny;
+          b.vx += dot * nx;
+          b.vy += dot * ny;
+        }
+
+        const overlap = (FLOATER_SIZE - dist) / 2;
+        a.x -= overlap * nx;
+        a.y -= overlap * ny;
+        b.x += overlap * nx;
+        b.y += overlap * ny;
+      }
+    }
+  }
+
+  for (let i = 0; i < len; i++) {
+    const f = floaters[i];
+    f.el.style.transform = `translate3d(${f.x}px,${f.y}px,0)`;
+  }
+
+  requestAnimationFrame(animateFloaters);
 }
 
-function fadeImg() {
-  this.style.transition = 'opacity 2s';
-  this.style.opacity = '1';
+const front = document.querySelector('.avatar-front');
+const back = document.querySelector('.avatar-back');
+const loading = document.querySelector('.avatar-loading');
+const ensNameEl = document.querySelector('.ens-name');
+const status = document.getElementById('status');
+const input = document.getElementById('searchInput');
+
+const profile = document.getElementById('profile');
+const bannerContainer = document.getElementById('bannerContainer');
+const bannerFront = document.querySelector('.banner-front');
+const bannerBack = document.querySelector('.banner-back');
+
+let activeSide = 'front';
+let bannerActiveSide = 'front';
+
+function setStatus(text, isError) {
+  status.textContent = text;
+  status.classList.toggle('error', !!isError);
 }
 
-function setImage(ens, avatarUri = notFoundImage, warn = false, headerUri) {
-  const elem = document.getElementById('queryImage');
-  const headerContainer = document.getElementById('headerContainer');
-  elem.setAttribute('src', avatarUri);
-  elem.setAttribute('alt', ens);
-  headerContainer.style.backgroundImage = headerUri ? `url("${headerUri}")` : 'none';
-  const warnText = document.getElementById('warnText');
-  if (warn) {
-    if (warnText) return;
-    const newWarnText = document.createElement('div');
-    newWarnText.id = 'warnText';
-    newWarnText.textContent = 'The query is not valid';
-    newWarnText.style.color = 'red';
-    newWarnText.style.lineHeight = '10px';
-    elem.setAttribute('height', 290);
-    elem.parentNode.insertBefore(newWarnText, elem.nextSibling);
-  } else {
-    elem.setAttribute('height', 300);
-    warnText && warnText.remove();
+function showLoading() {
+  loading.classList.add('visible');
+  setStatus('Resolving...');
+}
+
+function hideLoading() {
+  loading.classList.remove('visible');
+}
+
+function crossfade(src, name) {
+  return new Promise((resolve) => {
+    const incoming = activeSide === 'front' ? back : front;
+    const outgoing = activeSide === 'front' ? front : back;
+
+    incoming.onload = () => {
+      incoming.classList.add('active');
+      outgoing.classList.remove('active');
+      activeSide = activeSide === 'front' ? 'back' : 'front';
+      ensNameEl.textContent = name;
+      ensNameEl.classList.add('visible');
+      resolve();
+    };
+
+    incoming.onerror = () => {
+      resolve();
+    };
+
+    incoming.src = src;
+  });
+}
+
+function crossfadeBanner(src) {
+  return new Promise((resolve) => {
+    const incoming = bannerActiveSide === 'front' ? bannerBack : bannerFront;
+    const outgoing = bannerActiveSide === 'front' ? bannerFront : bannerBack;
+
+    incoming.onload = () => {
+      bannerContainer.classList.add('visible');
+      profile.classList.add('has-banner');
+      incoming.classList.add('active');
+      outgoing.classList.remove('active');
+      bannerActiveSide = bannerActiveSide === 'front' ? 'back' : 'front';
+      resolve();
+    };
+
+    incoming.onerror = () => {
+      resolve();
+    };
+
+    incoming.src = src;
+  });
+}
+
+function hideBanner() {
+  profile.classList.remove('has-banner');
+  bannerContainer.classList.remove('visible');
+  bannerFront.classList.remove('active');
+  bannerBack.classList.remove('active');
+}
+
+async function resolveAvatar(name) {
+  showLoading();
+  try {
+    const [avatar, header] = await Promise.all([
+      avt.getAvatar(name),
+      avt.getHeader(name).catch(() => null),
+    ]);
+    hideLoading();
+
+    if (!avatar) {
+      setStatus('No avatar found', true);
+      return;
+    }
+
+    if (header) {
+      crossfadeBanner(header);
+    } else {
+      hideBanner();
+    }
+
+    await crossfade(avatar, name);
+    setStatus('');
+  } catch (err) {
+    hideLoading();
+    console.warn(err);
+    setStatus(`Could not resolve avatar for ${name}`, true);
   }
 }
 
-document.getElementById('queryInput').addEventListener('change', event => {
-  let ens = event.target.value;
-  ens = ens.toLowerCase().trim();
-
-  if (ens === 'nevergonnagiveyouup' || ens === 'rickroll') {
-    setImage(
-      'rickroll',
-      'http://ipfs.io/ipfs/QmPmU7h1rcZkivDntjvfh8BJB5Yk32ozMjPd12HNMoAZZ8'
-    );
-    return;
-  }
-
-  if (ens.length < 7 || !ens.endsWith('.eth')) {
-    setImage(
-      'fail',
-      'http://ipfs.io/ipfs/QmYVZtV4Xtbqqj6hKojgbLskf5b1rV2wNfpAwgZ2EBuQnD',
-      true
-    );
-    return;
-  }
-
-  const elem = document.getElementById('queryImage');
-  elem.style.filter = 'blur(5px) grayscale(70%)';
-  elem.style.transition = 'filter .5s';
-  avt
-    .getMetadata(ens)
-    .then(metadata => {
-      const avatar = avtUtils.getImageURI({ metadata });
-      avt.getHeader(ens).then(header => {
-        setImage(ens, avatar, false, header);
-      });
-      elem.style.filter = 'none';
-    })
-    .catch(error => {
-      console.warn(error);
-      setImage(ens);
-      elem.style.filter = 'none';
-    });
+input.addEventListener('change', (event) => {
+  const name = event.target.value.toLowerCase().trim();
+  if (!name) return;
+  resolveAvatar(name);
 });
+
+const defaultName = floaterNames[Math.floor(Math.random() * floaterNames.length)];
+resolveAvatar(defaultName);
+initFloaters();

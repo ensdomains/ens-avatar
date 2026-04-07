@@ -5,6 +5,7 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
+  createFetcher,
   getImageURI,
   handleSettled,
   isImageURI,
@@ -13,8 +14,10 @@ import {
 import {
   AvatarRequestOpts,
   AvatarResolverOpts,
+  Fetcher,
   HeaderRequestOpts,
   MediaKey,
+  NFTMetadata,
   Spec,
 } from './types';
 
@@ -32,19 +35,23 @@ export class UnsupportedMediaKey extends BaseError {}
 export interface AvatarResolver {
   provider: JsonRpcProvider;
   options?: AvatarResolverOpts;
+  fetcher: Fetcher;
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
   getHeader(ens: string, data: HeaderRequestOpts): Promise<string | null>;
-  getMetadata(ens: string, key?: MediaKey): Promise<any | null>;
+  getMetadata(ens: string, key?: MediaKey): Promise<NFTMetadata | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
   constructor(provider: JsonRpcProvider, options?: AvatarResolverOpts) {
     this.provider = provider;
     this.options = options;
-    // Note: fetch instance configuration is now handled in createFetcher
-    // The global fetch instance already has proper configuration
-    // This constructor no longer needs to modify the fetch instance
-    // as options are passed directly to API methods that create their own instances
+    this.fetcher = createFetcher({
+      ttl: options?.cache,
+      dispatcher: options?.dispatcher,
+      allowPrivateIPs: options?.allowPrivateIPs,
+      timeout: options?.timeout,
+      urlDenyList: options?.urlDenyList,
+    });
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
@@ -62,16 +69,22 @@ export class AvatarResolver implements AvatarResolver {
     // test case-insensitive in case of uppercase records
     if (!/eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(mediaURI, this.options);
-      return { uri: ens, ...metadata };
+      const metadata = await uriSpec.getMetadata(
+        mediaURI,
+        this.options,
+        this.fetcher
+      );
+      return { ...(typeof metadata === 'object' ? metadata : { image: metadata }), uri: ens };
     }
 
     // parse retrieved avatar uri
     const { chainID, namespace, contractAddress, tokenID } = parseNFT(mediaURI);
-    // detect avatar spec by namespace
-    const Spec = specs[namespace];
-    if (!Spec)
+    // detect avatar spec by namespace — use hasOwnProperty to prevent
+    // prototype pollution via __proto__/constructor namespace injection
+    if (!Object.prototype.hasOwnProperty.call(specs, namespace)) {
       throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
+    }
+    const Spec = specs[namespace];
     const spec = new Spec();
 
     // add meta information of the avatar record
@@ -89,9 +102,10 @@ export class AvatarResolver implements AvatarResolver {
       resolvedAddress,
       contractAddress,
       tokenID,
-      this.options
+      this.options,
+      this.fetcher
     );
-    return { uri: ens, host_meta, ...metadata };
+    return { ...metadata, uri: ens, host_meta };
   }
 
   async getAvatar(
@@ -133,7 +147,7 @@ export class AvatarResolver implements AvatarResolver {
       metadata.hasOwnProperty('host_meta') &&
       imageURI?.startsWith('http')
     ) {
-      const isImage = await isImageURI(imageURI);
+      const isImage = await isImageURI(imageURI, this.fetcher);
       return isImage ? imageURI : null;
     }
     return imageURI;

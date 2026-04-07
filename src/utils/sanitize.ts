@@ -1,17 +1,44 @@
 /**
  * Platform-specific SVG sanitization
  *
- * - Browser/Node.js: Uses DOMPurify (8.74 KB, battle-tested, superior SVG support)
- * - Cloudflare Workers: Uses sanitize-html (900 KB, parser-based, works without DOM)
+ * - Browser/Node.js with JSDOM: Uses DOMPurify (battle-tested, superior SVG support)
+ * - Cloudflare Workers / Node.js without JSDOM: Uses sanitize-html (parser-based, works without DOM)
  *
  * Both sanitizers are production-ready and actively maintained for security.
  */
 
-// Detect runtime environment
-const hasWindow = typeof window !== 'undefined';
-const hasGlobalThis = typeof globalThis !== 'undefined';
-const isCloudflareWorker =
-  hasGlobalThis && !hasWindow && typeof globalThis.fetch === 'function';
+/**
+ * Strips dangerous CSS constructs from a style attribute value.
+ * Allows safe visual properties (colors, fonts, transforms, etc.)
+ * while blocking url(), expression(), -moz-binding, @import, behavior —
+ * all of which can trigger external resource loading or script execution.
+ */
+function sanitizeStyleValue(css: string): string {
+  // First, normalize CSS escape sequences that could bypass pattern matching.
+  // e.g. `ur\6c(evil.com)` → `url(evil.com)`, `ur\l(...)` → `url(...)`
+  let clean = css;
+  // Strip CSS comments (could split keywords: `ur/**/l(...)`)
+  clean = clean.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Decode CSS hex escapes: \XX or \XXXXXX (optionally followed by one space)
+  clean = clean.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+  // Decode simple backslash escapes: \l → l
+  clean = clean.replace(/\\(.)/g, '$1');
+
+  // Now apply pattern-based removal on normalized CSS
+  // Remove url(...) — external resource loading / data exfiltration
+  clean = clean.replace(/url\s*\([^)]*\)/gi, '');
+  // Remove expression(...) — IE script execution
+  clean = clean.replace(/expression\s*\([^)]*\)/gi, '');
+  // Remove -moz-binding — Firefox XBL script execution
+  clean = clean.replace(/-moz-binding\s*:[^;]*(;|$)/gi, '$1');
+  // Remove behavior — IE HTC script execution
+  clean = clean.replace(/behavior\s*:[^;]*(;|$)/gi, '$1');
+  // Remove @import — external stylesheet loading
+  clean = clean.replace(/@import\s+[^;]*(;|$)/gi, '$1');
+  return clean.trim();
+}
 
 /**
  * Sanitize SVG content to prevent XSS attacks
@@ -20,40 +47,44 @@ const isCloudflareWorker =
  * @returns Sanitized SVG string
  */
 export function sanitizeSVG(svg: string, jsdomWindow?: any): string {
-  // Strategy 1: DOMPurify (Browser or Node.js with JSDOM)
-  if (!isCloudflareWorker) {
-    return sanitizeWithDOMPurify(svg, jsdomWindow);
+  // Determine if we have a usable DOM window for DOMPurify
+  let domWindow: any = jsdomWindow;
+  if (!domWindow) {
+    try {
+      if (typeof window !== 'undefined') {
+        domWindow = window;
+      }
+    } catch {
+      // window reference throws in some environments
+    }
   }
 
-  // Strategy 2: sanitize-html (Cloudflare Workers)
+  // Strategy 1: DOMPurify (when we have a DOM window)
+  if (domWindow) {
+    try {
+      return sanitizeWithDOMPurify(svg, domWindow);
+    } catch {
+      // Fall back to sanitize-html if DOMPurify fails
+    }
+  }
+
+  // Strategy 2: sanitize-html (no DOM available — CF Workers, Node.js without JSDOM)
   return sanitizeWithSanitizeHtml(svg);
 }
 
 /**
- * DOMPurify-based sanitization (Browser/Node.js)
- * Requires window object (native in browser, JSDOM in Node.js)
+ * DOMPurify-based sanitization (Browser/Node.js with DOM)
+ * Requires a window object (native in browser, JSDOM in Node.js)
  */
-function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
+function sanitizeWithDOMPurify(svg: string, domWindow: any): string {
   const createDOMPurify = require('dompurify');
+  const DOMPurify = createDOMPurify(domWindow);
 
-  let domWindow;
-  try {
-    domWindow = window;
-  } catch {
-    // Node.js environment - require JSDOM window
-    if (!jsdomWindow) {
-      throw Error(
-        'In Node.js environment, JSDOM window is required for DOMPurify'
-      );
-    }
-    domWindow = jsdomWindow;
-  }
+  // Remove any previously accumulated hooks before adding new ones
+  DOMPurify.removeAllHooks();
 
-  const DOMPurify = createDOMPurify(domWindow as any);
-
-  // Add security hooks
+  // Hook: Remove meta refresh tags (phishing vector)
   DOMPurify.addHook('uponSanitizeElement', (node: any, data: any) => {
-    // Remove meta refresh tags (can be used for phishing)
     if (data.tagName === 'meta') {
       if (node.getAttribute('http-equiv') === 'refresh') {
         node.remove();
@@ -61,14 +92,12 @@ function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
     }
   });
 
-  // Hook to sanitize xlink:href attributes (XSS vector)
+  // Hook: Block dangerous URL schemes in href attributes
   DOMPurify.addHook('uponSanitizeAttribute', (node: any, data: any) => {
-    // Block javascript: URLs in href and xlink:href attributes
     if (data.attrName === 'xlink:href' || data.attrName === 'href') {
       const value = data.attrValue;
       if (value && typeof value === 'string') {
         const normalized = value.toLowerCase().trim();
-        // Block javascript:, data:text/html, and vbscript: URLs
         if (
           normalized.startsWith('javascript:') ||
           normalized.startsWith('data:text/html') ||
@@ -81,21 +110,67 @@ function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
     }
   });
 
+  // Hook: Block external resource loading to prevent tracking/exfiltration.
+  // SVGs served as avatar data should be self-contained — no external fetches.
+  DOMPurify.addHook('afterSanitizeAttributes', (node: any) => {
+    // Sanitize style attribute — keep safe CSS, strip url()/expression()/etc.
+    const style = node.getAttribute('style');
+    if (style) {
+      const clean = sanitizeStyleValue(style);
+      if (clean) {
+        node.setAttribute('style', clean);
+      } else {
+        node.removeAttribute('style');
+      }
+    }
+
+    const href = node.getAttribute('href');
+    if (!href) return;
+
+    const tagName = (node.tagName || '').toLowerCase();
+    const trimmed = href.trim();
+
+    // <use> and <textPath>: only internal fragment references (#id)
+    if (tagName === 'use' || tagName === 'textpath') {
+      if (!trimmed.startsWith('#')) {
+        node.removeAttribute('href');
+      }
+      return;
+    }
+
+    // <image> and <feImage>: only data:image/* URIs (inline raster), no external loading
+    if (tagName === 'image' || tagName === 'feimage') {
+      if (!trimmed.startsWith('#') && !/^data:image\//i.test(trimmed)) {
+        node.removeAttribute('href');
+      }
+      return;
+    }
+  });
+
   // Sanitize with SVG profile and forbidden tags
   const cleanDOM = DOMPurify.sanitize(svg, {
     USE_PROFILES: { svg: true, svgFilters: true },
-    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link', 'script'],
-    FORBID_ATTR: ['xlink:href'], // Block xlink:href entirely (deprecated, use href)
+    FORBID_TAGS: [
+      'a',
+      'area',
+      'base',
+      'foreignObject',
+      'iframe',
+      'link',
+      'script',
+    ],
+    FORBID_ATTR: ['xlink:href'],
+    ADD_DATA_URI_TAGS: ['feimage'],
   });
 
   return cleanDOM;
 }
 
 /**
- * sanitize-html-based sanitization (Cloudflare Workers)
+ * sanitize-html-based sanitization (Cloudflare Workers / Node.js without JSDOM)
  * Parser-based, no DOM dependency
  */
-function sanitizeWithSanitizeHtml(svg: string): string {
+export function sanitizeWithSanitizeHtml(svg: string): string {
   const sanitizeHtml = require('sanitize-html');
 
   // Comprehensive SVG element and attribute whitelist
@@ -152,9 +227,8 @@ function sanitizeWithSanitizeHtml(svg: string): string {
     'feFuncG',
     'feFuncB',
     'feFuncA',
-    // Other
+    // Other (NO foreignObject — enables HTML embedding)
     'image',
-    'foreignObject',
     'title',
     'desc',
     'metadata',
@@ -220,6 +294,7 @@ function sanitizeWithSanitizeHtml(svg: string): string {
     textPath: ['href', 'startOffset', 'method', 'spacing'],
     use: ['href', 'x', 'y', 'width', 'height'],
     image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
+    feImage: ['href', 'result', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
     linearGradient: [
       'id',
       'x1',
@@ -285,38 +360,69 @@ function sanitizeWithSanitizeHtml(svg: string): string {
     // Disallow all protocols except safe ones
     allowedSchemes: ['http', 'https', 'data'],
     allowedSchemesByTag: {
-      image: ['http', 'https', 'data'],
-      use: ['http', 'https'],
-      textPath: ['http', 'https'],
+      // image/feImage: only data:image/* (transform enforces further);
+      // no http/https to prevent external resource loading = tracking
+      image: ['data'],
+      feImage: ['data'],
+      // use/textPath: no schemes at all — only fragment references (#id)
+      use: [],
+      textPath: [],
     },
-    // Additional disallowed schemes to be explicit
     disallowedTagsMode: 'discard',
-    // Don't allow any iframe-related attributes
     allowIframeRelativeUrls: false,
-    // Transform URLs to remove dangerous protocols
+    // Transform tags to enforce strict href policies and sanitize style values
     transformTags: {
+      '*': (tagName: string, attribs: any) => {
+        // Sanitize style attribute on every element
+        if (attribs.style && typeof attribs.style === 'string') {
+          const clean = sanitizeStyleValue(attribs.style);
+          if (clean) {
+            attribs.style = clean;
+          } else {
+            delete attribs.style;
+          }
+        }
+        return { tagName, attribs };
+      },
       use: (tagName: string, attribs: any) => {
-        // Additional safety check for href attribute
+        // <use>: only allow internal fragment references
         if (attribs.href && typeof attribs.href === 'string') {
-          const normalized = attribs.href.toLowerCase().trim();
-          if (
-            normalized.startsWith('javascript:') ||
-            normalized.startsWith('data:text/html') ||
-            normalized.startsWith('vbscript:')
-          ) {
+          if (!attribs.href.trim().startsWith('#')) {
+            delete attribs.href;
+          }
+        }
+        return { tagName, attribs };
+      },
+      textPath: (tagName: string, attribs: any) => {
+        // <textPath>: only allow internal fragment references
+        if (attribs.href && typeof attribs.href === 'string') {
+          if (!attribs.href.trim().startsWith('#')) {
             delete attribs.href;
           }
         }
         return { tagName, attribs };
       },
       image: (tagName: string, attribs: any) => {
-        // Additional safety check for href attribute
         if (attribs.href && typeof attribs.href === 'string') {
-          const normalized = attribs.href.toLowerCase().trim();
-          if (
-            normalized.startsWith('javascript:') ||
-            normalized.startsWith('vbscript:')
-          ) {
+          const trimmed = attribs.href.trim();
+          // Allow fragment references (#id) and data:image/* URIs
+          if (!trimmed.startsWith('#') && !/^data:image\//i.test(trimmed)) {
+            delete attribs.href;
+          }
+          if (trimmed.toLowerCase().startsWith('data:text/html')) {
+            delete attribs.href;
+          }
+        }
+        return { tagName, attribs };
+      },
+      feImage: (tagName: string, attribs: any) => {
+        // Same rules as <image>: only #fragment refs and data:image/* URIs
+        if (attribs.href && typeof attribs.href === 'string') {
+          const trimmed = attribs.href.trim();
+          if (!trimmed.startsWith('#') && !/^data:image\//i.test(trimmed)) {
+            delete attribs.href;
+          }
+          if (trimmed.toLowerCase().startsWith('data:text/html')) {
             delete attribs.href;
           }
         }

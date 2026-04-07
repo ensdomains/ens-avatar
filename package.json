@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "2.0.0",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -10,20 +10,14 @@
     "src"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "rollup -c --watch",
     "build": "rollup -c",
     "build:demo": "node ./example/build.js",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
+    "test": "jest",
     "size": "size-limit"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint src test"
-    }
   },
   "prettier": {
     "printWidth": 80,
@@ -33,15 +27,8 @@
   },
   "jest": {
     "testTimeout": 20000,
-    "transformIgnorePatterns": [
-      "node_modules/(?!(axios|axios-cache-interceptor))"
-    ],
-    "moduleNameMapper": {
-      "^axios$": "axios/dist/node/axios.cjs"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/test/setup.js"
-    ]
+    "preset": "ts-jest",
+    "testEnvironment": "node"
   },
   "name": "@ensdomains/ens-avatar",
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
@@ -53,7 +40,9 @@
         "jsdom",
         "http",
         "https",
-        "ssrf-req-filter"
+        "net",
+        "dns",
+        "undici"
       ]
     },
     {
@@ -63,7 +52,9 @@
         "jsdom",
         "http",
         "https",
-        "ssrf-req-filter"
+        "net",
+        "dns",
+        "undici"
       ]
     }
   ],
@@ -71,41 +62,30 @@
     "@rollup/plugin-typescript": "^11.1.5",
     "@size-limit/preset-small-lib": "^11.0.1",
     "@types/dompurify": "^3.0.5",
+    "@types/jest": "^30.0.0",
     "@types/jsdom": "^21.1.6",
-    "@types/moxios": "^0.4.17",
     "@types/sanitize-html": "^2.16.0",
     "@types/url-join": "^4.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.0.0",
-    "@typescript-eslint/parser": "^4.0.0",
-    "babel-eslint": "^10.1.0",
     "dotenv": "^16.3.1",
-    "esbuild": "^0.14.21",
-    "eslint-config-react-app": "6",
-    "eslint-plugin-import": "^2.32.0",
-    "moxios": "^0.4.0",
-    "nock": "^13.2.2",
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "rollup": "^4.9.1",
     "sanitize-html": "^2.17.0",
     "size-limit": "^11.0.1",
-    "tsdx": "^0.14.1",
-    "typescript": "^4.5.5",
-    "undici": "^7.16.0"
+    "ts-jest": "^29.4.9",
+    "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@ethersproject/contracts": "^5.7.0",
-    "@ethersproject/providers": "^5.7.0",
     "assert": "^2.1.0",
-    "axios": "^1.12.2",
-    "axios-cache-interceptor": "^1.8.3",
     "buffer": "^6.0.3",
     "dompurify": "^3.0.6",
     "ethers": "6.12.0",
-    "is-svg": "^4.3.2",
     "multiformats": "^9.6.2",
-    "ssrf-req-filter": "^1.1.1",
+    "undici": "^7.16.0",
     "url-join": "^4.0.1"
   },
   "volta": {
-    "node": "18.14.0"
+    "node": "20.20.0"
   }
 }

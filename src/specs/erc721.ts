@@ -1,7 +1,14 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import { createFetcher, resolveURI } from '../utils';
-import { AvatarResolverOpts } from '../types';
+import {
+  BaseError,
+  createFetcher,
+  handleSettled,
+  resolveURI,
+} from '../utils';
+import { MetadataParsingError } from '../utils/error';
+import { isURIEncoded } from '../utils/isImageURI';
+import { AvatarResolverOpts, Fetcher } from '../types';
 
 const abi = [
   'function tokenURI(uint256 tokenId) external view returns (string memory)',
@@ -14,28 +21,42 @@ export default class ERC721 {
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
-    options?: AvatarResolverOpts
+    options?: AvatarResolverOpts,
+    fetcher?: Fetcher
   ) {
-    // Create a configured fetch instance for this request
-    const fetch = createFetcher({
-      ttl: options?.cache,
-      agents: options?.agents,
-      allowPrivateIPs: options?.allowPrivateIPs,
-    });
+    // Use provided fetcher or create a new one
+    const fetch =
+      fetcher ||
+      createFetcher({
+        ttl: options?.cache,
+        dispatcher: options?.dispatcher,
+        allowPrivateIPs: options?.allowPrivateIPs,
+        timeout: options?.timeout,
+        urlDenyList: options?.urlDenyList,
+      });
 
     const contract = new Contract(contractAddress, abi, provider);
-    const [tokenURI, owner] = await Promise.all([
+    const [tokenURI, owner] = await handleSettled([
       contract.tokenURI(tokenID),
-      ownerAddress && contract.ownerOf(tokenID),
+      ownerAddress
+        ? contract.ownerOf(tokenID)
+        : Promise.resolve(null),
     ]);
+
+    if (!tokenURI) {
+      throw new BaseError('tokenURI is empty or could not be retrieved');
+    }
+
     // if user has valid address and if owner of the nft matches with the owner address
     const isOwner = !!(
-      ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
+      ownerAddress &&
+      owner &&
+      owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
       tokenURI,
-      options
+      { ipfs: options?.ipfs, arweave: options?.arweave }
     );
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
@@ -45,13 +66,23 @@ export default class ERC721 {
           'base64'
         ).toString();
       }
-      const metadata = JSON.parse(_resolvedUri);
+      let metadata: Record<string, unknown>;
+      try {
+        metadata = JSON.parse(_resolvedUri);
+      } catch (e) {
+        throw new MetadataParsingError(
+          `Failed to parse token metadata: ${(e as Error).message}`
+        );
+      }
       return { ...metadata, is_owner: isOwner };
     }
-    const response = await fetch.get(
-      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID))
-    );
-    const metadata = await response?.data;
+    const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenID);
+    const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
+    const response = await fetch.get(finalURI);
+    if (!response?.data) {
+      throw new BaseError('Failed to retrieve token metadata from URI');
+    }
+    const metadata = response?.data as Record<string, unknown>;
     return { ...metadata, is_owner: isOwner };
   }
 }

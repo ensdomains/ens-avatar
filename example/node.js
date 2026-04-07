@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { StaticJsonRpcProvider } = require('@ethersproject/providers');
+const { ethers } = require('ethers');
 const { AvatarResolver, utils: avtUtils } = require('../dist/index');
 const { JSDOM } = require('jsdom');
 
@@ -12,7 +12,7 @@ if (!ensName) {
   process.exit(1);
 }
 const IPFS = 'https://cf-ipfs.com';
-const provider = new StaticJsonRpcProvider(
+const provider = new ethers.JsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
 const avt = new AvatarResolver(provider, {
