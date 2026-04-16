@@ -377,7 +377,20 @@ describe('isImageURI', () => {
       let mockFetcher: Fetcher;
       if (mimeType === ALLOWED_IMAGE_MIMETYPES[0]) {
         // application/octet-stream — need getArrayBuffer mock with JPEG magic bytes
-        const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        const jpegBytes = new Uint8Array([
+          0xff,
+          0xd8,
+          0xff,
+          0xe0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ]);
         mockFetcher = createMockFetcher(
           {
             status: 200,
@@ -419,7 +432,10 @@ describe('isImageURI', () => {
       },
     });
 
-    const result = await isImageURI('https://example.com/not-an-image', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/not-an-image',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -432,7 +448,10 @@ describe('isImageURI', () => {
       },
     });
 
-    const result = await isImageURI('https://example.com/large-image', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/large-image',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -453,7 +472,20 @@ describe('isImageURI', () => {
   });
 
   it('should check stream for application/octet-stream content type', async () => {
-    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const jpegBytes = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ]);
     const mockFetcher = createMockFetcher(
       {
         status: 200,
@@ -480,7 +512,20 @@ describe('isImageURI', () => {
   });
 
   it('should return false for non-image streams', async () => {
-    const nonImageBytes = new Uint8Array([0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const nonImageBytes = new Uint8Array([
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ]);
     const mockFetcher = createMockFetcher(
       {
         status: 200,
@@ -499,7 +544,10 @@ describe('isImageURI', () => {
       }
     );
 
-    const result = await isImageURI('https://example.com/not-an-image-stream', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/not-an-image-stream',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -509,7 +557,10 @@ describe('isImageURI', () => {
       headers: {},
     });
 
-    const result = await isImageURI('https://example.com/network-error', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/network-error',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -521,7 +572,10 @@ describe('isImageURI', () => {
       },
     });
 
-    const result = await isImageURI('https://example.com/no-content-type', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/no-content-type',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -531,7 +585,10 @@ describe('isImageURI', () => {
       headers: {},
     });
 
-    const result = await isImageURI('https://example.com/not-found', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/not-found',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -555,7 +612,10 @@ describe('isImageURI', () => {
       }
     );
 
-    const result = await isImageURI('https://example.com/invalid-image-stream', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/invalid-image-stream',
+      mockFetcher
+    );
     expect(result).toBe(false);
   });
 
@@ -582,7 +642,10 @@ describe('isImageURI', () => {
       }
     );
 
-    const result = await isImageURI('https://example.com/svg-image', mockFetcher);
+    const result = await isImageURI(
+      'https://example.com/svg-image',
+      mockFetcher
+    );
     // SVG under octet-stream: isStreamAnImage returns true for SVG
     // (the original test expected false, but SVG detection finds it)
     // Actually the old test had moxios stubbing both HEAD and GET with same stub.
@@ -702,18 +765,24 @@ describe('sanitizeSVG', () => {
 
   describe('element and href sanitization', () => {
     it('removes script tags', () => {
-      const result = sanitize('<script>alert("XSS")</script><rect width="10" height="10" />');
+      const result = sanitize(
+        '<script>alert("XSS")</script><rect width="10" height="10" />'
+      );
       expect(result).not.toContain('<script');
       expect(result).not.toContain('alert');
     });
 
     it('removes foreignObject tags', () => {
-      const result = sanitize('<foreignObject><body xmlns="http://www.w3.org/1999/xhtml"><h1>hi</h1></body></foreignObject>');
+      const result = sanitize(
+        '<foreignObject><body xmlns="http://www.w3.org/1999/xhtml"><h1>hi</h1></body></foreignObject>'
+      );
       expect(result).not.toContain('foreignObject');
     });
 
     it('removes anchor tags', () => {
-      const result = sanitize('<a href="https://evil.com"><rect width="10" height="10" /></a>');
+      const result = sanitize(
+        '<a href="https://evil.com"><rect width="10" height="10" /></a>'
+      );
       expect(result).not.toContain('<a ');
       expect(result).not.toContain('evil.com');
     });
@@ -724,23 +793,31 @@ describe('sanitizeSVG', () => {
     });
 
     it('blocks data:text/html href scheme', () => {
-      const result = sanitize('<use href="data:text/html,<script>alert(1)</script>" />');
+      const result = sanitize(
+        '<use href="data:text/html,<script>alert(1)</script>" />'
+      );
       expect(result).not.toContain('data:text/html');
     });
 
     it('blocks use with external reference', () => {
-      const result = sanitize('<use href="https://evil.com/sprite.svg#icon"></use>');
+      const result = sanitize(
+        '<use href="https://evil.com/sprite.svg#icon"></use>'
+      );
       expect(result).not.toContain('evil.com');
     });
 
     it('allows image with data:image/ URI', () => {
       const dataUri = 'data:image/png;base64,iVBORw0KGgo=';
-      const result = sanitize(`<image href="${dataUri}" width="10" height="10" />`);
+      const result = sanitize(
+        `<image href="${dataUri}" width="10" height="10" />`
+      );
       expect(result).toContain('data:image/png');
     });
 
     it('blocks image with external URL', () => {
-      const result = sanitize('<image href="https://tracker.com/pixel.gif" width="10" height="10" />');
+      const result = sanitize(
+        '<image href="https://tracker.com/pixel.gif" width="10" height="10" />'
+      );
       expect(result).not.toContain('tracker.com');
     });
 
@@ -795,7 +872,9 @@ describe('isHostDenied', () => {
   });
 
   it('returns true for subdomain match', () => {
-    expect(isHostDenied('https://cdn.evil.com/img.png', ['evil.com'])).toBe(true);
+    expect(isHostDenied('https://cdn.evil.com/img.png', ['evil.com'])).toBe(
+      true
+    );
   });
 
   it('returns false for non-matching domain', () => {
@@ -804,7 +883,9 @@ describe('isHostDenied', () => {
 
   it('returns false for partial domain name overlap', () => {
     // "notevil.com" should NOT match deny list entry "evil.com"
-    expect(isHostDenied('https://notevil.com/img.png', ['evil.com'])).toBe(false);
+    expect(isHostDenied('https://notevil.com/img.png', ['evil.com'])).toBe(
+      false
+    );
   });
 
   it('returns true (fail-closed) for malformed URL', () => {
@@ -1005,7 +1086,9 @@ describe('sanitizeWithSanitizeHtml (CF Workers path)', () => {
 
   describe('element and href sanitization', () => {
     it('removes script tags', () => {
-      const result = sanitize('<script>alert("XSS")</script><rect width="10" height="10"></rect>');
+      const result = sanitize(
+        '<script>alert("XSS")</script><rect width="10" height="10"></rect>'
+      );
       expect(result).not.toContain('<script');
       expect(result).not.toContain('alert');
     });
@@ -1016,23 +1099,31 @@ describe('sanitizeWithSanitizeHtml (CF Workers path)', () => {
     });
 
     it('removes anchor tags', () => {
-      const result = sanitize('<a href="https://evil.com"><rect width="10" height="10"></rect></a>');
+      const result = sanitize(
+        '<a href="https://evil.com"><rect width="10" height="10"></rect></a>'
+      );
       expect(result).not.toContain('<a ');
     });
 
     it('blocks use with external reference', () => {
-      const result = sanitize('<use href="https://evil.com/sprite.svg#icon"></use>');
+      const result = sanitize(
+        '<use href="https://evil.com/sprite.svg#icon"></use>'
+      );
       expect(result).not.toContain('evil.com');
     });
 
     it('blocks image with external URL', () => {
-      const result = sanitize('<image href="https://tracker.com/pixel.gif" width="10" height="10"></image>');
+      const result = sanitize(
+        '<image href="https://tracker.com/pixel.gif" width="10" height="10"></image>'
+      );
       expect(result).not.toContain('tracker.com');
     });
 
     it('allows image with data:image/ URI', () => {
       const dataUri = 'data:image/png;base64,iVBORw0KGgo=';
-      const result = sanitize(`<image href="${dataUri}" width="10" height="10"></image>`);
+      const result = sanitize(
+        `<image href="${dataUri}" width="10" height="10"></image>`
+      );
       expect(result).toContain('data:image/png');
     });
 
@@ -1084,7 +1175,9 @@ describe('sanitizeWithSanitizeHtml (CF Workers path)', () => {
     });
 
     it('strips disallowed attributes', () => {
-      const result = sanitize('<rect onclick="alert(1)" width="10" height="10"></rect>');
+      const result = sanitize(
+        '<rect onclick="alert(1)" width="10" height="10"></rect>'
+      );
       expect(result).not.toContain('onclick');
     });
   });
@@ -1098,9 +1191,9 @@ describe('validateUrl', () => {
   });
 
   it('blocks requests to link-local (cloud metadata)', () => {
-    expect(() => validateUrl('http://169.254.169.254/latest/meta-data')).toThrow(
-      /Request to private address blocked/
-    );
+    expect(() =>
+      validateUrl('http://169.254.169.254/latest/meta-data')
+    ).toThrow(/Request to private address blocked/);
   });
 
   it('blocks requests to denied hosts', () => {

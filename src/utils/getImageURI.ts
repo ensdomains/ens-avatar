@@ -71,7 +71,11 @@ export function getImageURI({
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
-  const { uri: parsedURI } = resolveURI(_image as string, gateways, customGateway);
+  const { uri: parsedURI } = resolveURI(
+    _image as string,
+    gateways,
+    customGateway
+  );
 
   if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data

@@ -1,5 +1,5 @@
 import { Provider } from 'ethers';
-import type { Dispatcher } from 'undici';
+import { Dispatcher } from 'undici';
 
 export interface FetcherResponse<T = unknown> {
   status: number;

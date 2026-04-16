@@ -293,7 +293,15 @@ export function sanitizeWithSanitizeHtml(svg: string): string {
     textPath: ['href', 'startOffset', 'method', 'spacing'],
     use: ['href', 'x', 'y', 'width', 'height'],
     image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
-    feImage: ['href', 'result', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
+    feImage: [
+      'href',
+      'result',
+      'x',
+      'y',
+      'width',
+      'height',
+      'preserveAspectRatio',
+    ],
     linearGradient: [
       'id',
       'x1',

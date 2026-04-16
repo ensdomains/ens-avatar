@@ -1,11 +1,6 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import {
-  BaseError,
-  createFetcher,
-  handleSettled,
-  resolveURI,
-} from '../utils';
+import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
@@ -64,10 +59,10 @@ export default class ERC1155 {
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance && balance > BigInt(0));
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
-      tokenURI,
-      { ipfs: options?.ipfs, arweave: options?.arweave }
-    );
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
+      ipfs: options?.ipfs,
+      arweave: options?.arweave,
+    });
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {

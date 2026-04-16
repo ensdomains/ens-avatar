@@ -74,7 +74,10 @@ export class AvatarResolver implements AvatarResolver {
         this.options,
         this.fetcher
       );
-      return { ...(typeof metadata === 'object' ? metadata : { image: metadata }), uri: ens };
+      return {
+        ...(typeof metadata === 'object' ? metadata : { image: metadata }),
+        uri: ens,
+      };
     }
 
     // parse retrieved avatar uri

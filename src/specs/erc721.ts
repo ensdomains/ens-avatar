@@ -1,11 +1,6 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import {
-  BaseError,
-  createFetcher,
-  handleSettled,
-  resolveURI,
-} from '../utils';
+import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
@@ -38,9 +33,7 @@ export default class ERC721 {
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await handleSettled([
       contract.tokenURI(tokenID),
-      ownerAddress
-        ? contract.ownerOf(tokenID)
-        : Promise.resolve(null),
+      ownerAddress ? contract.ownerOf(tokenID) : Promise.resolve(null),
     ]);
 
     if (!tokenURI) {
@@ -54,10 +47,10 @@ export default class ERC721 {
       owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
-      tokenURI,
-      { ipfs: options?.ipfs, arweave: options?.arweave }
-    );
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
+      ipfs: options?.ipfs,
+      arweave: options?.arweave,
+    });
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {

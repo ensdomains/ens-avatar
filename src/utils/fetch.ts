@@ -1,4 +1,4 @@
-import type { Dispatcher } from 'undici';
+import { Dispatcher } from 'undici';
 import { isNode } from './detectPlatform';
 import { Fetcher, FetcherResponse } from '../types';
 
@@ -29,7 +29,11 @@ export function isPrivateHostname(hostname: string): boolean {
   if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)) return true;
 
   // Private TLDs
-  if (h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.localhost'))
+  if (
+    h.endsWith('.local') ||
+    h.endsWith('.internal') ||
+    h.endsWith('.localhost')
+  )
     return true;
 
   // IPv6 checks — only apply to actual IPv6 addresses (contain ':')
@@ -140,11 +144,19 @@ function createSSRFSafeAgent(): Dispatcher {
   // undici's buildConnector types use complex discriminated tuples (CallbackArgs)
   // that differ across versions. We type the public boundary (Dispatcher return)
   // and use runtime-safe patterns internally.
-  type LookupCb = (err: Error | null, address?: string, family?: number) => void;
+  type LookupCb = (
+    err: Error | null,
+    address?: string,
+    family?: number
+  ) => void;
   type ConnectorCb = (err: Error | null, socket: unknown) => void;
 
   const connector = buildConnector({
-    lookup: (hostname: string, options: Record<string, unknown>, callback: LookupCb) => {
+    lookup: (
+      hostname: string,
+      options: Record<string, unknown>,
+      callback: LookupCb
+    ) => {
       // Layer 1: block IP literals before DNS
       if (net.isIP(hostname)) {
         checkIP(hostname, hostname);
@@ -152,37 +164,47 @@ function createSSRFSafeAgent(): Dispatcher {
       }
 
       // Layer 2: validate DNS results
-      dns.lookup(hostname, options, (err: Error | null, address: string, family: number) => {
-        if (err) return callback(err);
-        try {
-          checkIP(address, hostname);
-        } catch (e) {
-          return callback(e as Error);
+      dns.lookup(
+        hostname,
+        options,
+        (err: Error | null, address: string, family: number) => {
+          if (err) return callback(err);
+          try {
+            checkIP(address, hostname);
+          } catch (e) {
+            return callback(e as Error);
+          }
+          callback(null, address, family);
         }
-        callback(null, address, family);
-      });
+      );
     },
   });
 
   return new Agent({
     connect: (opts: Record<string, unknown>, cb: ConnectorCb) => {
-      connector(opts, (err: Error | null, socket: { remoteAddress?: string; destroy: () => void }) => {
-        if (err || !socket) return cb(err, null);
+      connector(
+        opts,
+        (
+          err: Error | null,
+          socket: { remoteAddress?: string; destroy: () => void }
+        ) => {
+          if (err || !socket) return cb(err, null);
 
-        // Layer 3: post-connect validation
-        const remoteAddr = socket.remoteAddress;
-        if (remoteAddr && isPrivateHostname(remoteAddr)) {
-          socket.destroy();
-          return cb(
-            new Error(
-              `SSRF blocked: connection to private address ${remoteAddr}`
-            ),
-            null
-          );
+          // Layer 3: post-connect validation
+          const remoteAddr = socket.remoteAddress;
+          if (remoteAddr && isPrivateHostname(remoteAddr)) {
+            socket.destroy();
+            return cb(
+              new Error(
+                `SSRF blocked: connection to private address ${remoteAddr}`
+              ),
+              null
+            );
+          }
+
+          cb(null, socket);
         }
-
-        cb(null, socket);
-      });
+      );
     },
   });
 }
@@ -282,7 +304,10 @@ export function createFetcher({
     url: string,
     init: RequestInit & { dispatcher?: Dispatcher } = {}
   ): Promise<Response> {
-    const fetchInit: RequestInit & { dispatcher?: Dispatcher; signal?: AbortSignal | null } = { ...init };
+    const fetchInit: RequestInit & {
+      dispatcher?: Dispatcher;
+      signal?: AbortSignal | null;
+    } = { ...init };
 
     if (ssrfDispatcher) {
       fetchInit.dispatcher = ssrfDispatcher;
@@ -297,11 +322,15 @@ export function createFetcher({
     }
 
     try {
-      return await fetchWithRedirects(url, fetchInit as RequestInit & { dispatcher?: Dispatcher }, {
-        fetchFn: fetchFn!,
-        urlDenyList,
-        allowPrivateIPs,
-      });
+      return await fetchWithRedirects(
+        url,
+        fetchInit as RequestInit & { dispatcher?: Dispatcher },
+        {
+          fetchFn: fetchFn!,
+          urlDenyList,
+          allowPrivateIPs,
+        }
+      );
     } finally {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     }
