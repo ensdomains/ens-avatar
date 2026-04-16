@@ -6,6 +6,8 @@
  *
  * Both sanitizers are production-ready and actively maintained for security.
  */
+import createDOMPurify from 'dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * Strips dangerous CSS constructs from a style attribute value.
@@ -77,7 +79,6 @@ export function sanitizeSVG(svg: string, jsdomWindow?: any): string {
  * Requires a window object (native in browser, JSDOM in Node.js)
  */
 function sanitizeWithDOMPurify(svg: string, domWindow: any): string {
-  const createDOMPurify = require('dompurify');
   const DOMPurify = createDOMPurify(domWindow);
 
   // Remove any previously accumulated hooks before adding new ones
@@ -171,8 +172,6 @@ function sanitizeWithDOMPurify(svg: string, domWindow: any): string {
  * Parser-based, no DOM dependency
  */
 export function sanitizeWithSanitizeHtml(svg: string): string {
-  const sanitizeHtml = require('sanitize-html');
-
   // Comprehensive SVG element and attribute whitelist
   // Based on DOMPurify's SVG profile and SVG 1.1/2.0 specs
   const allowedTags = [
