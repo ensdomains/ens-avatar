@@ -240,7 +240,6 @@ describe('remove refresh meta tags', () => {
 });
 
 describe('getImageURI', () => {
-
   it('should throw an error when image is not available', () => {
     expect(() => getImageURI({ metadata: {} })).toThrow(
       'Image is not available'
@@ -249,7 +248,8 @@ describe('getImageURI', () => {
 
   it('should handle image_url', () => {
     const result = getImageURI({
-      metadata: { image_url: 'https://example.com/image.png' },    });
+      metadata: { image_url: 'https://example.com/image.png' },
+    });
     expect(result).toBe('https://example.com/image.png');
   });
 
@@ -257,7 +257,8 @@ describe('getImageURI', () => {
     const svgData =
       '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100"/></svg>';
     const result = getImageURI({
-      metadata: { image_data: svgData },    });
+      metadata: { image_data: svgData },
+    });
     expect(result).toMatch(/^data:image\/svg\+xml;base64,/);
   });
 
@@ -265,7 +266,8 @@ describe('getImageURI', () => {
     const maliciousSVG =
       '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("XSS")</script></svg>';
     const result = getImageURI({
-      metadata: { image: maliciousSVG },    });
+      metadata: { image: maliciousSVG },
+    });
     expect(result).not.toContain('<script>');
   });
 
@@ -282,7 +284,8 @@ describe('getImageURI', () => {
     const pngDataURI =
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
     const result = getImageURI({
-      metadata: { image: pngDataURI },    });
+      metadata: { image: pngDataURI },
+    });
     expect(result).toBe(pngDataURI);
   });
 
@@ -290,14 +293,16 @@ describe('getImageURI', () => {
     const urlEncodedSVG =
       'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3C%2Fsvg%3E';
     const result = getImageURI({
-      metadata: { image: urlEncodedSVG },    });
+      metadata: { image: urlEncodedSVG },
+    });
     expect(result).toBeNull();
   });
 
   it('should return null for invalid data URIs', () => {
     const invalidDataURI = 'data:image/invalid,somedata';
     const result = getImageURI({
-      metadata: { image: invalidDataURI },    });
+      metadata: { image: invalidDataURI },
+    });
     expect(result).toBeNull();
   });
 
@@ -310,7 +315,8 @@ describe('getImageURI', () => {
   it('should return null for URLs in denyList', () => {
     const deniedURL = 'https://malicious.com/image.jpg';
     const result = getImageURI({
-      metadata: { image: deniedURL },      urlDenyList: ['malicious.com'],
+      metadata: { image: deniedURL },
+      urlDenyList: ['malicious.com'],
     });
     expect(result).toBeNull();
   });
@@ -319,7 +325,8 @@ describe('getImageURI', () => {
     const ipfsHash = 'ipfs://QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR';
     const customGateway = 'https://custom-gateway.com/';
     const result = getImageURI({
-      metadata: { image: ipfsHash },      customGateway,
+      metadata: { image: ipfsHash },
+      customGateway,
     });
     expect(result).toBe(
       'https://custom-gateway.com/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
@@ -335,14 +342,16 @@ describe('getImageURI', () => {
   it('should handle errors in base64 decoding', () => {
     const invalidBase64 = 'data:image/svg+xml;base64,Invalid Base64!!!';
     const result = getImageURI({
-      metadata: { image: invalidBase64 },    });
+      metadata: { image: invalidBase64 },
+    });
     expect(result).toBeNull();
   });
 
   it('should handle errors in URL decoding', () => {
     const invalidURLEncoded = 'data:image/svg+xml,%Invalid URL encoding!!!';
     const result = getImageURI({
-      metadata: { image: invalidURLEncoded },    });
+      metadata: { image: invalidURLEncoded },
+    });
     expect(result).toBeNull();
   });
 });
@@ -640,7 +649,6 @@ describe('isImageURI', () => {
 });
 
 describe('sanitizeSVG', () => {
-
   // Helper: wrap content in SVG, sanitize, return result
   const sanitize = (inner: string) =>
     sanitizeSVG(`<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`);
