@@ -89,12 +89,12 @@ export interface AvatarResolverOpts {
   timeout?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface AvatarRequestOpts {
-  jsdomWindow?: Window | object;
+  // Reserved for future per-request options.
 }
 
 export interface HeaderRequestOpts {
-  jsdomWindow?: Window | object;
   mediaKey?: Exclude<MediaKey, 'avatar'>;
 }
 
@@ -107,6 +107,5 @@ export interface ImageURIOpts {
   metadata: NFTMetadata;
   customGateway?: string;
   gateways?: Gateways;
-  jsdomWindow?: Window | object;
   urlDenyList?: string[];
 }

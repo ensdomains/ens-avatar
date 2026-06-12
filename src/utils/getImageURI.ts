@@ -53,9 +53,8 @@ export function convertToRawSVG(input: string): string | null {
   }
 }
 
-function _sanitize(data: string, jsDomWindow?: any): Buffer {
-  // Use platform-specific sanitization (DOMPurify or sanitize-html)
-  const cleanSVG = sanitizeSVG(data, jsDomWindow);
+function _sanitize(data: string): Buffer {
+  const cleanSVG = sanitizeSVG(data);
   return Buffer.from(cleanSVG);
 }
 
@@ -63,7 +62,6 @@ export function getImageURI({
   metadata,
   customGateway,
   gateways,
-  jsdomWindow,
   urlDenyList,
 }: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
@@ -86,7 +84,7 @@ export function getImageURI({
     if (!rawSVG) return null;
 
     try {
-      const data = _sanitize(rawSVG, jsdomWindow);
+      const data = _sanitize(rawSVG);
       return `data:image/svg+xml;base64,${data.toString('base64')}`;
     } catch (error) {
       console.error('SVG sanitization failed:', error);

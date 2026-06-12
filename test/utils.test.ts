@@ -1,4 +1,3 @@
-import { JSDOM } from 'jsdom';
 import { CID } from 'multiformats/cid';
 import {
   ALLOWED_IMAGE_MIMETYPES,
@@ -16,7 +15,6 @@ import {
   getImageURI,
   convertToRawSVG,
   sanitizeSVG,
-  sanitizeWithSanitizeHtml,
   validateUrl,
 } from '../src/utils';
 import { Fetcher, FetcherResponse } from '../src/types';
@@ -216,7 +214,6 @@ describe('convertToRawSvg', () => {
 });
 
 describe('remove refresh meta tags', () => {
-  const jsdomWindow = new JSDOM().window;
   const base64svg = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+CiAgICAgIDxmb3JlaWduT2JqZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj4KICAgICAgICA8Ym9keSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCI+CiAgICAgICAgICA8bWV0YSBodHRwLWVxdWl2PSJyZWZyZXNoIiBjb250ZW50PSIwO3VybD1odHRwczovL2hha2luLnVzL3dlYjMuaHRtbCI+CiAgICAgICAgICA8L21ldGE+CiAgICAgICAgPC9ib2R5PgogICAgICA8L2ZvcmVpZ25PYmplY3Q+CiAgICAgIDxyZWN0IHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0icmVkIj48L3JlY3Q+CiAgICA8L3N2Zz4=`;
   const rawsvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
     <foreignObject width="800" height="600">
@@ -230,32 +227,29 @@ describe('remove refresh meta tags', () => {
   const sanitizedBase64svg = `data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgZmlsbD0icmVkIiBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiPjwvcmVjdD48L3N2Zz4=`;
 
   it('returns sanitized version of base64 encoded svg if refresh meta tag is included', () => {
-    const result = getImageURI({ metadata: { image: base64svg }, jsdomWindow });
+    const result = getImageURI({ metadata: { image: base64svg } });
     expect(result).toBeTruthy();
     expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 
   it('returns sanitized version of raw svg as base64 if refresh meta tag is included', () => {
-    const result = getImageURI({ metadata: { image: rawsvg }, jsdomWindow });
+    const result = getImageURI({ metadata: { image: rawsvg } });
     expect(result).toBeTruthy();
     expect(compareSVGs(result!, sanitizedBase64svg)).toBe(true);
   });
 });
 
 describe('getImageURI', () => {
-  const jsdomWindow = new JSDOM().window;
 
   it('should throw an error when image is not available', () => {
-    expect(() => getImageURI({ metadata: {}, jsdomWindow })).toThrow(
+    expect(() => getImageURI({ metadata: {} })).toThrow(
       'Image is not available'
     );
   });
 
   it('should handle image_url', () => {
     const result = getImageURI({
-      metadata: { image_url: 'https://example.com/image.png' },
-      jsdomWindow,
-    });
+      metadata: { image_url: 'https://example.com/image.png' },    });
     expect(result).toBe('https://example.com/image.png');
   });
 
@@ -263,9 +257,7 @@ describe('getImageURI', () => {
     const svgData =
       '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100"/></svg>';
     const result = getImageURI({
-      metadata: { image_data: svgData },
-      jsdomWindow,
-    });
+      metadata: { image_data: svgData },    });
     expect(result).toMatch(/^data:image\/svg\+xml;base64,/);
   });
 
@@ -273,16 +265,14 @@ describe('getImageURI', () => {
     const maliciousSVG =
       '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("XSS")</script></svg>';
     const result = getImageURI({
-      metadata: { image: maliciousSVG },
-      jsdomWindow,
-    });
+      metadata: { image: maliciousSVG },    });
     expect(result).not.toContain('<script>');
   });
 
   it('should handle base64 encoded SVG', () => {
     const base64SVG =
       'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IGhlaWdodD0iMTAwIiB3aWR0aD0iMTAwIj48L3JlY3Q+PC9zdmc+';
-    const result = getImageURI({ metadata: { image: base64SVG }, jsdomWindow });
+    const result = getImageURI({ metadata: { image: base64SVG } });
     if (!result) throw 'No result';
     expect(result).toMatch(/^data:image\/svg\+xml;base64,/);
     expect(compareSVGs(base64SVG, result)).toBe(true);
@@ -292,9 +282,7 @@ describe('getImageURI', () => {
     const pngDataURI =
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
     const result = getImageURI({
-      metadata: { image: pngDataURI },
-      jsdomWindow,
-    });
+      metadata: { image: pngDataURI },    });
     expect(result).toBe(pngDataURI);
   });
 
@@ -302,33 +290,27 @@ describe('getImageURI', () => {
     const urlEncodedSVG =
       'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3C%2Fsvg%3E';
     const result = getImageURI({
-      metadata: { image: urlEncodedSVG },
-      jsdomWindow,
-    });
+      metadata: { image: urlEncodedSVG },    });
     expect(result).toBeNull();
   });
 
   it('should return null for invalid data URIs', () => {
     const invalidDataURI = 'data:image/invalid,somedata';
     const result = getImageURI({
-      metadata: { image: invalidDataURI },
-      jsdomWindow,
-    });
+      metadata: { image: invalidDataURI },    });
     expect(result).toBeNull();
   });
 
   it('should handle HTTP URLs', () => {
     const httpURL = 'http://example.com/image.jpg';
-    const result = getImageURI({ metadata: { image: httpURL }, jsdomWindow });
+    const result = getImageURI({ metadata: { image: httpURL } });
     expect(result).toBe(httpURL);
   });
 
   it('should return null for URLs in denyList', () => {
     const deniedURL = 'https://malicious.com/image.jpg';
     const result = getImageURI({
-      metadata: { image: deniedURL },
-      jsdomWindow,
-      urlDenyList: ['malicious.com'],
+      metadata: { image: deniedURL },      urlDenyList: ['malicious.com'],
     });
     expect(result).toBeNull();
   });
@@ -337,9 +319,7 @@ describe('getImageURI', () => {
     const ipfsHash = 'ipfs://QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR';
     const customGateway = 'https://custom-gateway.com/';
     const result = getImageURI({
-      metadata: { image: ipfsHash },
-      jsdomWindow,
-      customGateway,
+      metadata: { image: ipfsHash },      customGateway,
     });
     expect(result).toBe(
       'https://custom-gateway.com/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
@@ -348,25 +328,21 @@ describe('getImageURI', () => {
 
   it('should return null for unsupported protocols', () => {
     const ftpURL = 'ftp://example.com/image.jpg';
-    const result = getImageURI({ metadata: { image: ftpURL }, jsdomWindow });
+    const result = getImageURI({ metadata: { image: ftpURL } });
     expect(result).toBeNull();
   });
 
   it('should handle errors in base64 decoding', () => {
     const invalidBase64 = 'data:image/svg+xml;base64,Invalid Base64!!!';
     const result = getImageURI({
-      metadata: { image: invalidBase64 },
-      jsdomWindow,
-    });
+      metadata: { image: invalidBase64 },    });
     expect(result).toBeNull();
   });
 
   it('should handle errors in URL decoding', () => {
     const invalidURLEncoded = 'data:image/svg+xml,%Invalid URL encoding!!!';
     const result = getImageURI({
-      metadata: { image: invalidURLEncoded },
-      jsdomWindow,
-    });
+      metadata: { image: invalidURLEncoded },    });
     expect(result).toBeNull();
   });
 });
@@ -664,23 +640,19 @@ describe('isImageURI', () => {
 });
 
 describe('sanitizeSVG', () => {
-  const jsdomWindow = new JSDOM().window;
 
   // Helper: wrap content in SVG, sanitize, return result
   const sanitize = (inner: string) =>
-    sanitizeSVG(
-      `<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`,
-      jsdomWindow
-    );
+    sanitizeSVG(`<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`);
 
   describe('style attribute sanitization', () => {
     it('preserves safe inline styles', () => {
       const result = sanitize(
         '<rect style="fill: red; opacity: 0.5; font-size: 14px" width="10" height="10" />'
       );
-      expect(result).toContain('fill: red');
-      expect(result).toContain('opacity: 0.5');
-      expect(result).toContain('font-size: 14px');
+      expect(result).toMatch(/fill:\s*red/);
+      expect(result).toMatch(/opacity:\s*0\.5/);
+      expect(result).toMatch(/font-size:\s*14px/);
     });
 
     it('preserves CSS functions like rgb(), rotate(), translate()', () => {
@@ -697,7 +669,7 @@ describe('sanitizeSVG', () => {
       );
       expect(result).not.toContain('url(');
       expect(result).not.toContain('evil.com');
-      expect(result).toContain('fill: blue');
+      expect(result).toMatch(/fill:\s*blue/);
     });
 
     it('strips expression() from style attributes', () => {
@@ -705,7 +677,7 @@ describe('sanitizeSVG', () => {
         '<rect style="width: expression(document.body.clientWidth); fill: green" width="10" height="10" />'
       );
       expect(result).not.toContain('expression(');
-      expect(result).toContain('fill: green');
+      expect(result).toMatch(/fill:\s*green/);
     });
 
     it('strips -moz-binding from style attributes', () => {
@@ -854,6 +826,110 @@ describe('sanitizeSVG', () => {
     it('strips xlink:href attribute', () => {
       const result = sanitize('<use xlink:href="#myId" />');
       expect(result).not.toContain('xlink:href');
+    });
+  });
+});
+
+describe('sanitizeSVG — CSS allowlist & <style> blocks', () => {
+  const sanitize = (inner: string) =>
+    sanitizeSVG(`<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`);
+
+  describe('style attribute — internal vs external url()', () => {
+    it('preserves internal url(#id) gradient references', () => {
+      const result = sanitize(
+        '<rect style="fill:url(#grad)" width="10" height="10"></rect>'
+      );
+      expect(result).toContain('url(#grad)');
+    });
+
+    it('preserves internal clip-path/filter url(#id) references', () => {
+      const result = sanitize(
+        '<rect style="clip-path:url(#clip);filter:url(#blur)" width="10" height="10"></rect>'
+      );
+      expect(result).toContain('url(#clip)');
+      expect(result).toContain('url(#blur)');
+    });
+
+    it('drops external url() but keeps safe declarations', () => {
+      const result = sanitize(
+        '<rect style="fill:url(http://evil.com/p);stroke:blue" width="10" height="10"></rect>'
+      );
+      expect(result).not.toContain('evil.com');
+      expect(result).toMatch(/stroke:\s*blue/);
+    });
+
+    it('blocks image-set() resource loading', () => {
+      const result = sanitize(
+        '<rect style="background:image-set(url(http://evil.com/a.png) 1x);fill:red" width="10" height="10"></rect>'
+      );
+      expect(result).not.toContain('image-set');
+      expect(result).not.toContain('evil.com');
+      expect(result).toMatch(/fill:\s*red/);
+    });
+
+    it('drops properties not on the allowlist', () => {
+      const result = sanitize(
+        '<rect style="position:absolute;fill:red" width="10" height="10"></rect>'
+      );
+      expect(result).not.toContain('position');
+      expect(result).toMatch(/fill:\s*red/);
+    });
+  });
+
+  describe('<style> block sanitization', () => {
+    it('preserves a <style> block with safe rules', () => {
+      const result = sanitize(
+        '<style>.a{fill:red;font-size:14px}</style><rect class="a" width="10" height="10"></rect>'
+      );
+      expect(result).toContain('<style>');
+      expect(result).toMatch(/fill:\s*red/);
+      expect(result).toContain('class="a"');
+    });
+
+    it('preserves internal url(#id) inside a <style> block', () => {
+      const result = sanitize(
+        '<style>.b{fill:url(#grad)}</style><rect class="b" width="10" height="10"></rect>'
+      );
+      expect(result).toContain('url(#grad)');
+    });
+
+    it('preserves a child-combinator selector', () => {
+      const result = sanitize(
+        '<style>g > rect{fill:red}</style><g><rect width="10" height="10"></rect></g>'
+      );
+      expect(result).toMatch(/fill:\s*red/);
+    });
+
+    it('strips @import from a <style> block', () => {
+      const result = sanitize(
+        '<style>@import url(http://evil.com/x.css);.a{fill:red}</style>'
+      );
+      expect(result).not.toContain('@import');
+      expect(result).not.toContain('evil.com');
+    });
+
+    it('strips external url() from a <style> block', () => {
+      const result = sanitize(
+        '<style>.a{background:url(http://evil.com/leak)}</style>'
+      );
+      expect(result).not.toContain('evil.com');
+    });
+
+    it('strips @font-face from a <style> block', () => {
+      const result = sanitize(
+        '<style>@font-face{font-family:x;src:url(http://evil.com/f.woff)}</style>'
+      );
+      expect(result).not.toContain('@font-face');
+      expect(result).not.toContain('evil.com');
+    });
+
+    it('strips expression() and -moz-binding from a <style> block', () => {
+      const result = sanitize(
+        '<style>.a{width:expression(alert(1))}.b{-moz-binding:url(http://evil.com/x.xml)}</style>'
+      );
+      expect(result).not.toContain('expression');
+      expect(result).not.toContain('-moz-binding');
+      expect(result).not.toContain('evil.com');
     });
   });
 });
@@ -1035,12 +1111,10 @@ describe('isPrivateHostname', () => {
   });
 });
 
-describe('sanitizeWithSanitizeHtml (CF Workers path)', () => {
-  // Test the sanitize-html path directly, which runs on CF Workers where no DOM is available
+describe('sanitizeSVG (parser-path coverage)', () => {
+  // The single sanitize-html engine runs identically in browser, Node.js, and edge.
   const sanitize = (inner: string) =>
-    sanitizeWithSanitizeHtml(
-      `<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
-    );
+    sanitizeSVG(`<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`);
 
   describe('style attribute sanitization', () => {
     it('preserves safe inline styles', () => {

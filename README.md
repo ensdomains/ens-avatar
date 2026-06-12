@@ -20,9 +20,9 @@ This library works seamlessly across:
 ### Prerequisites
 
 - Have your web3 provider ready (web3.js, ethers.js)
-- [Only for node env] Have jsdom installed.
 
-And good to go!
+And good to go! SVG sanitization is built in and runs identically in browsers, Node.js,
+and edge runtimes (Cloudflare Workers) — no DOM polyfill (jsdom) required.
 
 ### Installation
 
@@ -39,22 +39,19 @@ yarn add @ensdomains/ens-avatar
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { AvatarResolver, utils as avtUtils } from '@ensdomains/ens-avatar';
 
-// const { JSDOM } = require('jsdom'); on nodejs
-// const jsdom = new JSDOM().window; on nodejs
-
 const provider = new StaticJsonRpcProvider(
     ...
   );
 ...
 async function getAvatar() {
     const resolver = new AvatarResolver(provider);
-    const avatarURI = await resolver.getAvatar('tanrikulu.eth', { /* jsdomWindow: jsdom (on nodejs) */ });
+    const avatarURI = await resolver.getAvatar('tanrikulu.eth');
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
 
 async function getHeader() {
     const resolver = new AvatarResolver(provider);
-    const headerURI = await resolver.getHeader('tanrikulu.eth', { /* jsdomWindow: jsdom (on nodejs) */ });
+    const headerURI = await resolver.getHeader('tanrikulu.eth');
     // headerURI = https://ipfs.io/ipfs/QmRFnn6c9rj6NuHenFVyKXb6tuKxynAvGiw7yszQJ2EsjN
 }
 
@@ -64,7 +61,7 @@ async function getAvatarMetadata() {
     // avatarMetadata = { image: ... , uri: ... , name: ... , description: ... }
     const headerMetadata = await resolver.getMetadata('tanrikulu.eth', 'header');
     // headerMetadata = { image: ... , uri: ... , name: ... , description: ... }
-    const avatarURI = avtUtils.getImageURI({ metadata: avatarMetadata /*, jsdomWindow: jsdom (on nodejs) */ });
+    const avatarURI = avtUtils.getImageURI({ metadata: avatarMetadata });
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
 ```
@@ -178,10 +175,11 @@ Common local development scenarios:
 
 All user-generated SVG content is automatically sanitized to prevent XSS attacks:
 
-- **Browser/Node.js**: Uses [DOMPurify](https://github.com/cure53/DOMPurify) (8.74 KB, battle-tested)
-- **Cloudflare Workers**: Uses [sanitize-html](https://github.com/apostrophecms/sanitize-html) (parser-based, no DOM dependency)
+- A single, parser-based sanitizer ([sanitize-html](https://github.com/apostrophecms/sanitize-html) + [postcss](https://github.com/postcss/postcss)) runs **identically** in browsers, Node.js, and edge runtimes (Cloudflare Workers) — no DOM or jsdom required.
+- Tags and attributes are restricted to a strict SVG allowlist (no `script`, `foreignObject`, event handlers, or external `href`/`use`/`image` targets).
+- CSS in both `style` attributes and `<style>` blocks is filtered against a property allowlist; `url(...)` is permitted only for internal fragment references (`url(#id)`), so gradients/clips/masks keep working while external resource loading (tracking, exfiltration) is blocked.
 
-Both sanitizers are production-ready, actively maintained, and specifically configured for secure SVG handling.
+Raster avatars (`png`, `jpeg`, `gif`, `webp`, …), whether served as `data:` URIs or remote URLs, are passed through after validation — they are inert as `<img>` sources and are not (and need not be) rewritten.
 
 ### SSRF Protection
 

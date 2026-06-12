@@ -113,9 +113,9 @@ export class AvatarResolver implements AvatarResolver {
 
   async getAvatar(
     ens: string,
-    data?: AvatarRequestOpts
+    _data?: AvatarRequestOpts
   ): Promise<string | null> {
-    return this._getMedia(ens, 'avatar', data);
+    return this._getMedia(ens, 'avatar');
   }
 
   async getHeader(
@@ -126,14 +126,10 @@ export class AvatarResolver implements AvatarResolver {
     if (!['header', 'banner'].includes(mediaKey)) {
       throw new UnsupportedMediaKey('Unsupported media key');
     }
-    return this._getMedia(ens, mediaKey, data);
+    return this._getMedia(ens, mediaKey);
   }
 
-  async _getMedia(
-    ens: string,
-    mediaKey: MediaKey = 'avatar',
-    data?: HeaderRequestOpts
-  ) {
+  async _getMedia(ens: string, mediaKey: MediaKey = 'avatar') {
     const metadata = await this.getMetadata(ens, mediaKey);
     if (!metadata) return null;
     const imageURI = getImageURI({
@@ -142,7 +138,6 @@ export class AvatarResolver implements AvatarResolver {
         ipfs: this.options?.ipfs,
         arweave: this.options?.arweave,
       },
-      jsdomWindow: data?.jsdomWindow,
       urlDenyList: this.options?.urlDenyList,
     });
     if (

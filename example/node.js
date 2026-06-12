@@ -1,9 +1,7 @@
 require('dotenv').config();
 const { ethers } = require('ethers');
 const { AvatarResolver, utils: avtUtils } = require('../dist/index');
-const { JSDOM } = require('jsdom');
 
-const jsdom = new JSDOM().window;
 const ensName = process.argv[2];
 if (!ensName) {
   console.log(
@@ -31,7 +29,6 @@ avt
       gateways: {
         ipfs: IPFS,
       },
-      jsdomWindow: jsdom,
     });
     console.log('avatar: ', avatar);
   })
@@ -39,7 +36,7 @@ avt
 
 try {
   avt
-  .getHeader(ensName, { jsdomWindow: jsdom })
+  .getHeader(ensName)
   .then(header => {
     console.log('header: ', header);
   })

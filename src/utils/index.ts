@@ -12,7 +12,7 @@ import {
   isImageURI,
   isURIEncoded,
 } from './isImageURI';
-import { sanitizeSVG, sanitizeWithSanitizeHtml } from './sanitize';
+import { sanitizeSVG } from './sanitize';
 
 export {
   ALLOWED_IMAGE_MIMETYPES,
@@ -32,6 +32,5 @@ export {
   parseNFT,
   resolveURI,
   sanitizeSVG,
-  sanitizeWithSanitizeHtml,
   validateUrl,
 };
