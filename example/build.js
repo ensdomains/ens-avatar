@@ -2,7 +2,7 @@ require('esbuild')
   .build({
     bundle: true,
     entryPoints: ['example/browser.js'],
-    external: ['dotenv', 'http', 'https', 'undici'],
+    external: ['dotenv', 'http', 'https', 'net', 'dns', 'undici'],
     loader: {
       '.html': 'text',
     },
