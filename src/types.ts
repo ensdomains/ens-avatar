@@ -1,5 +1,5 @@
-import { Provider } from 'ethers';
 import { Dispatcher } from 'undici';
+import { ChainClient } from './chain/client';
 
 export interface FetcherResponse<T = unknown> {
   status: number;
@@ -28,7 +28,7 @@ export interface NFTMetadata {
 
 export interface Spec {
   getMetadata: (
-    provider: Provider,
+    client: ChainClient,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,

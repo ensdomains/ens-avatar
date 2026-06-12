@@ -1,18 +1,30 @@
-import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
 import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
+import { ChainClient } from '../chain/client';
 
 const abi = [
-  'function tokenURI(uint256 tokenId) external view returns (string memory)',
-  'function ownerOf(uint256 tokenId) public view returns (address)',
-];
+  {
+    type: 'function',
+    name: 'tokenURI',
+    stateMutability: 'view',
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    outputs: [{ type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'ownerOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    outputs: [{ type: 'address' }],
+  },
+] as const;
 
 export default class ERC721 {
   async getMetadata(
-    provider: Provider,
+    client: ChainClient,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
@@ -30,10 +42,22 @@ export default class ERC721 {
         urlDenyList: options?.urlDenyList,
       });
 
-    const contract = new Contract(contractAddress, abi, provider);
+    const id = BigInt(tokenID);
     const [tokenURI, owner] = await handleSettled([
-      contract.tokenURI(tokenID),
-      ownerAddress ? contract.ownerOf(tokenID) : Promise.resolve(null),
+      client.readContract<string>({
+        address: contractAddress,
+        abi,
+        functionName: 'tokenURI',
+        args: [id],
+      }),
+      ownerAddress
+        ? client.readContract<string>({
+            address: contractAddress,
+            abi,
+            functionName: 'ownerOf',
+            args: [id],
+          })
+        : Promise.resolve(null),
     ]);
 
     if (!tokenURI) {

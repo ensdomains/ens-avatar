@@ -1,14 +1,29 @@
-import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
 import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
+import { ChainClient } from '../chain/client';
 
 const abi = [
-  'function uri(uint256 _id) public view returns (string memory)',
-  'function balanceOf(address account, uint256 id) public view returns (uint256)',
-];
+  {
+    type: 'function',
+    name: 'uri',
+    stateMutability: 'view',
+    inputs: [{ name: '_id', type: 'uint256' }],
+    outputs: [{ type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'account', type: 'address' },
+      { name: 'id', type: 'uint256' },
+    ],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const;
 
 function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
   if (
@@ -22,7 +37,7 @@ function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
 
 export default class ERC1155 {
   async getMetadata(
-    provider: Provider,
+    client: ChainClient,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
@@ -44,11 +59,21 @@ export default class ERC1155 {
     const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
       ? tokenID.replace('0x', '').padStart(64, '0')
       : tokenID;
-    const contract = new Contract(contractAddress, abi, provider);
+    const id = BigInt(tokenID);
     const [tokenURI, balance] = await handleSettled([
-      contract.uri(tokenID),
+      client.readContract<string>({
+        address: contractAddress,
+        abi,
+        functionName: 'uri',
+        args: [id],
+      }),
       ownerAddress
-        ? contract.balanceOf(ownerAddress, tokenID)
+        ? client.readContract<bigint>({
+            address: contractAddress,
+            abi,
+            functionName: 'balanceOf',
+            args: [ownerAddress, id],
+          })
         : Promise.resolve(BigInt(0)),
     ]);
 

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { ethers } = require('ethers');
 const { AvatarResolver, utils: avtUtils } = require('../dist/index');
+const { fromEthers } = require('../dist/chain/ethers');
 
 const ensName = process.argv[2];
 if (!ensName) {
@@ -13,7 +14,7 @@ const IPFS = 'https://cf-ipfs.com';
 const provider = new ethers.JsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
-const avt = new AvatarResolver(provider, {
+const avt = new AvatarResolver(fromEthers(provider), {
   ipfs: IPFS,
   apiKey: { opensea: process.env.OPENSEA_KEY },
 });
