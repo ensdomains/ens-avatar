@@ -553,7 +553,10 @@ describe('fromViem adapter', () => {
       },
     };
 
-    const record = await fromViem(client).getEnsRecord('tanrikulu.eth', 'avatar');
+    const record = await fromViem(client).getEnsRecord(
+      'tanrikulu.eth',
+      'avatar'
+    );
     expect(record).toEqual({
       record: 'https://example.com/a.png',
       address: '0x5a384227b65fa093dec03ec34e111db80a040615',
