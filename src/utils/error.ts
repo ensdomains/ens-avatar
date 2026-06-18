@@ -8,3 +8,6 @@ export class BaseError extends Error {
     this.__proto__ = trueProto;
   }
 }
+
+export interface MetadataParsingError {}
+export class MetadataParsingError extends BaseError {}

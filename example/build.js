@@ -1,20 +1,11 @@
-require('dotenv').config();
 require('esbuild')
   .build({
     bundle: true,
     entryPoints: ['example/browser.js'],
-    external: ['dotenv'],
+    external: ['dotenv', 'http', 'https', 'net', 'dns', 'undici'],
     loader: {
       '.html': 'text',
     },
     outfile: 'example/dist/index.js',
-    define: {
-      process: `{
-        "env": {
-          "INFURA_KEY": '${process.env.INFURA_KEY}',
-          "OPENSEA_KEY": '${process.env.OPENSEA_KEY}'
-        },
-      }`,
-    },
   })
   .catch(() => process.exit(1));

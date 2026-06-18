@@ -1,329 +1,446 @@
 /**
- * Platform-specific SVG sanitization
+ * SVG sanitization — a single engine that behaves identically in browsers,
+ * Node.js, and edge runtimes (Cloudflare Workers).
  *
- * - Browser/Node.js: Uses DOMPurify (8.74 KB, battle-tested, superior SVG support)
- * - Cloudflare Workers: Uses sanitize-html (900 KB, parser-based, works without DOM)
- *
- * Both sanitizers are production-ready and actively maintained for security.
+ * Built on sanitize-html (htmlparser2): pure JavaScript, no DOM dependency, so the
+ * same code path runs everywhere and produces the same output. CSS is sanitized with
+ * an allowlist — only SVG presentation properties survive, and `url(...)` is permitted
+ * only for internal fragment references (`url(#id)`), so gradients/clips/masks keep
+ * working while external resource loading (tracking, exfiltration) is blocked.
  */
+import sanitizeHtml from 'sanitize-html';
+import { parse as parseCss } from 'postcss';
 
-// Detect runtime environment
-const hasWindow = typeof window !== 'undefined';
-const hasGlobalThis = typeof globalThis !== 'undefined';
-const isCloudflareWorker =
-  hasGlobalThis && !hasWindow && typeof globalThis.fetch === 'function';
+// CSS properties allowed in `style` attributes and `<style>` blocks.
+// Presentation / paint / text / layout only — nothing that loads external resources.
+const SAFE_CSS_PROPERTIES = new Set<string>([
+  'fill',
+  'fill-opacity',
+  'fill-rule',
+  'stroke',
+  'stroke-width',
+  'stroke-opacity',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-miterlimit',
+  'opacity',
+  'color',
+  'stop-color',
+  'stop-opacity',
+  'flood-color',
+  'flood-opacity',
+  'lighting-color',
+  'font',
+  'font-family',
+  'font-size',
+  'font-size-adjust',
+  'font-stretch',
+  'font-style',
+  'font-variant',
+  'font-weight',
+  'text-anchor',
+  'text-decoration',
+  'text-rendering',
+  'letter-spacing',
+  'word-spacing',
+  'dominant-baseline',
+  'alignment-baseline',
+  'baseline-shift',
+  'direction',
+  'writing-mode',
+  'transform',
+  'transform-origin',
+  'display',
+  'visibility',
+  'overflow',
+  'clip-path',
+  'clip-rule',
+  'mask',
+  'filter',
+  'marker',
+  'marker-start',
+  'marker-mid',
+  'marker-end',
+  'paint-order',
+  'vector-effect',
+  'shape-rendering',
+  'image-rendering',
+  'color-interpolation',
+  'color-interpolation-filters',
+  'mix-blend-mode',
+  'isolation',
+  // SVG2 geometry-as-CSS (harmless, occasionally used)
+  'cx',
+  'cy',
+  'r',
+  'rx',
+  'ry',
+  'x',
+  'y',
+  'width',
+  'height',
+  'd',
+]);
+
+// At-rules that load external resources or change parsing — always removed.
+const FORBIDDEN_AT_RULES = new Set<string>([
+  'import',
+  'charset',
+  'namespace',
+  'font-face',
+  'apply',
+]);
 
 /**
- * Sanitize SVG content to prevent XSS attacks
+ * Normalizes CSS escape sequences and comments so obfuscated payloads
+ * (e.g. `ur\6c(...)`, `ur/* *​/l(...)`) are caught by the checks below.
+ */
+function normalizeForDetection(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\/\*[\s\S]*?\*\//g, '') // strip comments
+    .replace(/\\([0-9a-f]{1,6})\s?/g, (_match, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    ) // hex escapes: \6c -> l
+    .replace(/\\(.)/g, '$1'); // simple escapes: \l -> l
+}
+
+/**
+ * Returns true if a CSS value is safe: no script/binding/external-load tokens,
+ * and any `url(...)` is an internal fragment reference (`url(#id)`) only.
+ */
+function isSafeCssValue(value: string): boolean {
+  const normalized = normalizeForDetection(value);
+  if (
+    /expression\s*\(|javascript:|vbscript:|-moz-binding|behavior\s*:|image-set|cross-fade|@import|element\s*\(/.test(
+      normalized
+    )
+  ) {
+    return false;
+  }
+  const urls = normalized.match(/url\s*\([^)]*\)/g) || [];
+  for (const url of urls) {
+    const inner = url
+      .replace(/^url\s*\(\s*['"]?/, '')
+      .replace(/['"]?\s*\)\s*$/, '')
+      .trim();
+    if (!inner.startsWith('#')) return false; // only internal references
+  }
+  return true;
+}
+
+function isAllowedDeclaration(property: string, value: string): boolean {
+  return (
+    SAFE_CSS_PROPERTIES.has(property.trim().toLowerCase()) &&
+    isSafeCssValue(value)
+  );
+}
+
+/** Sanitize an inline `style=""` attribute value against the allowlist. */
+function sanitizeStyleAttribute(css: string): string {
+  return css
+    .split(';')
+    .map(declaration => declaration.trim())
+    .filter(Boolean)
+    .map(declaration => {
+      const colon = declaration.indexOf(':');
+      if (colon < 0) return null;
+      const property = declaration.slice(0, colon).trim();
+      const value = declaration.slice(colon + 1).trim();
+      return isAllowedDeclaration(property, value)
+        ? `${property.toLowerCase()}:${value}`
+        : null;
+    })
+    .filter(Boolean)
+    .join(';');
+}
+
+/** Sanitize the CSS text inside a `<style>` block with postcss. */
+function sanitizeStyleBlock(css: string): string {
+  let root;
+  try {
+    root = parseCss(css);
+  } catch {
+    return ''; // unparseable CSS — fail closed
+  }
+  root.walkAtRules(atRule => {
+    if (FORBIDDEN_AT_RULES.has(atRule.name.toLowerCase())) atRule.remove();
+  });
+  root.walkDecls(decl => {
+    if (!isAllowedDeclaration(decl.prop, decl.value)) decl.remove();
+  });
+  // Drop rules / at-rules left empty after declaration removal.
+  root.walkRules(rule => {
+    if (rule.nodes.length === 0) rule.remove();
+  });
+  root.walkAtRules(atRule => {
+    if (atRule.nodes && atRule.nodes.length === 0) atRule.remove();
+  });
+  return root.toString().trim();
+}
+
+/**
+ * Restrict an element's `href`: keep only internal fragment references (`#id`),
+ * and — for raster-capable elements — inline `data:image/*` URIs.
+ */
+function restrictHref(
+  attribs: sanitizeHtml.Attributes,
+  allowDataImage: boolean
+): sanitizeHtml.Attributes {
+  const href = attribs.href;
+  if (typeof href === 'string') {
+    const trimmed = href.trim();
+    const ok =
+      trimmed.startsWith('#') ||
+      (allowDataImage &&
+        /^data:image\//i.test(trimmed) &&
+        !/^data:text\/html/i.test(trimmed));
+    if (!ok) delete attribs.href;
+  }
+  return attribs;
+}
+
+// Comprehensive SVG element allowlist (SVG 1.1 / 2.0). No foreignObject (HTML
+// embedding), no script/a/iframe/link/base. `style` is allowed because its CSS
+// content is sanitized by sanitizeStyleBlock after parsing.
+const allowedTags = [
+  // Structure
+  'svg',
+  'g',
+  'defs',
+  'symbol',
+  'use',
+  'marker',
+  'clipPath',
+  'mask',
+  'pattern',
+  'style',
+  // Shapes
+  'circle',
+  'ellipse',
+  'line',
+  'path',
+  'polygon',
+  'polyline',
+  'rect',
+  // Text
+  'text',
+  'tspan',
+  'textPath',
+  // Gradients and filters
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'filter',
+  'feBlend',
+  'feColorMatrix',
+  'feComponentTransfer',
+  'feComposite',
+  'feConvolveMatrix',
+  'feDiffuseLighting',
+  'feDisplacementMap',
+  'feFlood',
+  'feGaussianBlur',
+  'feImage',
+  'feMerge',
+  'feMergeNode',
+  'feMorphology',
+  'feOffset',
+  'feSpecularLighting',
+  'feTile',
+  'feTurbulence',
+  'feDistantLight',
+  'fePointLight',
+  'feSpotLight',
+  'feFuncR',
+  'feFuncG',
+  'feFuncB',
+  'feFuncA',
+  // Other
+  'image',
+  'title',
+  'desc',
+  'metadata',
+];
+
+const allowedAttributes: { [key: string]: string[] } = {
+  // Global SVG attributes (apply to all tags)
+  '*': [
+    'id',
+    'class',
+    'style',
+    'transform',
+    'fill',
+    'fill-opacity',
+    'fill-rule',
+    'stroke',
+    'stroke-width',
+    'stroke-opacity',
+    'stroke-linecap',
+    'stroke-linejoin',
+    'stroke-dasharray',
+    'stroke-dashoffset',
+    'opacity',
+    'visibility',
+    'display',
+    'clip-path',
+    'clip-rule',
+    'mask',
+    'filter',
+    'color',
+    'color-interpolation',
+  ],
+  svg: [
+    'xmlns',
+    'xmlns:xlink',
+    'viewBox',
+    'preserveAspectRatio',
+    'width',
+    'height',
+    'x',
+    'y',
+    'version',
+    'baseProfile',
+  ],
+  circle: ['cx', 'cy', 'r'],
+  ellipse: ['cx', 'cy', 'rx', 'ry'],
+  line: ['x1', 'y1', 'x2', 'y2'],
+  path: ['d', 'pathLength'],
+  polygon: ['points'],
+  polyline: ['points'],
+  rect: ['x', 'y', 'width', 'height', 'rx', 'ry'],
+  text: [
+    'x',
+    'y',
+    'dx',
+    'dy',
+    'text-anchor',
+    'font-family',
+    'font-size',
+    'font-weight',
+  ],
+  tspan: ['x', 'y', 'dx', 'dy', 'text-anchor'],
+  textPath: ['href', 'startOffset', 'method', 'spacing'],
+  use: ['href', 'x', 'y', 'width', 'height'],
+  image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
+  feImage: [
+    'href',
+    'result',
+    'x',
+    'y',
+    'width',
+    'height',
+    'preserveAspectRatio',
+  ],
+  linearGradient: [
+    'id',
+    'x1',
+    'y1',
+    'x2',
+    'y2',
+    'gradientUnits',
+    'gradientTransform',
+  ],
+  radialGradient: [
+    'id',
+    'cx',
+    'cy',
+    'r',
+    'fx',
+    'fy',
+    'gradientUnits',
+    'gradientTransform',
+  ],
+  stop: ['offset', 'stop-color', 'stop-opacity'],
+  pattern: [
+    'id',
+    'x',
+    'y',
+    'width',
+    'height',
+    'patternUnits',
+    'patternTransform',
+  ],
+  marker: [
+    'id',
+    'markerWidth',
+    'markerHeight',
+    'refX',
+    'refY',
+    'orient',
+    'markerUnits',
+  ],
+  clipPath: ['id', 'clipPathUnits'],
+  mask: ['id', 'x', 'y', 'width', 'height', 'maskUnits', 'maskContentUnits'],
+  filter: ['id', 'x', 'y', 'width', 'height', 'filterUnits', 'primitiveUnits'],
+  g: ['id', 'transform'],
+  defs: ['id'],
+  symbol: ['id', 'viewBox', 'preserveAspectRatio'],
+};
+
+const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+
+/**
+ * Sanitize SVG content to prevent XSS, phishing, and external resource loading.
  * @param svg - Raw SVG string
- * @param jsdomWindow - Optional JSDOM window (required for Node.js when using DOMPurify)
  * @returns Sanitized SVG string
  */
-export function sanitizeSVG(svg: string, jsdomWindow?: any): string {
-  // Strategy 1: DOMPurify (Browser or Node.js with JSDOM)
-  if (!isCloudflareWorker) {
-    return sanitizeWithDOMPurify(svg, jsdomWindow);
-  }
-
-  // Strategy 2: sanitize-html (Cloudflare Workers)
-  return sanitizeWithSanitizeHtml(svg);
-}
-
-/**
- * DOMPurify-based sanitization (Browser/Node.js)
- * Requires window object (native in browser, JSDOM in Node.js)
- */
-function sanitizeWithDOMPurify(svg: string, jsdomWindow?: any): string {
-  const createDOMPurify = require('dompurify');
-
-  let domWindow;
-  try {
-    domWindow = window;
-  } catch {
-    // Node.js environment - require JSDOM window
-    if (!jsdomWindow) {
-      throw Error(
-        'In Node.js environment, JSDOM window is required for DOMPurify'
-      );
-    }
-    domWindow = jsdomWindow;
-  }
-
-  const DOMPurify = createDOMPurify(domWindow as any);
-
-  // Add security hooks
-  DOMPurify.addHook('uponSanitizeElement', (node: any, data: any) => {
-    // Remove meta refresh tags (can be used for phishing)
-    if (data.tagName === 'meta') {
-      if (node.getAttribute('http-equiv') === 'refresh') {
-        node.remove();
-      }
-    }
-  });
-
-  // Hook to sanitize xlink:href attributes (XSS vector)
-  DOMPurify.addHook('uponSanitizeAttribute', (node: any, data: any) => {
-    // Block javascript: URLs in href and xlink:href attributes
-    if (data.attrName === 'xlink:href' || data.attrName === 'href') {
-      const value = data.attrValue;
-      if (value && typeof value === 'string') {
-        const normalized = value.toLowerCase().trim();
-        // Block javascript:, data:text/html, and vbscript: URLs
-        if (
-          normalized.startsWith('javascript:') ||
-          normalized.startsWith('data:text/html') ||
-          normalized.startsWith('vbscript:')
-        ) {
-          data.keepAttr = false;
-          node.removeAttribute(data.attrName);
-        }
-      }
-    }
-  });
-
-  // Sanitize with SVG profile and forbidden tags
-  const cleanDOM = DOMPurify.sanitize(svg, {
-    USE_PROFILES: { svg: true, svgFilters: true },
-    FORBID_TAGS: ['a', 'area', 'base', 'iframe', 'link', 'script'],
-    FORBID_ATTR: ['xlink:href'], // Block xlink:href entirely (deprecated, use href)
-  });
-
-  return cleanDOM;
-}
-
-/**
- * sanitize-html-based sanitization (Cloudflare Workers)
- * Parser-based, no DOM dependency
- */
-function sanitizeWithSanitizeHtml(svg: string): string {
-  const sanitizeHtml = require('sanitize-html');
-
-  // Comprehensive SVG element and attribute whitelist
-  // Based on DOMPurify's SVG profile and SVG 1.1/2.0 specs
-  const allowedTags = [
-    // SVG root and structure
-    'svg',
-    'g',
-    'defs',
-    'symbol',
-    'use',
-    'marker',
-    'clipPath',
-    'mask',
-    'pattern',
-    // Shapes
-    'circle',
-    'ellipse',
-    'line',
-    'path',
-    'polygon',
-    'polyline',
-    'rect',
-    // Text
-    'text',
-    'tspan',
-    'textPath',
-    // Gradients and filters
-    'linearGradient',
-    'radialGradient',
-    'stop',
-    'filter',
-    'feBlend',
-    'feColorMatrix',
-    'feComponentTransfer',
-    'feComposite',
-    'feConvolveMatrix',
-    'feDiffuseLighting',
-    'feDisplacementMap',
-    'feFlood',
-    'feGaussianBlur',
-    'feImage',
-    'feMerge',
-    'feMergeNode',
-    'feMorphology',
-    'feOffset',
-    'feSpecularLighting',
-    'feTile',
-    'feTurbulence',
-    'feDistantLight',
-    'fePointLight',
-    'feSpotLight',
-    'feFuncR',
-    'feFuncG',
-    'feFuncB',
-    'feFuncA',
-    // Other
-    'image',
-    'foreignObject',
-    'title',
-    'desc',
-    'metadata',
-  ];
-
-  const allowedAttributes: { [key: string]: string[] } = {
-    // Global SVG attributes (apply to all tags)
-    '*': [
-      'id',
-      'class',
-      'style',
-      'transform',
-      'fill',
-      'fill-opacity',
-      'fill-rule',
-      'stroke',
-      'stroke-width',
-      'stroke-opacity',
-      'stroke-linecap',
-      'stroke-linejoin',
-      'stroke-dasharray',
-      'stroke-dashoffset',
-      'opacity',
-      'visibility',
-      'display',
-      'clip-path',
-      'clip-rule',
-      'mask',
-      'filter',
-      'color',
-      'color-interpolation',
-    ],
-    svg: [
-      'xmlns',
-      'xmlns:xlink',
-      'viewBox',
-      'preserveAspectRatio',
-      'width',
-      'height',
-      'x',
-      'y',
-      'version',
-      'baseProfile',
-    ],
-    circle: ['cx', 'cy', 'r'],
-    ellipse: ['cx', 'cy', 'rx', 'ry'],
-    line: ['x1', 'y1', 'x2', 'y2'],
-    path: ['d', 'pathLength'],
-    polygon: ['points'],
-    polyline: ['points'],
-    rect: ['x', 'y', 'width', 'height', 'rx', 'ry'],
-    text: [
-      'x',
-      'y',
-      'dx',
-      'dy',
-      'text-anchor',
-      'font-family',
-      'font-size',
-      'font-weight',
-    ],
-    tspan: ['x', 'y', 'dx', 'dy', 'text-anchor'],
-    textPath: ['href', 'startOffset', 'method', 'spacing'],
-    use: ['href', 'x', 'y', 'width', 'height'],
-    image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'],
-    linearGradient: [
-      'id',
-      'x1',
-      'y1',
-      'x2',
-      'y2',
-      'gradientUnits',
-      'gradientTransform',
-    ],
-    radialGradient: [
-      'id',
-      'cx',
-      'cy',
-      'r',
-      'fx',
-      'fy',
-      'gradientUnits',
-      'gradientTransform',
-    ],
-    stop: ['offset', 'stop-color', 'stop-opacity'],
-    pattern: [
-      'id',
-      'x',
-      'y',
-      'width',
-      'height',
-      'patternUnits',
-      'patternTransform',
-    ],
-    marker: [
-      'id',
-      'markerWidth',
-      'markerHeight',
-      'refX',
-      'refY',
-      'orient',
-      'markerUnits',
-    ],
-    clipPath: ['id', 'clipPathUnits'],
-    mask: ['id', 'x', 'y', 'width', 'height', 'maskUnits', 'maskContentUnits'],
-    filter: [
-      'id',
-      'x',
-      'y',
-      'width',
-      'height',
-      'filterUnits',
-      'primitiveUnits',
-    ],
-    g: ['id', 'transform'],
-    defs: ['id'],
-    symbol: ['id', 'viewBox', 'preserveAspectRatio'],
-  };
-
-  const cleanSVG = sanitizeHtml(svg, {
+export function sanitizeSVG(svg: string): string {
+  const cleaned = sanitizeHtml(svg, {
     allowedTags,
     allowedAttributes,
-    // Preserve case for SVG elements (important!)
+    // <style> content is sanitized by sanitizeStyleBlock below, not by sanitize-html.
+    allowVulnerableTags: true,
+    // Preserve case for SVG elements/attributes (viewBox, clipPath, …).
     parser: {
       lowerCaseTags: false,
       lowerCaseAttributeNames: false,
     },
-    // Disallow all protocols except safe ones
     allowedSchemes: ['http', 'https', 'data'],
     allowedSchemesByTag: {
-      image: ['http', 'https', 'data'],
-      use: ['http', 'https'],
-      textPath: ['http', 'https'],
+      // image/feImage: only data:image/* (transform enforces further) — no external loading.
+      image: ['data'],
+      feImage: ['data'],
+      // use/textPath: no schemes — only internal fragment references (#id).
+      use: [],
+      textPath: [],
     },
-    // Additional disallowed schemes to be explicit
     disallowedTagsMode: 'discard',
-    // Don't allow any iframe-related attributes
     allowIframeRelativeUrls: false,
-    // Transform URLs to remove dangerous protocols
     transformTags: {
-      use: (tagName: string, attribs: any) => {
-        // Additional safety check for href attribute
-        if (attribs.href && typeof attribs.href === 'string') {
-          const normalized = attribs.href.toLowerCase().trim();
-          if (
-            normalized.startsWith('javascript:') ||
-            normalized.startsWith('data:text/html') ||
-            normalized.startsWith('vbscript:')
-          ) {
-            delete attribs.href;
-          }
+      '*': (tagName, attribs) => {
+        if (typeof attribs.style === 'string') {
+          const clean = sanitizeStyleAttribute(attribs.style);
+          if (clean) attribs.style = clean;
+          else delete attribs.style;
         }
         return { tagName, attribs };
       },
-      image: (tagName: string, attribs: any) => {
-        // Additional safety check for href attribute
-        if (attribs.href && typeof attribs.href === 'string') {
-          const normalized = attribs.href.toLowerCase().trim();
-          if (
-            normalized.startsWith('javascript:') ||
-            normalized.startsWith('vbscript:')
-          ) {
-            delete attribs.href;
-          }
-        }
-        return { tagName, attribs };
-      },
+      use: (tagName, attribs) => ({
+        tagName,
+        attribs: restrictHref(attribs, false),
+      }),
+      textPath: (tagName, attribs) => ({
+        tagName,
+        attribs: restrictHref(attribs, false),
+      }),
+      image: (tagName, attribs) => ({
+        tagName,
+        attribs: restrictHref(attribs, true),
+      }),
+      feImage: (tagName, attribs) => ({
+        tagName,
+        attribs: restrictHref(attribs, true),
+      }),
     },
   });
 
-  return cleanSVG;
+  // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
+  // keeps their content verbatim; here we run it through the same allowlist.
+  return cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
+    const safe = sanitizeStyleBlock(css);
+    return safe ? `<style>${safe}</style>` : '';
+  });
 }

@@ -1,9 +1,7 @@
 require('dotenv').config();
-const { StaticJsonRpcProvider } = require('@ethersproject/providers');
+const { ethers } = require('ethers');
 const { AvatarResolver, utils: avtUtils } = require('../dist/index');
-const { JSDOM } = require('jsdom');
 
-const jsdom = new JSDOM().window;
 const ensName = process.argv[2];
 if (!ensName) {
   console.log(
@@ -12,7 +10,7 @@ if (!ensName) {
   process.exit(1);
 }
 const IPFS = 'https://cf-ipfs.com';
-const provider = new StaticJsonRpcProvider(
+const provider = new ethers.JsonRpcProvider(
   `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`
 );
 const avt = new AvatarResolver(provider, {
@@ -31,7 +29,6 @@ avt
       gateways: {
         ipfs: IPFS,
       },
-      jsdomWindow: jsdom,
     });
     console.log('avatar: ', avatar);
   })
@@ -39,7 +36,7 @@ avt
 
 try {
   avt
-  .getHeader(ensName, { jsdomWindow: jsdom })
+  .getHeader(ensName)
   .then(header => {
     console.log('header: ', header);
   })

@@ -1,7 +1,9 @@
 import { Contract, Provider } from 'ethers';
 import { Buffer } from 'buffer/';
-import { createFetcher, resolveURI } from '../utils';
-import { AvatarResolverOpts } from '../types';
+import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import { MetadataParsingError } from '../utils/error';
+import { isURIEncoded } from '../utils/isImageURI';
+import { AvatarResolverOpts, Fetcher } from '../types';
 
 const abi = [
   'function uri(uint256 _id) public view returns (string memory)',
@@ -24,31 +26,43 @@ export default class ERC1155 {
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
-    options?: AvatarResolverOpts
+    options?: AvatarResolverOpts,
+    fetcher?: Fetcher
   ) {
-    // Create a configured fetch instance for this request
-    const fetch = createFetcher({
-      ttl: options?.cache,
-      agents: options?.agents,
-      allowPrivateIPs: options?.allowPrivateIPs,
-    });
+    // Use provided fetcher or create a new one
+    const fetch =
+      fetcher ||
+      createFetcher({
+        ttl: options?.cache,
+        dispatcher: options?.dispatcher,
+        allowPrivateIPs: options?.allowPrivateIPs,
+        timeout: options?.timeout,
+        urlDenyList: options?.urlDenyList,
+      });
 
     // exclude opensea api which does not follow erc1155 spec
     const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
       ? tokenID.replace('0x', '').padStart(64, '0')
       : tokenID;
     const contract = new Contract(contractAddress, abi, provider);
-    const [tokenURI, balance] = await Promise.all([
+    const [tokenURI, balance] = await handleSettled([
       contract.uri(tokenID),
-      ownerAddress ? contract.balanceOf(ownerAddress, tokenID) : BigInt(0),
+      ownerAddress
+        ? contract.balanceOf(ownerAddress, tokenID)
+        : Promise.resolve(BigInt(0)),
     ]);
-    // if user has valid address and if token balance of given address is greater than 0
-    const isOwner = !!(ownerAddress && balance > BigInt(0));
 
-    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
-      tokenURI,
-      options
-    );
+    if (!tokenURI) {
+      throw new BaseError('Token URI is empty or could not be retrieved');
+    }
+
+    // if user has valid address and if token balance of given address is greater than 0
+    const isOwner = !!(ownerAddress && balance && balance > BigInt(0));
+
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
+      ipfs: options?.ipfs,
+      arweave: options?.arweave,
+    });
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
@@ -57,17 +71,29 @@ export default class ERC1155 {
           'base64'
         ).toString();
       }
-      const metadata = JSON.parse(_resolvedUri);
+      let metadata: Record<string, unknown>;
+      try {
+        metadata = JSON.parse(_resolvedUri);
+      } catch (e) {
+        throw new MetadataParsingError(
+          `Failed to parse token metadata: ${(e as Error).message}`
+        );
+      }
       return { ...metadata, is_owner: isOwner };
     }
 
     const marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);
 
+    const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex);
+    const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
     const response = await fetch.get(
-      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)),
+      finalURI,
       marketplaceKey ? { headers: marketplaceKey } : {}
     );
-    const metadata = await response?.data;
+    if (!response?.data) {
+      throw new BaseError('Failed to retrieve token metadata from URI');
+    }
+    const metadata = response?.data as Record<string, unknown>;
     return { ...metadata, is_owner: isOwner };
   }
 }

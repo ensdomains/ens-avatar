@@ -1,9 +1,13 @@
-import isSVG from 'is-svg';
-
 import { ImageURIOpts } from '../types';
 import { assert } from './assert';
+import { isHostDenied } from './isHostDenied';
 import { resolveURI } from './resolveURI';
 import { sanitizeSVG } from './sanitize';
+
+function isSVGString(str: string): boolean {
+  const trimmed = str.trimStart();
+  return trimmed.startsWith('<svg') || trimmed.startsWith('<?xml');
+}
 
 function isSVGDataUri(uri: string): boolean {
   const svgDataUriPrefix = 'data:image/svg+xml';
@@ -49,9 +53,8 @@ export function convertToRawSVG(input: string): string | null {
   }
 }
 
-function _sanitize(data: string, jsDomWindow?: any): Buffer {
-  // Use platform-specific sanitization (DOMPurify or sanitize-html)
-  const cleanSVG = sanitizeSVG(data, jsDomWindow);
+function _sanitize(data: string): Buffer {
+  const cleanSVG = sanitizeSVG(data);
   return Buffer.from(cleanSVG);
 }
 
@@ -59,7 +62,6 @@ export function getImageURI({
   metadata,
   customGateway,
   gateways,
-  jsdomWindow,
   urlDenyList,
 }: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
@@ -67,9 +69,13 @@ export function getImageURI({
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
-  const { uri: parsedURI } = resolveURI(_image, gateways, customGateway);
+  const { uri: parsedURI } = resolveURI(
+    _image as string,
+    gateways,
+    customGateway
+  );
 
-  if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
+  if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
     const rawSVG = convertToRawSVG(parsedURI)?.replace(
       /\s*(<[^>]+>)\s*/g,
@@ -77,12 +83,17 @@ export function getImageURI({
     );
     if (!rawSVG) return null;
 
-    const data = _sanitize(rawSVG, jsdomWindow);
-    return `data:image/svg+xml;base64,${data.toString('base64')}`;
+    try {
+      const data = _sanitize(rawSVG);
+      return `data:image/svg+xml;base64,${data.toString('base64')}`;
+    } catch (error) {
+      console.error('SVG sanitization failed:', error);
+      return null;
+    }
   }
 
   if (isImageDataUri(parsedURI) || parsedURI.startsWith('http')) {
-    if (urlDenyList?.includes(new URL(parsedURI).hostname)) return null;
+    if (isHostDenied(parsedURI, urlDenyList)) return null;
     return parsedURI;
   }
 
