@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { ethers } = require('ethers');
-const { AvatarResolver, utils: avtUtils } = require('../dist/index');
-const { fromEthers } = require('../dist/chain/ethers');
+const { AvatarResolver, utils: avtUtils } = require('../dist/index.cjs');
+const { fromEthers } = require('../dist/chain/ethers.cjs');
 
 const ensName = process.argv[2];
 if (!ensName) {
