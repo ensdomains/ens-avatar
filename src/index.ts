@@ -35,7 +35,25 @@ export interface AvatarResolver {
   client: ChainClient;
   options?: AvatarResolverOpts;
   fetcher: Fetcher;
+  /**
+   * Resolve an ENS name's `avatar` record to a displayable image reference.
+   *
+   * Returns a URL for remote raster/SVG images, or a sanitized
+   * `data:image/svg+xml;base64,...` URI for inline/on-chain SVGs (scripts,
+   * event handlers, and external references stripped).
+   *
+   * SECURITY: a **remote** SVG (an `http(s)` URL pointing at an SVG) is returned
+   * as the raw URL and is NOT sanitized — render it in a sandboxed context
+   * (`<img>`, CSS `background-image`, or `<image href>` in an SVG), or run the
+   * fetched bytes through `utils.sanitizeSVG` before inlining into the DOM.
+   *
+   * @returns the image reference, or null if the name has no avatar record.
+   */
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
+  /**
+   * Resolve an ENS name's `header`/`banner` record to a displayable image
+   * reference. Same return contract and remote-SVG caveat as `getAvatar`.
+   */
   getHeader(ens: string, data: HeaderRequestOpts): Promise<string | null>;
   getMetadata(ens: string, key?: MediaKey): Promise<NFTMetadata | null>;
 }
@@ -150,3 +168,6 @@ export class AvatarResolver implements AvatarResolver {
 
 export { utils };
 export { ChainClient, EnsRecord, ReadContractParams } from './chain/client';
+// Public option/return types so consumers can write typed code against the API
+// (AvatarResolverOpts, NFTMetadata, Fetcher, MediaKey, Gateways, Spec, …).
+export * from './types';
