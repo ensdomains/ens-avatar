@@ -13,7 +13,13 @@ import {
   Dispatcher,
   fetch as undiciFetch,
 } from 'undici';
-import { AvatarResolver } from '../src';
+import {
+  AvatarResolver,
+  AvatarResolverOpts,
+  Gateways,
+  MediaKey,
+  NFTMetadata,
+} from '../src';
 import { fromEthers } from '../src/chain/ethers';
 import { fromViem, ViemClientLike } from '../src/chain/viem';
 
@@ -603,5 +609,161 @@ describe('fromViem adapter', () => {
       });
 
     expect(await avt.getAvatar('matoken.eth')).toEqual(NFT_URI.toString());
+  });
+
+  it('resolves an erc1155 NFT avatar through a viem-style client (readContract path)', async () => {
+    const MANIFEST = new URL('https://nft.example/meta/erc1155.json');
+    const NFT_URI = new URL('https://img.example/erc1155.png');
+    const owner = '0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5';
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return 'eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e/8112316025873927737505937898915153732580103913704334048512380490797008551937';
+      },
+      async getEnsAddress() {
+        return owner;
+      },
+      async readContract({ functionName }) {
+        if (functionName === 'uri') return MANIFEST.toString();
+        if (functionName === 'balanceOf') return BigInt(1);
+        throw new Error(`unexpected function ${functionName}`);
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+
+    mockPool(MANIFEST.origin)
+      .intercept({ path: MANIFEST.pathname, method: 'GET' })
+      .reply(
+        200,
+        { image: NFT_URI.toString() },
+        { headers: { 'content-type': 'application/json', ...CORS_HEADERS } }
+      );
+    mockPool(NFT_URI.origin)
+      .intercept({ path: NFT_URI.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/png' },
+      });
+
+    expect(await avt.getAvatar('nick.eth')).toEqual(NFT_URI.toString());
+  });
+});
+
+describe('SVG avatars (end to end)', () => {
+  it('sanitizes an inline data: URI SVG avatar via getAvatar (viem adapter)', async () => {
+    const hostileSVG =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(1)</script><rect width="10" height="10" fill="red"/></svg>';
+    const dataUri =
+      'data:image/svg+xml;base64,' + Buffer.from(hostileSVG).toString('base64');
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return dataUri;
+      },
+      async getEnsAddress() {
+        return null;
+      },
+      async readContract() {
+        throw new Error('not used');
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+    const result = await avt.getAvatar('svg-data.eth');
+    expect(result).toBeTruthy();
+    expect(result!.startsWith('data:image/svg+xml;base64,')).toBe(true);
+    const decoded = Buffer.from(
+      result!.replace('data:image/svg+xml;base64,', ''),
+      'base64'
+    ).toString();
+    expect(decoded).not.toMatch(/<script|alert/i);
+    expect(decoded).toContain('fill="red"');
+  });
+
+  it('passes through an http(s) SVG avatar URL unchanged via getAvatar (ethers adapter)', async () => {
+    // NOTE: remote (http/https) SVGs are returned as the raw URL — the library
+    // does NOT fetch and sanitize them (only inline data:/on-chain SVGs are
+    // sanitized). The content-type check + SSRF protection are the safeguards;
+    // the consumer is responsible for sanitizing remote SVG bytes at render time.
+    const SVG_URL = new URL('https://svg.example/avatar.svg');
+
+    setupRpcMocks({
+      eth_chainId: '0x1',
+      ...mockUniversalResolve({
+        ens: 'svg-http.eth',
+        key: 'avatar',
+        resolver: '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
+        resolvedAddress: '0x0d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
+        mediaURI: SVG_URL.toString(),
+      }),
+    });
+    provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+    avt = new AvatarResolver(fromEthers(provider), { dispatcher: mockAgent });
+
+    mockPool(SVG_URL.origin)
+      .intercept({ path: SVG_URL.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/svg+xml' },
+      });
+
+    expect(await avt.getAvatar('svg-http.eth')).toEqual(SVG_URL.toString());
+  });
+});
+
+describe('ERC-1155 {id} substitution (spec-compliant hex)', () => {
+  it('replaces {id} with 64-char lowercase hex of the uint256 id', async () => {
+    const tokenId = '1234';
+    const idHex = BigInt(tokenId)
+      .toString(16)
+      .padStart(64, '0');
+    const META = new URL(`https://erc1155.example/${idHex}.json`);
+    const IMG = new URL('https://img.example/erc1155-id.png');
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return `eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e/${tokenId}`;
+      },
+      async getEnsAddress() {
+        return '0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5';
+      },
+      async readContract({ functionName }) {
+        if (functionName === 'uri') return 'https://erc1155.example/{id}.json';
+        if (functionName === 'balanceOf') return BigInt(1);
+        throw new Error(`unexpected function ${functionName}`);
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+
+    // The mock only matches the spec-correct hex path; a decimal-padded {id}
+    // would request a different path and the request would not be intercepted.
+    mockPool(META.origin)
+      .intercept({ path: META.pathname, method: 'GET' })
+      .reply(
+        200,
+        { image: IMG.toString() },
+        { headers: { 'content-type': 'application/json', ...CORS_HEADERS } }
+      );
+    mockPool(IMG.origin)
+      .intercept({ path: IMG.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/png' },
+      });
+
+    expect(await avt.getAvatar('erc1155-id.eth')).toEqual(IMG.toString());
+  });
+});
+
+describe('public type exports', () => {
+  it('exposes option/return types from the package entry point', () => {
+    // Compile-time check: these names must be importable from '../src'.
+    const opts: AvatarResolverOpts = { cache: 1, allowPrivateIPs: false };
+    const meta: NFTMetadata = { image: 'x' };
+    const key: MediaKey = 'avatar';
+    const gw: Gateways = { ipfs: 'https://ipfs.io' };
+    expect(opts.cache).toBe(1);
+    expect(meta.image).toBe('x');
+    expect(key).toBe('avatar');
+    expect(gw.ipfs).toContain('ipfs');
   });
 });

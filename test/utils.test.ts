@@ -18,6 +18,17 @@ import {
   validateUrl,
 } from '../src/utils';
 import { Fetcher, FetcherResponse } from '../src/types';
+import { createSSRFSafeLookup } from '../src/utils/fetch';
+import {
+  base64ToBytes,
+  base64ToUtf8,
+  bytesToBase64,
+  bytesToHex,
+  utf8ToBase64,
+} from '../src/utils/base64';
+import { isPrivateIp, parseIPv4, parseIPv6 } from '../src/utils/ip';
+import * as net from 'net';
+import * as dns from 'dns';
 
 function createMockFetcher(
   headResponse?: Partial<FetcherResponse<void>>,
@@ -1373,6 +1384,258 @@ describe('isURIEncoded', () => {
 
   it('returns false for empty string', () => {
     expect(isURIEncoded('')).toBe(false);
+  });
+});
+
+describe('getImageURI — hostile inline SVG sanitization (end to end)', () => {
+  // A single payload combining every vector the threat model cares about:
+  // <script>, an inline event handler (onload=), external href + xlink:href,
+  // and <foreignObject> (HTML embedding). getImageURI must return a
+  // base64 data: URI whose decoded SVG contains none of them.
+  const hostileSVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100" onload="alert(1)">
+    <script>alert('xss')</script>
+    <foreignObject width="100" height="100"><body xmlns="http://www.w3.org/1999/xhtml"><iframe src="https://evil.com"></iframe></body></foreignObject>
+    <a href="https://evil.com/phish"><rect width="10" height="10" fill="red" /></a>
+    <use xlink:href="https://evil.com/sprite.svg#icon" />
+    <image href="https://tracker.com/pixel.gif" width="10" height="10" />
+    <rect width="100" height="100" fill="blue" />
+  </svg>`;
+
+  const decode = (dataUri: string) =>
+    Buffer.from(
+      dataUri.replace(/^data:image\/svg\+xml;base64,/, ''),
+      'base64'
+    ).toString();
+
+  it('strips script/onload/foreignObject/external refs from a raw SVG record', () => {
+    const result = getImageURI({ metadata: { image: hostileSVG } });
+    expect(result).toBeTruthy();
+    expect(result!.startsWith('data:image/svg+xml;base64,')).toBe(true);
+    const clean = decode(result!);
+    expect(clean).not.toMatch(/<script/i);
+    expect(clean).not.toMatch(/onload/i);
+    expect(clean).not.toMatch(/<foreignObject/i);
+    expect(clean).not.toMatch(/<iframe/i);
+    expect(clean).not.toMatch(/<a[\s>]/i);
+    expect(clean).not.toMatch(/xlink:href/i);
+    expect(clean).not.toContain('evil.com');
+    expect(clean).not.toContain('tracker.com');
+    expect(clean).not.toContain('alert');
+    // the benign content survives
+    expect(clean).toContain('fill="blue"');
+  });
+
+  it('strips the same vectors when delivered as a base64 data: URI', () => {
+    const dataUri =
+      'data:image/svg+xml;base64,' + Buffer.from(hostileSVG).toString('base64');
+    const result = getImageURI({ metadata: { image: dataUri } });
+    expect(result).toBeTruthy();
+    const clean = decode(result!);
+    expect(clean).not.toMatch(
+      /<script|onload|<foreignObject|xlink:href|<iframe/i
+    );
+    expect(clean).not.toContain('evil.com');
+    expect(clean).toContain('fill="blue"');
+  });
+});
+
+describe('createSSRFSafeLookup (Node SSRF agent — regression for undici all:true)', () => {
+  // undici v7 on Node 20+ invokes the connector lookup with { all: true } (Happy
+  // Eyeballs / autoSelectFamily), so dns.lookup returns an ARRAY of
+  // { address, family }. The lookup must validate each entry and pass the array
+  // through — not crash with "hostname.toLowerCase is not a function".
+  const lookup = createSSRFSafeLookup(net, dns);
+
+  it('blocks a hostname resolving to loopback under all:true (array form)', done => {
+    // localhost resolves to ::1 / 127.0.0.1 via the hosts file — no network.
+    lookup('localhost', { all: true }, (err, address) => {
+      expect(err).toBeTruthy();
+      expect(String((err as Error).message)).toMatch(/SSRF blocked/);
+      expect(String((err as Error).message)).not.toMatch(/toLowerCase/);
+      expect(address).toBeUndefined();
+      done();
+    });
+  });
+
+  it('passes a public IP literal through under all:true as the array shape', done => {
+    lookup('1.1.1.1', { all: true }, (err, address) => {
+      expect(err).toBeNull();
+      expect(Array.isArray(address)).toBe(true);
+      expect((address as { address: string }[])[0].address).toBe('1.1.1.1');
+      done();
+    });
+  });
+
+  it('still returns the single-address shape when all is not requested', done => {
+    lookup('1.1.1.1', {}, (err, address, family) => {
+      expect(err).toBeNull();
+      expect(address).toBe('1.1.1.1');
+      expect(family).toBe(4);
+      done();
+    });
+  });
+
+  it('blocks a private IP literal (cloud metadata range)', done => {
+    lookup('169.254.169.254', { all: true }, err => {
+      expect(err).toBeTruthy();
+      expect(String((err as Error).message)).toMatch(/SSRF blocked/);
+      done();
+    });
+  });
+});
+
+describe('isPrivateHostname — IPv6 encodings (SSRF bypass regression)', () => {
+  it('blocks bracketed IPv6 hosts (as produced by URL.hostname)', () => {
+    expect(isPrivateHostname('[::1]')).toBe(true);
+    expect(isPrivateHostname('[fc00::1]')).toBe(true);
+    expect(isPrivateHostname('[fe80::1]')).toBe(true);
+  });
+
+  it('blocks hex-form IPv4-mapped loopback (::ffff:7f00:1), bare and bracketed', () => {
+    expect(isPrivateHostname('::ffff:7f00:1')).toBe(true);
+    expect(isPrivateHostname('[::ffff:7f00:1]')).toBe(true);
+  });
+
+  it('blocks fully-expanded loopback (0:0:0:0:0:0:0:1)', () => {
+    expect(isPrivateHostname('0:0:0:0:0:0:0:1')).toBe(true);
+  });
+
+  it('blocks NAT64-embedded private IPv4 (64:ff9b::7f00:1)', () => {
+    expect(isPrivateHostname('64:ff9b::7f00:1')).toBe(true);
+  });
+
+  it('allows public IPv6 (bare and bracketed) and IPv4-mapped public', () => {
+    expect(isPrivateHostname('2606:4700::1111')).toBe(false);
+    expect(isPrivateHostname('[2606:4700::1111]')).toBe(false);
+    expect(isPrivateHostname('::ffff:8.8.8.8')).toBe(false);
+  });
+});
+
+describe('validateUrl — IPv6 literal URLs (SSRF)', () => {
+  it('throws for loopback / ULA / IPv4-mapped IPv6 URLs', () => {
+    expect(() => validateUrl('http://[::1]/')).toThrow(/private address/);
+    expect(() => validateUrl('http://[fc00::1]/')).toThrow(/private address/);
+    expect(() => validateUrl('http://[fe80::1]/')).toThrow(/private address/);
+    expect(() => validateUrl('http://[::ffff:127.0.0.1]/')).toThrow(
+      /private address/
+    );
+  });
+
+  it('allows a public IPv6 URL', () => {
+    expect(() => validateUrl('http://[2606:4700::1111]/')).not.toThrow();
+  });
+});
+
+describe('ip parsing/classification', () => {
+  it('parses IPv4', () => {
+    expect(parseIPv4('127.0.0.1')).toBe(0x7f000001);
+    expect(parseIPv4('1.2.3.4')).toBe(0x01020304);
+    expect(parseIPv4('256.0.0.1')).toBeNull();
+    expect(parseIPv4('1.2.3')).toBeNull();
+    expect(parseIPv4('example.com')).toBeNull();
+  });
+
+  it('expands IPv6 :: and embedded IPv4 to 8 groups', () => {
+    expect(parseIPv6('::1')).toEqual([0, 0, 0, 0, 0, 0, 0, 1]);
+    expect(parseIPv6('::ffff:127.0.0.1')).toEqual([
+      0,
+      0,
+      0,
+      0,
+      0,
+      0xffff,
+      0x7f00,
+      1,
+    ]);
+    expect(parseIPv6('::ffff:7f00:1')).toEqual([
+      0,
+      0,
+      0,
+      0,
+      0,
+      0xffff,
+      0x7f00,
+      1,
+    ]);
+    expect(parseIPv6('64:ff9b::1.2.3.4')).toEqual([
+      0x64,
+      0xff9b,
+      0,
+      0,
+      0,
+      0,
+      0x102,
+      0x304,
+    ]);
+    expect(parseIPv6('1.2.3.4')).toBeNull();
+    expect(parseIPv6('nope')).toBeNull();
+    expect(parseIPv6('1::2::3')).toBeNull();
+  });
+
+  it('classifies private IPs across encodings, leaves public/hostnames alone', () => {
+    expect(isPrivateIp('[::1]')).toBe(true);
+    expect(isPrivateIp('::ffff:7f00:1')).toBe(true);
+    expect(isPrivateIp('8.8.8.8')).toBe(false);
+    expect(isPrivateIp('not-an-ip')).toBe(false);
+  });
+});
+
+describe('base64 codec (cross-runtime, replaces Buffer)', () => {
+  it('round-trips UTF-8 including multi-byte characters', () => {
+    const s = 'héllo <svg/> 🚀 字';
+    expect(base64ToUtf8(utf8ToBase64(s))).toBe(s);
+  });
+
+  it('round-trips raw bytes including high bytes', () => {
+    const bytes = new Uint8Array([0, 1, 2, 250, 253, 254, 255]);
+    expect(Array.from(base64ToBytes(bytesToBase64(bytes)))).toEqual([
+      0,
+      1,
+      2,
+      250,
+      253,
+      254,
+      255,
+    ]);
+  });
+
+  it('produces output identical to Node Buffer (compat with prior behavior)', () => {
+    const s = 'data:application/json compatibility check — €';
+    expect(utf8ToBase64(s)).toBe(Buffer.from(s).toString('base64'));
+    expect(base64ToUtf8(Buffer.from(s).toString('base64'))).toBe(s);
+  });
+
+  it('bytesToHex sniffs leading bytes for magic numbers', () => {
+    expect(bytesToHex(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), 0, 4)).toBe(
+      '89504e47'
+    );
+  });
+});
+
+describe('getImageURI — base64 WebP detection (magic-byte offset fix)', () => {
+  it('recognizes a base64 WebP image and returns it unchanged', () => {
+    // RIFF (0-3) + size (4-7) + WEBP (8-11) + a VP8 chunk tag (>=12 bytes)
+    const webp = new Uint8Array([
+      0x52,
+      0x49,
+      0x46,
+      0x46,
+      0x1a,
+      0x00,
+      0x00,
+      0x00,
+      0x57,
+      0x45,
+      0x42,
+      0x50,
+      0x56,
+      0x50,
+      0x38,
+      0x20,
+    ]);
+    const dataUri =
+      'data:image/webp;base64,' + Buffer.from(webp).toString('base64');
+    expect(getImageURI({ metadata: { image: dataUri } })).toBe(dataUri);
   });
 });
 
