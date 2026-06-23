@@ -1,53 +1,39 @@
 import { Dispatcher } from 'undici';
 import { isNode } from './detectPlatform';
+import { isPrivateIp } from './ip';
 import { Fetcher, FetcherResponse } from '../types';
 
 const MAX_REDIRECTS = 10;
 
 /**
- * Checks if a hostname is a private/reserved IP address.
- * Defense-in-depth URL-based check for all environments.
+ * Checks if a hostname denotes a private/reserved target.
+ * Defense-in-depth URL-based check for all environments (the only SSRF defense
+ * in browser/edge runtimes, since no Node agent is installed there).
  * Does NOT protect against DNS rebinding — use agent-based protection in Node.js.
+ *
+ * Two cases: DNS names that always denote local scopes (localhost, .local,
+ * .internal, .localhost), and IP literals — which are canonicalized and
+ * range-checked by isPrivateIp so every textual encoding (bracketed IPv6,
+ * compressed `::`, hex-embedded / IPv4-mapped / NAT64 forms) is caught.
  */
 export function isPrivateHostname(hostname: string): boolean {
   if (!hostname) return true;
-  const h = hostname.toLowerCase();
+  // Strip the brackets the WHATWG URL parser puts around IPv6 hosts.
+  const h = hostname
+    .toLowerCase()
+    .replace(/^\[/, '')
+    .replace(/\]$/, '');
 
-  // Loopback
-  if (h === 'localhost' || h === '::1' || h === '0.0.0.0' || h === '::')
-    return true;
-  if (/^127\./.test(h) || /^0\./.test(h)) return true;
-
-  // Private IPv4 (RFC 1918)
-  if (/^10\./.test(h) || /^192\.168\./.test(h)) return true;
-  if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(h)) return true;
-
-  // Link-local — covers cloud metadata endpoints (AWS 169.254.169.254, etc.)
-  if (/^169\.254\./.test(h)) return true;
-
-  // CGNAT / Shared Address Space (RFC 6598) — used by cloud providers internally
-  if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)) return true;
-
-  // Private TLDs
   if (
+    h === 'localhost' ||
+    h.endsWith('.localhost') ||
     h.endsWith('.local') ||
-    h.endsWith('.internal') ||
-    h.endsWith('.localhost')
-  )
+    h.endsWith('.internal')
+  ) {
     return true;
-
-  // IPv6 checks — only apply to actual IPv6 addresses (contain ':')
-  if (h.includes(':')) {
-    // IPv6 unique-local (fc00::/7) and link-local (fe80::/10)
-    if (/^f[cd]/.test(h)) return true;
-    if (/^fe[89ab]/.test(h)) return true;
-
-    // IPv4-mapped IPv6 (::ffff:127.0.0.1, ::ffff:10.x.x.x, etc.)
-    const v4Mapped = h.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (v4Mapped) return isPrivateHostname(v4Mapped[1]);
   }
 
-  return false;
+  return isPrivateIp(hostname);
 }
 
 /**
@@ -118,21 +104,47 @@ class TTLCache {
 // SSRF-safe undici Agent (Node.js only)
 // ---------------------------------------------------------------------------
 
-/**
- * Creates an undici Agent with SSRF protection at the DNS and socket level.
- * Uses require() because this only runs on Node.js.
- *
- * @internal — types are loose inside because undici's connector API
- * uses complex discriminated tuples that vary across versions.
- * The public return type (Dispatcher) is what matters.
- */
-function createSSRFSafeAgent(): Dispatcher {
-  /* eslint-disable @typescript-eslint/no-var-requires */
-  const net = require('net');
-  const { Agent, buildConnector } = require('undici');
-  const dns = require('dns');
-  /* eslint-enable @typescript-eslint/no-var-requires */
+// undici's buildConnector types use complex discriminated tuples (CallbackArgs)
+// that differ across versions. We type the public boundary (Dispatcher return)
+// and use runtime-safe patterns internally.
+type LookupAddress = { address: string; family: number };
+type LookupCb = (
+  err: Error | null,
+  address?: string | LookupAddress[],
+  family?: number
+) => void;
+type ConnectorCb = (err: Error | null, socket: unknown) => void;
 
+// The slices of Node's `net` / `dns` builtins the SSRF agent needs. They are
+// injected (loaded via dynamic import in resolveRuntime) rather than required
+// here, so this module is valid ESM and never statically pulls Node-only
+// builtins into a browser/edge bundle.
+interface NetModule {
+  isIP(input: string): number;
+}
+interface DnsModule {
+  lookup(
+    hostname: string,
+    options: Record<string, unknown>,
+    callback: (
+      err: Error | null,
+      address: string | LookupAddress[],
+      family: number
+    ) => void
+  ): void;
+}
+
+/**
+ * Builds the SSRF-validating DNS lookup passed to undici's buildConnector.
+ *
+ * @internal — exported for tests. Node 20+ enables autoSelectFamily (Happy
+ * Eyeballs), so undici invokes this lookup with `{ all: true }`, and
+ * dns.lookup then returns an ARRAY of `{ address, family }` rather than a
+ * single address. Both shapes must be handled: every resolved IP is checked
+ * against the private-address rules, and the result is passed through
+ * unchanged so undici's family selection keeps working.
+ */
+export function createSSRFSafeLookup(net: NetModule, dns: DnsModule) {
   const checkIP = (ip: string, hostname: string) => {
     if (isPrivateHostname(ip)) {
       throw new Error(
@@ -141,44 +153,69 @@ function createSSRFSafeAgent(): Dispatcher {
     }
   };
 
-  // undici's buildConnector types use complex discriminated tuples (CallbackArgs)
-  // that differ across versions. We type the public boundary (Dispatcher return)
-  // and use runtime-safe patterns internally.
-  type LookupCb = (
-    err: Error | null,
-    address?: string,
-    family?: number
-  ) => void;
-  type ConnectorCb = (err: Error | null, socket: unknown) => void;
+  return (
+    hostname: string,
+    options: Record<string, unknown>,
+    callback: LookupCb
+  ) => {
+    const wantsAll = options && (options as { all?: boolean }).all === true;
+    const family = net.isIP(hostname);
 
-  const connector = buildConnector({
-    lookup: (
-      hostname: string,
-      options: Record<string, unknown>,
-      callback: LookupCb
-    ) => {
-      // Layer 1: block IP literals before DNS
-      if (net.isIP(hostname)) {
+    // Layer 1: block IP literals before DNS
+    if (family) {
+      try {
         checkIP(hostname, hostname);
-        return callback(null, hostname, net.isIP(hostname));
+      } catch (e) {
+        return callback(e as Error);
       }
+      return wantsAll
+        ? callback(null, [{ address: hostname, family }])
+        : callback(null, hostname, family);
+    }
 
-      // Layer 2: validate DNS results
-      dns.lookup(
-        hostname,
-        options,
-        (err: Error | null, address: string, family: number) => {
-          if (err) return callback(err);
-          try {
+    // Layer 2: validate every resolved DNS result
+    dns.lookup(
+      hostname,
+      options,
+      (
+        err: Error | null,
+        address: string | LookupAddress[],
+        addrFamily: number
+      ) => {
+        if (err) return callback(err);
+        try {
+          if (Array.isArray(address)) {
+            for (const entry of address) checkIP(entry.address, hostname);
+          } else {
             checkIP(address, hostname);
-          } catch (e) {
-            return callback(e as Error);
           }
-          callback(null, address, family);
+        } catch (e) {
+          return callback(e as Error);
         }
-      );
-    },
-  });
+        callback(null, address, addrFamily);
+      }
+    );
+  };
+}
+
+/**
+ * Creates an undici Agent with SSRF protection at the DNS and socket level.
+ * `undici`, `net`, and `dns` are injected (dynamically imported on Node in
+ * resolveRuntime) so this stays valid ESM and never statically pulls Node-only
+ * modules into a browser/edge bundle.
+ *
+ * @internal — types are loose inside because undici's connector API
+ * uses complex discriminated tuples that vary across versions.
+ * The public return type (Dispatcher) is what matters.
+ */
+function createSSRFSafeAgent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  undici: { Agent: any; buildConnector: any },
+  net: NetModule,
+  dns: DnsModule
+): Dispatcher {
+  const { Agent, buildConnector } = undici;
+  const connector = buildConnector({ lookup: createSSRFSafeLookup(net, dns) });
 
   return new Agent({
     connect: (opts: Record<string, unknown>, cb: ConnectorCb) => {
@@ -264,6 +301,50 @@ function headersToRecord(headers: Headers): Record<string, string> {
 }
 
 // ---------------------------------------------------------------------------
+// Runtime resolution
+//
+// Node-only dependencies (undici, net, dns) are loaded lazily via dynamic
+// import() on first request, never with require() and never as a static
+// top-level import. This keeps the emitted module valid ESM (no `require is
+// not defined`) while still not pulling Node-only packages into a browser/edge
+// bundle, since the import() only executes on Node.
+// ---------------------------------------------------------------------------
+
+interface FetchRuntime {
+  fetchFn: FetchFn;
+  ssrfDispatcher?: Dispatcher;
+}
+
+// Normalize CJS/ESM interop for a dynamically-imported module.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function interopDefault(ns: any): any {
+  return (ns && ns.default) || ns;
+}
+
+async function resolveRuntime(
+  dispatcher: Dispatcher | undefined,
+  allowPrivateIPs: boolean | undefined
+): Promise<FetchRuntime> {
+  if (!isNode) {
+    return { fetchFn: globalThis.fetch.bind(globalThis) };
+  }
+
+  const undici = interopDefault(await import('undici'));
+  const fetchFn = undici.fetch as FetchFn;
+
+  // User-provided dispatcher — use as-is, the caller owns SSRF safety.
+  if (dispatcher) return { fetchFn, ssrfDispatcher: dispatcher };
+  // Private IPs explicitly allowed — no SSRF agent.
+  if (allowPrivateIPs) return { fetchFn };
+
+  const [net, dns] = await Promise.all([
+    import('net').then(interopDefault),
+    import('dns').then(interopDefault),
+  ]);
+  return { fetchFn, ssrfDispatcher: createSSRFSafeAgent(undici, net, dns) };
+}
+
+// ---------------------------------------------------------------------------
 // createFetcher
 // ---------------------------------------------------------------------------
 
@@ -280,30 +361,22 @@ export function createFetcher({
   timeout?: number;
   urlDenyList?: string[];
 } = {}): Fetcher {
-  // Determine fetch function and SSRF dispatcher
-  let fetchFn: FetchFn;
-  let ssrfDispatcher: Dispatcher | undefined;
-
-  if (isNode) {
-    const undici = require('undici') as typeof import('undici');
-    fetchFn = undici.fetch as FetchFn;
-
-    if (dispatcher) {
-      // User-provided dispatcher — use as-is, user owns security
-      ssrfDispatcher = dispatcher;
-    } else if (!allowPrivateIPs) {
-      ssrfDispatcher = createSSRFSafeAgent();
-    }
-  } else {
-    fetchFn = globalThis.fetch.bind(globalThis);
-  }
-
   const cache = ttl && ttl > 0 ? new TTLCache(ttl) : null;
+
+  // Resolve the runtime (fetch fn + optional SSRF dispatcher) once, lazily, on
+  // the first request — keeps createFetcher synchronous and side-effect-free.
+  let runtime: Promise<FetchRuntime> | undefined;
+  const getRuntime = (): Promise<FetchRuntime> => {
+    if (!runtime) runtime = resolveRuntime(dispatcher, allowPrivateIPs);
+    return runtime;
+  };
 
   async function doFetch(
     url: string,
     init: RequestInit & { dispatcher?: Dispatcher } = {}
   ): Promise<Response> {
+    const { fetchFn, ssrfDispatcher } = await getRuntime();
+
     const fetchInit: RequestInit & {
       dispatcher?: Dispatcher;
       signal?: AbortSignal | null;
@@ -326,7 +399,7 @@ export function createFetcher({
         url,
         fetchInit as RequestInit & { dispatcher?: Dispatcher },
         {
-          fetchFn: fetchFn!,
+          fetchFn,
           urlDenyList,
           allowPrivateIPs,
         }

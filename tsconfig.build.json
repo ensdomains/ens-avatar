@@ -1,0 +1,16 @@
+{
+  // Declaration emission for the published package. Declarations are produced by
+  // a single `tsc` pass (see the `build` script) rather than by the rollup
+  // typescript plugin: with two outputs (.cjs + .mjs) the plugin emitted .d.ts
+  // during each output pass, racing and leaving some declaration files empty.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["test", "**/*.test.ts", "**/*.spec.ts", "example"]
+}

@@ -1,6 +1,7 @@
 import urlJoin from 'url-join';
 
 import { Gateways } from '../types';
+import { base64ToBytes, bytesToBase64, bytesToHex } from './base64';
 import { isCID } from './isCID';
 import { IMAGE_SIGNATURES } from './isImageURI';
 
@@ -13,14 +14,19 @@ const JSON_MIMETYPE = 'data:application/json;';
 
 function _getImageMimeType(uri: string) {
   const base64Data = uri.replace(base64Regex, '$2');
-  const buffer = Buffer.from(base64Data, 'base64');
+  let bytes: Uint8Array;
+  try {
+    bytes = base64ToBytes(base64Data);
+  } catch {
+    return null; // not valid base64
+  }
 
-  if (buffer.length < 12) {
+  if (bytes.length < 12) {
     return null; // not enough data to determine the type
   }
 
   // get the hex representation of the first 12 bytes
-  const hex = buffer.toString('hex', 0, 12).toUpperCase();
+  const hex = bytesToHex(bytes, 0, 12).toUpperCase();
 
   // check against magic number mapping
   for (const [magicNumber, mimeType] of Object.entries({
@@ -30,7 +36,9 @@ function _getImageMimeType(uri: string) {
   })) {
     if (hex.startsWith(magicNumber.toUpperCase())) {
       if (mimeType === 'special_webp_check') {
-        return hex.slice(8, 12) === '5745' ? 'image/webp' : null;
+        // RIFF (bytes 0-3) + size (4-7) + 'WEBP' (8-11). The 'WE' marker
+        // (0x5745) is at bytes 8-9 → hex chars 16-19, not 8-11.
+        return hex.slice(16, 20) === '5745' ? 'image/webp' : null;
       }
       return mimeType;
     }
@@ -64,8 +72,7 @@ function _isValidBase64(uri: string) {
 
   try {
     // try to encode/decode the string, to see if matches
-    const buffer = Buffer.from(str, 'base64');
-    const encoded = buffer.toString('base64');
+    const encoded = bytesToBase64(base64ToBytes(str));
     return encoded === str;
   } catch (e) {
     return false;

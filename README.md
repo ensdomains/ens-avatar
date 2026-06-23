@@ -198,6 +198,26 @@ All user-generated SVG content is automatically sanitized to prevent XSS attacks
 
 Raster avatars (`png`, `jpeg`, `gif`, `webp`, …), whether served as `data:` URIs or remote URLs, are passed through after validation — they are inert as `<img>` sources and are not (and need not be) rewritten.
 
+#### Inline vs. remote SVGs
+
+How an SVG avatar is handled depends on where it comes from:
+
+- **Inline SVGs** — on-chain `<svg>…</svg>` records and `data:image/svg+xml` URIs — are returned **already sanitized**. `getAvatar` / `utils.getImageURI` hand back a `data:image/svg+xml;base64,…` URI with scripts, event handlers, and external references stripped.
+- **Remote SVGs** — an avatar whose record is an `http(s)` URL that points at an SVG — are returned **as the raw URL, unsanitized**. ens-avatar is a resolver: for remote images it returns _where_ the image lives, not its bytes, so the safe-rendering strategy is yours to pick. (The content-type check performed during resolution is not a safety guarantee — a server can advertise `image/svg+xml` and still return a hostile body.)
+
+When you render a remote SVG, either load it in a context that already sandboxes it — an `<img src>` tag, a CSS `background-image`, or an `<image href>` inside another SVG, none of which execute scripts or load external sub-resources — **or**, if you fetch the bytes and inline them into your DOM, sanitize them first with the same engine the library uses for inline SVGs:
+
+```js
+import { utils as avtUtils } from '@ensdomains/ens-avatar';
+
+// `avatarUrl` came back from resolver.getAvatar(...) and points at an SVG
+const svg = await fetch(avatarUrl).then(res => res.text());
+const safeSvg = avtUtils.sanitizeSVG(svg); // strips scripts/handlers/external refs
+// safeSvg is now safe to inline into the DOM
+```
+
+For an SSRF-safe fetch (private-address blocking, redirect re-validation, size caps — see below), use the library's own fetcher instead of the global `fetch`: `const { get } = avtUtils.createFetcher();`.
+
 ### SSRF Protection
 
 **By default**, ens-avatar includes built-in protection against Server-Side Request Forgery (SSRF) attacks in Node.js environments. This prevents malicious actors from using avatar URLs to probe internal networks.

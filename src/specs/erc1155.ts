@@ -1,5 +1,5 @@
-import { Buffer } from 'buffer/';
 import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import { base64ToUtf8 } from '../utils/base64';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
@@ -55,10 +55,6 @@ export default class ERC1155 {
         urlDenyList: options?.urlDenyList,
       });
 
-    // exclude opensea api which does not follow erc1155 spec
-    const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
-      ? tokenID.replace('0x', '').padStart(64, '0')
-      : tokenID;
     const id = BigInt(tokenID);
     const [tokenURI, balance] = await handleSettled([
       client.readContract<string>({
@@ -91,10 +87,9 @@ export default class ERC1155 {
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
-        _resolvedUri = Buffer.from(
-          resolvedURI.replace('data:application/json;base64,', ''),
-          'base64'
-        ).toString();
+        _resolvedUri = base64ToUtf8(
+          resolvedURI.replace('data:application/json;base64,', '')
+        );
       }
       let metadata: Record<string, unknown>;
       try {
@@ -109,6 +104,15 @@ export default class ERC1155 {
 
     const marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);
 
+    // ERC-1155 requires {id} to be the lowercase hex of the uint256 id, padded
+    // to 64 chars. OpenSea's API is the documented exception — it uses the
+    // decimal id — so detect it on the resolved metadata URI (not the token id,
+    // which previously made this branch dead code).
+    const tokenIDHex = resolvedURI.startsWith('https://api.opensea.io/')
+      ? tokenID
+      : BigInt(tokenID)
+          .toString(16)
+          .padStart(64, '0');
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex);
     const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
     const response = await fetch.get(

@@ -1,5 +1,5 @@
-import { Buffer } from 'buffer/';
 import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import { base64ToUtf8 } from '../utils/base64';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
@@ -78,10 +78,9 @@ export default class ERC721 {
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
-        _resolvedUri = Buffer.from(
-          resolvedURI.replace('data:application/json;base64,', ''),
-          'base64'
-        ).toString();
+        _resolvedUri = base64ToUtf8(
+          resolvedURI.replace('data:application/json;base64,', '')
+        );
       }
       let metadata: Record<string, unknown>;
       try {

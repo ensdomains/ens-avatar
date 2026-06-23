@@ -19,11 +19,18 @@ export interface ViemClientLike {
     name: string;
     universalResolverAddress?: string;
   }): Promise<string | null>;
+  // `address` is `any` and `args` is optional so that a stock viem
+  // `PublicClient` (whose `readContract` is heavily generic, with `address`
+  // typed as the 0x-prefixed `Address`) structurally satisfies this interface —
+  // consumers can pass `createPublicClient(...)` straight to `fromViem` with no
+  // `as unknown as ViemClientLike` cast. `address` can't be the precise
+  // `` `0x${string}` `` template-literal type here because the repo's `tsdx`
+  // lint parser predates template-literal type syntax.
   readContract(args: {
-    address: string;
+    address: any;
     abi: readonly unknown[];
     functionName: string;
-    args: readonly unknown[];
+    args?: readonly unknown[];
   }): Promise<unknown>;
 }
 
