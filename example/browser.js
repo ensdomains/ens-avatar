@@ -1,12 +1,13 @@
 const { ethers } = require('ethers');
 const { AvatarResolver } = require('../dist/index');
+const { fromEthers } = require('../dist/chain/ethers');
 
 const provider = new ethers.JsonRpcProvider(
   'https://ethereum-rpc.publicnode.com',
   'mainnet',
   { staticNetwork: true }
 );
-const avt = new AvatarResolver(provider, {
+const avt = new AvatarResolver(fromEthers(provider), {
   ipfs: 'https://ipfs.io',
 });
 

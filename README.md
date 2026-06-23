@@ -4,8 +4,12 @@ Avatar resolver library for Node.js, browsers, and edge runtimes (Cloudflare Wor
 
 ## Important Notes
 
-- **ENS-Avatar >= 1.0.0** is only compatible with ethers v6. If your project is using v5, keep your ens-avatar on latest 0.x version.
+- **Bring your own chain client.** `AvatarResolver` takes a `ChainClient` instead of a raw provider, so the core ships with **no ethers in the bundle**. Wrap your SDK with a one-line adapter:
+  - ethers: `import { fromEthers } from '@ensdomains/ens-avatar/ethers'` → `new AvatarResolver(fromEthers(provider))`
+  - viem: `import { fromViem } from '@ensdomains/ens-avatar/viem'` → `new AvatarResolver(fromViem(client))`
+  - `ethers` and `viem` are **optional peer dependencies** — install only the one you use.
 - **Version 1.0.4+** uses the native Fetch API for maximum compatibility across platforms including Cloudflare Workers and other edge runtimes.
+- **Name resolution uses the ENS [Universal Resolver](https://docs.ens.domains/resolvers/universal/)**: the resolver address, owner address, and avatar/header record are fetched in a single CCIP-read-aware call, so offchain (gateway/L2) and ENSIP-10 wildcard names resolve out of the box. Override the contract via the adapter's `universalResolverAddress` option for non-default networks.
 
 ## Platform Support
 
@@ -19,7 +23,7 @@ This library works seamlessly across:
 
 ### Prerequisites
 
-- Have your web3 provider ready (web3.js, ethers.js)
+- Have an ethers v6 provider or a viem public client ready.
 
 And good to go! SVG sanitization is built in and runs identically in browsers, Node.js,
 and edge runtimes (Cloudflare Workers) — no DOM polyfill (jsdom) required.
@@ -35,28 +39,27 @@ yarn add @ensdomains/ens-avatar
 
 ### Usage
 
-```js
-import { StaticJsonRpcProvider } from '@ethersproject/providers';
-import { AvatarResolver, utils as avtUtils } from '@ensdomains/ens-avatar';
+With ethers:
 
-const provider = new StaticJsonRpcProvider(
-    ...
-  );
-...
+```js
+import { JsonRpcProvider } from 'ethers';
+import { AvatarResolver, utils as avtUtils } from '@ensdomains/ens-avatar';
+import { fromEthers } from '@ensdomains/ens-avatar/ethers';
+
+const provider = new JsonRpcProvider(/* ... */);
+const resolver = new AvatarResolver(fromEthers(provider));
+
 async function getAvatar() {
-    const resolver = new AvatarResolver(provider);
     const avatarURI = await resolver.getAvatar('tanrikulu.eth');
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
 
 async function getHeader() {
-    const resolver = new AvatarResolver(provider);
     const headerURI = await resolver.getHeader('tanrikulu.eth');
     // headerURI = https://ipfs.io/ipfs/QmRFnn6c9rj6NuHenFVyKXb6tuKxynAvGiw7yszQJ2EsjN
 }
 
 async function getAvatarMetadata() {
-    const resolver = new AvatarResolver(provider);
     const avatarMetadata = await resolver.getMetadata('tanrikulu.eth');
     // avatarMetadata = { image: ... , uri: ... , name: ... , description: ... }
     const headerMetadata = await resolver.getMetadata('tanrikulu.eth', 'header');
@@ -64,6 +67,20 @@ async function getAvatarMetadata() {
     const avatarURI = avtUtils.getImageURI({ metadata: avatarMetadata });
     // avatarURI = https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR
 }
+```
+
+With viem:
+
+```js
+import { createPublicClient, http } from 'viem';
+import { mainnet } from 'viem/chains';
+import { AvatarResolver } from '@ensdomains/ens-avatar';
+import { fromViem } from '@ensdomains/ens-avatar/viem';
+
+const client = createPublicClient({ chain: mainnet, transport: http() });
+const resolver = new AvatarResolver(fromViem(client));
+
+const avatarURI = await resolver.getAvatar('tanrikulu.eth');
 ```
 
 ## Supported avatar specs
@@ -180,6 +197,26 @@ All user-generated SVG content is automatically sanitized to prevent XSS attacks
 - CSS in both `style` attributes and `<style>` blocks is filtered against a property allowlist; `url(...)` is permitted only for internal fragment references (`url(#id)`), so gradients/clips/masks keep working while external resource loading (tracking, exfiltration) is blocked.
 
 Raster avatars (`png`, `jpeg`, `gif`, `webp`, …), whether served as `data:` URIs or remote URLs, are passed through after validation — they are inert as `<img>` sources and are not (and need not be) rewritten.
+
+#### Inline vs. remote SVGs
+
+How an SVG avatar is handled depends on where it comes from:
+
+- **Inline SVGs** — on-chain `<svg>…</svg>` records and `data:image/svg+xml` URIs — are returned **already sanitized**. `getAvatar` / `utils.getImageURI` hand back a `data:image/svg+xml;base64,…` URI with scripts, event handlers, and external references stripped.
+- **Remote SVGs** — an avatar whose record is an `http(s)` URL that points at an SVG — are returned **as the raw URL, unsanitized**. ens-avatar is a resolver: for remote images it returns _where_ the image lives, not its bytes, so the safe-rendering strategy is yours to pick. (The content-type check performed during resolution is not a safety guarantee — a server can advertise `image/svg+xml` and still return a hostile body.)
+
+When you render a remote SVG, either load it in a context that already sandboxes it — an `<img src>` tag, a CSS `background-image`, or an `<image href>` inside another SVG, none of which execute scripts or load external sub-resources — **or**, if you fetch the bytes and inline them into your DOM, sanitize them first with the same engine the library uses for inline SVGs:
+
+```js
+import { utils as avtUtils } from '@ensdomains/ens-avatar';
+
+// `avatarUrl` came back from resolver.getAvatar(...) and points at an SVG
+const svg = await fetch(avatarUrl).then(res => res.text());
+const safeSvg = avtUtils.sanitizeSVG(svg); // strips scripts/handlers/external refs
+// safeSvg is now safe to inline into the DOM
+```
+
+For an SSRF-safe fetch (private-address blocking, redirect re-validation, size caps — see below), use the library's own fetcher instead of the global `fetch`: `const { get } = avtUtils.createFetcher();`.
 
 ### SSRF Protection
 

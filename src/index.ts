@@ -1,4 +1,3 @@
-import { JsonRpcProvider } from 'ethers';
 import ERC1155 from './specs/erc1155';
 import ERC721 from './specs/erc721';
 import URI from './specs/uri';
@@ -7,7 +6,6 @@ import {
   BaseError,
   createFetcher,
   getImageURI,
-  handleSettled,
   isImageURI,
   parseNFT,
 } from './utils';
@@ -20,6 +18,7 @@ import {
   NFTMetadata,
   Spec,
 } from './types';
+import { ChainClient } from './chain/client';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
@@ -33,17 +32,35 @@ export interface UnsupportedMediaKey {}
 export class UnsupportedMediaKey extends BaseError {}
 
 export interface AvatarResolver {
-  provider: JsonRpcProvider;
+  client: ChainClient;
   options?: AvatarResolverOpts;
   fetcher: Fetcher;
+  /**
+   * Resolve an ENS name's `avatar` record to a displayable image reference.
+   *
+   * Returns a URL for remote raster/SVG images, or a sanitized
+   * `data:image/svg+xml;base64,...` URI for inline/on-chain SVGs (scripts,
+   * event handlers, and external references stripped).
+   *
+   * SECURITY: a **remote** SVG (an `http(s)` URL pointing at an SVG) is returned
+   * as the raw URL and is NOT sanitized — render it in a sandboxed context
+   * (`<img>`, CSS `background-image`, or `<image href>` in an SVG), or run the
+   * fetched bytes through `utils.sanitizeSVG` before inlining into the DOM.
+   *
+   * @returns the image reference, or null if the name has no avatar record.
+   */
   getAvatar(ens: string, data: AvatarRequestOpts): Promise<string | null>;
+  /**
+   * Resolve an ENS name's `header`/`banner` record to a displayable image
+   * reference. Same return contract and remote-SVG caveat as `getAvatar`.
+   */
   getHeader(ens: string, data: HeaderRequestOpts): Promise<string | null>;
   getMetadata(ens: string, key?: MediaKey): Promise<NFTMetadata | null>;
 }
 
 export class AvatarResolver implements AvatarResolver {
-  constructor(provider: JsonRpcProvider, options?: AvatarResolverOpts) {
-    this.provider = provider;
+  constructor(client: ChainClient, options?: AvatarResolverOpts) {
+    this.client = client;
     this.options = options;
     this.fetcher = createFetcher({
       ttl: options?.cache,
@@ -55,15 +72,12 @@ export class AvatarResolver implements AvatarResolver {
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
-    // retrieve registrar address and resolver object from ens name
-    const [resolvedAddress, resolver] = await handleSettled([
-      this.provider.resolveName(ens),
-      this.provider.getResolver(ens),
-    ]);
-    if (!resolver) return null;
-
-    // retrieve 'avatar' text recored from resolver
-    const mediaURI = await resolver.getText(key);
+    // resolve the avatar/header text record + owner address via the chain
+    // client (CCIP-read and ENSIP-10 wildcard aware in the bundled adapters)
+    const {
+      record: mediaURI,
+      address: resolvedAddress,
+    } = await this.client.getEnsRecord(ens, key);
     if (!mediaURI) return null;
 
     // test case-insensitive in case of uppercase records
@@ -101,7 +115,7 @@ export class AvatarResolver implements AvatarResolver {
 
     // retrieve metadata
     const metadata = await spec.getMetadata(
-      this.provider,
+      this.client,
       resolvedAddress,
       contractAddress,
       tokenID,
@@ -153,3 +167,7 @@ export class AvatarResolver implements AvatarResolver {
 }
 
 export { utils };
+export { ChainClient, EnsRecord, ReadContractParams } from './chain/client';
+// Public option/return types so consumers can write typed code against the API
+// (AvatarResolverOpts, NFTMetadata, Fetcher, MediaKey, Gateways, Spec, …).
+export * from './types';

@@ -2,26 +2,45 @@ import fs from 'fs';
 import path from 'path';
 import tsPlugin from '@rollup/plugin-typescript';
 
+const sharedOutput = {
+  dir: 'dist',
+  preserveModules: true,
+  preserveModulesRoot: 'src',
+};
+
 export default {
-  input: 'src/index.ts',
+  // Multiple entry points so the ethers/viem adapters are emitted as separate
+  // subpath modules (@ensdomains/ens-avatar/ethers, /viem). The core entry
+  // (index) imports neither adapter, so importing it pulls in no SDK.
+  input: ['src/index.ts', 'src/chain/ethers.ts', 'src/chain/viem.ts'],
+  // External deps (sanitize-html, postcss, multiformats, …) are pure libraries.
+  // Telling rollup they have no side effects stops it emitting redundant bare
+  // `import 'sanitize-html'` lines into modules that only use them transitively —
+  // which esbuild (honoring `sideEffects:false`) warns about while dropping.
+  // Bound imports that are actually used (utils/sanitize.ts) are unaffected.
+  treeshake: { moduleSideEffects: 'no-external' },
   output: [
+    // Distinct extensions so Node detects each format unambiguously without a
+    // top-level "type" field: .cjs is always CommonJS, .mjs is always ESM.
     {
+      ...sharedOutput,
       format: 'cjs',
-      file: './dist/index.js',
+      entryFileNames: '[name].cjs',
+      chunkFileNames: '[name].cjs',
     },
     {
+      ...sharedOutput,
       format: 'es',
-      dir: 'dist',
-      preserveModules: true,
-      preserveModulesRoot: 'src',
-      entryFileNames: chunk => {
-        return `${chunk.name === 'index' ? 'index.esm' : chunk.name}.js`;
-      },
+      entryFileNames: '[name].mjs',
+      chunkFileNames: '[name].mjs',
     },
   ],
   plugins: [
+    // Declarations are emitted by a separate `tsc -p tsconfig.build.json` pass
+    // (see the `build` script). Emitting them here too raced across the .cjs/.mjs
+    // outputs and produced intermittently-empty .d.ts files.
     tsPlugin({
-      declarationDir: './dist',
+      declaration: false,
       sourceMap: false,
     }),
     removeDist(),

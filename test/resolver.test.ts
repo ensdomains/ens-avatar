@@ -1,4 +1,11 @@
-import { JsonRpcProvider, FetchRequest } from 'ethers';
+import {
+  AbiCoder,
+  FetchRequest,
+  Interface,
+  JsonRpcProvider,
+  dnsEncode,
+  namehash,
+} from 'ethers';
 import {
   MockAgent,
   setGlobalDispatcher,
@@ -6,7 +13,15 @@ import {
   Dispatcher,
   fetch as undiciFetch,
 } from 'undici';
-import { AvatarResolver } from '../src';
+import {
+  AvatarResolver,
+  AvatarResolverOpts,
+  Gateways,
+  MediaKey,
+  NFTMetadata,
+} from '../src';
+import { fromEthers } from '../src/chain/ethers';
+import { fromViem, ViemClientLike } from '../src/chain/viem';
 
 require('dotenv').config();
 
@@ -47,6 +62,97 @@ const CORS_HEADERS = {
   'access-control-allow-credentials': 'true',
   'access-control-allow-origin': 'http://localhost',
 };
+
+const UNIVERSAL_RESOLVER = '0xeEeEEEeE14D718C2B47D9923Deab1335E144EeEe';
+
+/**
+ * Build the RPC mock entry for the Universal Resolver `resolve()` call that
+ * fromEthers(...).getEnsRecord issues — it batches addr(node, 60) +
+ * text(node, key) through multicall. Returns a single `eth_call:to:data` entry.
+ */
+function mockUniversalResolve(opts: {
+  ens: string;
+  key: string;
+  resolver: string;
+  resolvedAddress: string;
+  mediaURI: string;
+}): Record<string, string> {
+  const abi = AbiCoder.defaultAbiCoder();
+  const resolverIface = new Interface([
+    'function addr(bytes32 node, uint256 coinType) view returns (bytes)',
+    'function text(bytes32 node, string key) view returns (string)',
+  ]);
+  const multicallIface = new Interface([
+    'function multicall(bytes[] data) view returns (bytes[])',
+  ]);
+  const urIface = new Interface([
+    'function resolve(bytes name, bytes data) view returns (bytes, address)',
+  ]);
+
+  const node = namehash(opts.ens);
+  const data = multicallIface.encodeFunctionData('multicall', [
+    [
+      resolverIface.encodeFunctionData('addr', [node, 60]),
+      resolverIface.encodeFunctionData('text', [node, opts.key]),
+    ],
+  ]);
+  const calldata = urIface.encodeFunctionData('resolve', [
+    dnsEncode(opts.ens),
+    data,
+  ]);
+
+  // resolve() returns (bytes response, address resolver); `response` decodes as
+  // multicall's (bytes[]) = [addr return, text return].
+  const addrReturn = abi.encode(['bytes'], [opts.resolvedAddress]);
+  const textReturn = abi.encode(['string'], [opts.mediaURI]);
+  const multicallResult = abi.encode(['bytes[]'], [[addrReturn, textReturn]]);
+  const response = abi.encode(
+    ['bytes', 'address'],
+    [multicallResult, opts.resolver]
+  );
+
+  return {
+    [`eth_call:${UNIVERSAL_RESOLVER.toLowerCase()}:${calldata}`]: response,
+  };
+}
+
+/**
+ * Mock entry for the text-only fallback resolve (used when a resolver doesn't
+ * implement addr(bytes32,uint256) and the batched multicall reverts).
+ */
+function mockUniversalResolveText(opts: {
+  ens: string;
+  key: string;
+  resolver: string;
+  mediaURI: string;
+}): Record<string, string> {
+  const abi = AbiCoder.defaultAbiCoder();
+  const resolverIface = new Interface([
+    'function text(bytes32 node, string key) view returns (string)',
+  ]);
+  const urIface = new Interface([
+    'function resolve(bytes name, bytes data) view returns (bytes, address)',
+  ]);
+
+  const node = namehash(opts.ens);
+  const textCalldata = resolverIface.encodeFunctionData('text', [
+    node,
+    opts.key,
+  ]);
+  const calldata = urIface.encodeFunctionData('resolve', [
+    dnsEncode(opts.ens),
+    textCalldata,
+  ]);
+  const textReturn = abi.encode(['string'], [opts.mediaURI]);
+  const response = abi.encode(
+    ['bytes', 'address'],
+    [textReturn, opts.resolver]
+  );
+
+  return {
+    [`eth_call:${UNIVERSAL_RESOLVER.toLowerCase()}:${calldata}`]: response,
+  };
+}
 
 let mockAgent: MockAgent;
 let originalDispatcher: Dispatcher;
@@ -130,22 +236,24 @@ function mockPool(origin: string) {
 
 describe('get avatar', () => {
   it('retrieves image uri with erc721 spec', async () => {
-    const ENSRegistryWithFallback =
-      '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
     const PublicResolver = '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41';
 
     setupRpcMocks({
       eth_chainId: '0x1',
-      [`eth_call:${ENSRegistryWithFallback}:0x0178b8bf80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae`]: '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-      [`eth_call:${PublicResolver}:0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      [`eth_call:${PublicResolver}:0x3b3b57de80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae`]: '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615',
-      [`eth_call:${PublicResolver}:0x59d1d43c80ee077a908dffcf32972ba13c2df16b42688e1de21bcf17d3469a8507895eae000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003f6569703135353a312f6572633732313a3078333133383564333532306263656439346637376161653130346234303639393464386632313638632f3934323100',
+      ...mockUniversalResolve({
+        ens: 'matoken.eth',
+        key: 'avatar',
+        resolver: PublicResolver,
+        resolvedAddress: '0x5a384227b65fa093dec03ec34e111db80a040615',
+        mediaURI:
+          'eip155:1/erc721:0x31385d3520bced94f77aae104b406994d8f2168c/9421',
+      }),
       [`eth_call:0x31385d3520bced94f77aae104b406994d8f2168c:0xc87b56dd00000000000000000000000000000000000000000000000000000000000024cd`]: '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002568747470733a2f2f6170692e6261737461726467616e70756e6b732e636c75622f39343231000000000000000000000000000000000000000000000000000000',
       [`eth_call:0x31385d3520bced94f77aae104b406994d8f2168c:0x6352211e00000000000000000000000000000000000000000000000000000000000024cd`]: '0x0000000000000000000000005a384227b65fa093dec03ec34e111db80a040615',
     });
 
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-    avt = new AvatarResolver(provider, {
+    avt = new AvatarResolver(fromEthers(provider), {
       apiKey: { opensea: 'api-key' },
       dispatcher: mockAgent,
     });
@@ -203,20 +311,22 @@ describe('get avatar', () => {
   });
 
   it('retrieves image uri with custom spec', async () => {
-    const ENSRegistryWithFallback =
-      '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
     const PublicResolver = '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41';
 
     setupRpcMocks({
       eth_chainId: '0x1',
-      [`eth_call:${ENSRegistryWithFallback}:0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f`]: '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-      [`eth_call:${PublicResolver}:0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      [`eth_call:${PublicResolver}:0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f`]: '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
-      [`eth_call:${PublicResolver}:0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000',
+      ...mockUniversalResolve({
+        ens: 'tanrikulu.eth',
+        key: 'avatar',
+        resolver: PublicResolver,
+        resolvedAddress: '0x0d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
+        mediaURI:
+          'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR',
+      }),
     });
 
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-    avt = new AvatarResolver(provider, {
+    avt = new AvatarResolver(fromEthers(provider), {
       apiKey: { opensea: 'api-key' },
       dispatcher: mockAgent,
     });
@@ -257,22 +367,22 @@ describe('get avatar', () => {
   });
 
   it('retrieves image uri with erc1155 spec', async () => {
-    const ENSRegistryWithFallback =
-      '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
-    const PublicResolver = '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41';
-
     setupRpcMocks({
       eth_chainId: '0x1',
-      [`eth_call:${ENSRegistryWithFallback}:0x0178b8bf05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00`]: '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-      [`eth_call:${PublicResolver}:0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      [`eth_call:${PublicResolver}:0x3b3b57de05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00`]: '0x000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d5',
-      [`eth_call:${PublicResolver}:0x59d1d43c05a67c0ee82964c4f7394cdd47fee7f4d9503a23c09c38341779ea012afe6e00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000`]: '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000886569703135353a312f657263313135353a3078343935663934373237363734396365363436663638616338633234383432303034356362376235652f38313132333136303235383733393237373337353035393337383938393135313533373332353830313033393133373034333334303438353132333830343930373937303038353531393337000000000000000000000000000000000000000000000000',
+      ...mockUniversalResolve({
+        ens: 'nick.eth',
+        key: 'avatar',
+        resolver: '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
+        resolvedAddress: '0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5',
+        mediaURI:
+          'eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e/8112316025873927737505937898915153732580103913704334048512380490797008551937',
+      }),
       [`eth_call:0x495f947276749ce646f68ac8c248420045cb7b5e:0x0e89341c11ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001`]: '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000005868747470733a2f2f6170692e6f70656e7365612e696f2f6170692f76312f6d657461646174612f3078343935663934373237363734394365363436663638414338633234383432303034356362376235652f30787b69647d0000000000000000',
       [`eth_call:0x495f947276749ce646f68ac8c248420045cb7b5e:0x00fdd58e000000000000000000000000b8c2c29ee19d8307cb7255e1cd9cbde883a267d511ef687cfeb2e353670479f2dcc76af2bc6b3935000000000002c40000000001`]: '0x0000000000000000000000000000000000000000000000000000000000000001',
     });
 
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-    avt = new AvatarResolver(provider, {
+    avt = new AvatarResolver(fromEthers(provider), {
       apiKey: { opensea: 'api-key' },
       dispatcher: mockAgent,
     });
@@ -325,10 +435,46 @@ describe('get avatar', () => {
     expect(await avt.getAvatar('nick.eth')).toEqual(NFT_URI_NICK.toString());
   });
 
+  it('falls back to a text-only resolve when the batched multicall reverts', async () => {
+    // Only the text-only resolve is mocked; the batched addr+text multicall is
+    // left unmocked (returns empty), simulating a resolver that doesn't support
+    // addr(bytes32,uint256). The avatar should still resolve via the fallback.
+    setupRpcMocks({
+      eth_chainId: '0x1',
+      ...mockUniversalResolveText({
+        ens: 'legacy.eth',
+        key: 'avatar',
+        resolver: '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
+        mediaURI:
+          'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR',
+      }),
+    });
+    provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+
+    const result = await fromEthers(provider).getEnsRecord(
+      'legacy.eth',
+      'avatar'
+    );
+    expect(result.record).toEqual(
+      'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
+    );
+    // ownership check is skipped in the fallback (no address resolved)
+    expect(result.address).toBeNull();
+  });
+
+  it('returns null (does not throw) when the name cannot be resolved', async () => {
+    // No Universal Resolver mock — resolve() returns empty, which the resolver
+    // treats as unresolved and returns null rather than throwing.
+    setupRpcMocks({ eth_chainId: '0x1' });
+    provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+    avt = new AvatarResolver(fromEthers(provider), { dispatcher: mockAgent });
+    await expect(avt.getAvatar('does-not-resolve.eth')).resolves.toBeNull();
+  });
+
   it('sets cache to 1 sec', async () => {
     setupRpcMocks({ eth_chainId: '0x1' });
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-    const avt = new AvatarResolver(provider, {
+    const avt = new AvatarResolver(fromEthers(provider), {
       cache: 1,
       dispatcher: mockAgent,
     });
@@ -338,20 +484,22 @@ describe('get avatar', () => {
 
 describe('get banner/header', () => {
   it('retrieves image uri with custom spec', async () => {
-    const ENSRegistryWithFallback =
-      '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
     const PublicResolver = '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41';
 
     setupRpcMocks({
       eth_chainId: '0x1',
-      [`eth_call:${ENSRegistryWithFallback}:0x0178b8bfb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f`]: '0x0000000000000000000000004976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
-      [`eth_call:${PublicResolver}:0x01ffc9a79061b92300000000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      [`eth_call:${PublicResolver}:0x3b3b57deb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f`]: '0x0000000000000000000000000d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
-      [`eth_call:${PublicResolver}:0x59d1d43cb47a0edaf3c702800c923ca4c44a113d0d718cb1f42ecdce70c5fd05fa36a63f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066865616465720000000000000000000000000000000000000000000000000000`]: '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004368747470733a2f2f697066732e696f2f697066732f516d55536867666f5a5153484b3354517975546655707363385566654e6644384b77505576444255645a346e6d520000000000000000000000000000000000000000000000000000000000',
+      ...mockUniversalResolve({
+        ens: 'tanrikulu.eth',
+        key: 'header',
+        resolver: PublicResolver,
+        resolvedAddress: '0x0d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
+        mediaURI:
+          'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR',
+      }),
     });
 
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
-    avt = new AvatarResolver(provider, {
+    avt = new AvatarResolver(fromEthers(provider), {
       apiKey: { opensea: 'api-key' },
       dispatcher: mockAgent,
     });
@@ -390,5 +538,232 @@ describe('get banner/header', () => {
     expect(await avt.getHeader('tanrikulu.eth')).toEqual(
       'https://ipfs.io/ipfs/QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR'
     );
+  });
+});
+
+describe('fromViem adapter', () => {
+  it('maps getEnsRecord to the viem client (getEnsText + getEnsAddress)', async () => {
+    const client: ViemClientLike = {
+      async getEnsText({ name, key }) {
+        return name === 'tanrikulu.eth' && key === 'avatar'
+          ? 'https://example.com/a.png'
+          : null;
+      },
+      async getEnsAddress({ name }) {
+        return name === 'tanrikulu.eth'
+          ? '0x5a384227b65fa093dec03ec34e111db80a040615'
+          : null;
+      },
+      async readContract() {
+        throw new Error('not used in this test');
+      },
+    };
+
+    const record = await fromViem(client).getEnsRecord(
+      'tanrikulu.eth',
+      'avatar'
+    );
+    expect(record).toEqual({
+      record: 'https://example.com/a.png',
+      address: '0x5a384227b65fa093dec03ec34e111db80a040615',
+    });
+  });
+
+  it('resolves an erc721 NFT avatar through a viem-style client (readContract path)', async () => {
+    const NFT_URI = new URL(
+      'https://ipfs.io/ipfs/QmRagxjj2No4T8gNCjpM42mLZGQE3ZwMYdTFUYe6e6LMBG'
+    );
+    const MANIFEST = new URL('https://api.bastardganpunks.club/9421');
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return 'eip155:1/erc721:0x31385d3520bced94f77aae104b406994d8f2168c/9421';
+      },
+      async getEnsAddress() {
+        return '0x5a384227b65fa093dec03ec34e111db80a040615';
+      },
+      async readContract({ functionName }) {
+        if (functionName === 'tokenURI') return MANIFEST.toString();
+        if (functionName === 'ownerOf')
+          return '0x5a384227b65fa093dec03ec34e111db80a040615';
+        throw new Error(`unexpected function ${functionName}`);
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+
+    const manifestPool = mockPool(MANIFEST.origin);
+    manifestPool
+      .intercept({ path: MANIFEST.pathname, method: 'GET' })
+      .reply(
+        200,
+        { image: NFT_URI.toString() },
+        { headers: { 'content-type': 'application/json', ...CORS_HEADERS } }
+      );
+
+    const nftPool = mockPool(NFT_URI.origin);
+    nftPool
+      .intercept({ path: NFT_URI.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/png' },
+      });
+
+    expect(await avt.getAvatar('matoken.eth')).toEqual(NFT_URI.toString());
+  });
+
+  it('resolves an erc1155 NFT avatar through a viem-style client (readContract path)', async () => {
+    const MANIFEST = new URL('https://nft.example/meta/erc1155.json');
+    const NFT_URI = new URL('https://img.example/erc1155.png');
+    const owner = '0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5';
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return 'eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e/8112316025873927737505937898915153732580103913704334048512380490797008551937';
+      },
+      async getEnsAddress() {
+        return owner;
+      },
+      async readContract({ functionName }) {
+        if (functionName === 'uri') return MANIFEST.toString();
+        if (functionName === 'balanceOf') return BigInt(1);
+        throw new Error(`unexpected function ${functionName}`);
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+
+    mockPool(MANIFEST.origin)
+      .intercept({ path: MANIFEST.pathname, method: 'GET' })
+      .reply(
+        200,
+        { image: NFT_URI.toString() },
+        { headers: { 'content-type': 'application/json', ...CORS_HEADERS } }
+      );
+    mockPool(NFT_URI.origin)
+      .intercept({ path: NFT_URI.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/png' },
+      });
+
+    expect(await avt.getAvatar('nick.eth')).toEqual(NFT_URI.toString());
+  });
+});
+
+describe('SVG avatars (end to end)', () => {
+  it('sanitizes an inline data: URI SVG avatar via getAvatar (viem adapter)', async () => {
+    const hostileSVG =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(1)</script><rect width="10" height="10" fill="red"/></svg>';
+    const dataUri =
+      'data:image/svg+xml;base64,' + Buffer.from(hostileSVG).toString('base64');
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return dataUri;
+      },
+      async getEnsAddress() {
+        return null;
+      },
+      async readContract() {
+        throw new Error('not used');
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+    const result = await avt.getAvatar('svg-data.eth');
+    expect(result).toBeTruthy();
+    expect(result!.startsWith('data:image/svg+xml;base64,')).toBe(true);
+    const decoded = Buffer.from(
+      result!.replace('data:image/svg+xml;base64,', ''),
+      'base64'
+    ).toString();
+    expect(decoded).not.toMatch(/<script|alert/i);
+    expect(decoded).toContain('fill="red"');
+  });
+
+  it('passes through an http(s) SVG avatar URL unchanged via getAvatar (ethers adapter)', async () => {
+    // NOTE: remote (http/https) SVGs are returned as the raw URL — the library
+    // does NOT fetch and sanitize them (only inline data:/on-chain SVGs are
+    // sanitized). The content-type check + SSRF protection are the safeguards;
+    // the consumer is responsible for sanitizing remote SVG bytes at render time.
+    const SVG_URL = new URL('https://svg.example/avatar.svg');
+
+    setupRpcMocks({
+      eth_chainId: '0x1',
+      ...mockUniversalResolve({
+        ens: 'svg-http.eth',
+        key: 'avatar',
+        resolver: '0x4976fb03c32e5b8cfe2b6ccb31c09ba78ebaba41',
+        resolvedAddress: '0x0d59d0f7dcc0fbf0a3305ce0261863aaf7ab685c',
+        mediaURI: SVG_URL.toString(),
+      }),
+    });
+    provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
+    avt = new AvatarResolver(fromEthers(provider), { dispatcher: mockAgent });
+
+    mockPool(SVG_URL.origin)
+      .intercept({ path: SVG_URL.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/svg+xml' },
+      });
+
+    expect(await avt.getAvatar('svg-http.eth')).toEqual(SVG_URL.toString());
+  });
+});
+
+describe('ERC-1155 {id} substitution (spec-compliant hex)', () => {
+  it('replaces {id} with 64-char lowercase hex of the uint256 id', async () => {
+    const tokenId = '1234';
+    const idHex = BigInt(tokenId)
+      .toString(16)
+      .padStart(64, '0');
+    const META = new URL(`https://erc1155.example/${idHex}.json`);
+    const IMG = new URL('https://img.example/erc1155-id.png');
+
+    const client: ViemClientLike = {
+      async getEnsText() {
+        return `eip155:1/erc1155:0x495f947276749ce646f68ac8c248420045cb7b5e/${tokenId}`;
+      },
+      async getEnsAddress() {
+        return '0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5';
+      },
+      async readContract({ functionName }) {
+        if (functionName === 'uri') return 'https://erc1155.example/{id}.json';
+        if (functionName === 'balanceOf') return BigInt(1);
+        throw new Error(`unexpected function ${functionName}`);
+      },
+    };
+
+    const avt = new AvatarResolver(fromViem(client), { dispatcher: mockAgent });
+
+    // The mock only matches the spec-correct hex path; a decimal-padded {id}
+    // would request a different path and the request would not be intercepted.
+    mockPool(META.origin)
+      .intercept({ path: META.pathname, method: 'GET' })
+      .reply(
+        200,
+        { image: IMG.toString() },
+        { headers: { 'content-type': 'application/json', ...CORS_HEADERS } }
+      );
+    mockPool(IMG.origin)
+      .intercept({ path: IMG.pathname, method: 'HEAD' })
+      .reply(200, '', {
+        headers: { ...CORS_HEADERS, 'content-type': 'image/png' },
+      });
+
+    expect(await avt.getAvatar('erc1155-id.eth')).toEqual(IMG.toString());
+  });
+});
+
+describe('public type exports', () => {
+  it('exposes option/return types from the package entry point', () => {
+    // Compile-time check: these names must be importable from '../src'.
+    const opts: AvatarResolverOpts = { cache: 1, allowPrivateIPs: false };
+    const meta: NFTMetadata = { image: 'x' };
+    const key: MediaKey = 'avatar';
+    const gw: Gateways = { ipfs: 'https://ipfs.io' };
+    expect(opts.cache).toBe(1);
+    expect(meta.image).toBe('x');
+    expect(key).toBe('avatar');
+    expect(gw.ipfs).toContain('ipfs');
   });
 });

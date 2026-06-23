@@ -1,14 +1,29 @@
-import { Contract, Provider } from 'ethers';
-import { Buffer } from 'buffer/';
 import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import { base64ToUtf8 } from '../utils/base64';
 import { MetadataParsingError } from '../utils/error';
 import { isURIEncoded } from '../utils/isImageURI';
 import { AvatarResolverOpts, Fetcher } from '../types';
+import { ChainClient } from '../chain/client';
 
 const abi = [
-  'function uri(uint256 _id) public view returns (string memory)',
-  'function balanceOf(address account, uint256 id) public view returns (uint256)',
-];
+  {
+    type: 'function',
+    name: 'uri',
+    stateMutability: 'view',
+    inputs: [{ name: '_id', type: 'uint256' }],
+    outputs: [{ type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'account', type: 'address' },
+      { name: 'id', type: 'uint256' },
+    ],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const;
 
 function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
   if (
@@ -22,7 +37,7 @@ function getMarketplaceAPIKey(uri: string, options?: AvatarResolverOpts) {
 
 export default class ERC1155 {
   async getMetadata(
-    provider: Provider,
+    client: ChainClient,
     ownerAddress: string | undefined | null,
     contractAddress: string,
     tokenID: string,
@@ -40,15 +55,21 @@ export default class ERC1155 {
         urlDenyList: options?.urlDenyList,
       });
 
-    // exclude opensea api which does not follow erc1155 spec
-    const tokenIDHex = !tokenID.startsWith('https://api.opensea.io/')
-      ? tokenID.replace('0x', '').padStart(64, '0')
-      : tokenID;
-    const contract = new Contract(contractAddress, abi, provider);
+    const id = BigInt(tokenID);
     const [tokenURI, balance] = await handleSettled([
-      contract.uri(tokenID),
+      client.readContract<string>({
+        address: contractAddress,
+        abi,
+        functionName: 'uri',
+        args: [id],
+      }),
       ownerAddress
-        ? contract.balanceOf(ownerAddress, tokenID)
+        ? client.readContract<bigint>({
+            address: contractAddress,
+            abi,
+            functionName: 'balanceOf',
+            args: [ownerAddress, id],
+          })
         : Promise.resolve(BigInt(0)),
     ]);
 
@@ -66,10 +87,9 @@ export default class ERC1155 {
     let _resolvedUri = resolvedURI;
     if (isOnChain) {
       if (isEncoded) {
-        _resolvedUri = Buffer.from(
-          resolvedURI.replace('data:application/json;base64,', ''),
-          'base64'
-        ).toString();
+        _resolvedUri = base64ToUtf8(
+          resolvedURI.replace('data:application/json;base64,', '')
+        );
       }
       let metadata: Record<string, unknown>;
       try {
@@ -84,6 +104,15 @@ export default class ERC1155 {
 
     const marketplaceKey = getMarketplaceAPIKey(resolvedURI, options);
 
+    // ERC-1155 requires {id} to be the lowercase hex of the uint256 id, padded
+    // to 64 chars. OpenSea's API is the documented exception — it uses the
+    // decimal id — so detect it on the resolved metadata URI (not the token id,
+    // which previously made this branch dead code).
+    const tokenIDHex = resolvedURI.startsWith('https://api.opensea.io/')
+      ? tokenID
+      : BigInt(tokenID)
+          .toString(16)
+          .padStart(64, '0');
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex);
     const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
     const response = await fetch.get(

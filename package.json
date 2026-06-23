@@ -1,9 +1,27 @@
 {
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./ethers": {
+      "types": "./dist/chain/ethers.d.ts",
+      "import": "./dist/chain/ethers.mjs",
+      "require": "./dist/chain/ethers.cjs"
+    },
+    "./viem": {
+      "types": "./dist/chain/viem.d.ts",
+      "import": "./dist/chain/viem.mjs",
+      "require": "./dist/chain/viem.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "sideEffects": false,
   "files": [
     "dist",
@@ -14,7 +32,7 @@
   },
   "scripts": {
     "start": "rollup -c --watch",
-    "build": "rollup -c",
+    "build": "rollup -c && tsc -p tsconfig.build.json",
     "build:demo": "node ./example/build.js",
     "test": "jest",
     "lint": "tsdx lint",
@@ -40,10 +58,9 @@
   "author": "Muhammed Tanrıkulu <muhammed@ens.domains>",
   "size-limit": [
     {
-      "path": "dist/index.js",
-      "limit": "240 KB",
+      "path": "dist/index.cjs",
+      "limit": "120 KB",
       "ignore": [
-        "jsdom",
         "http",
         "https",
         "net",
@@ -52,10 +69,9 @@
       ]
     },
     {
-      "path": "dist/index.esm.js",
-      "limit": "150 KB",
+      "path": "dist/index.mjs",
+      "limit": "120 KB",
       "ignore": [
-        "jsdom",
         "http",
         "https",
         "net",
@@ -78,6 +94,7 @@
     "esbuild": "^0.25.0",
     "eslint-config-react-app": "6",
     "eslint-plugin-import": "^2.32.0",
+    "ethers": "6.12.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "rollup": "^4.9.1",
@@ -88,13 +105,23 @@
   },
   "dependencies": {
     "assert": "^2.1.0",
-    "buffer": "^6.0.3",
-    "ethers": "6.12.0",
     "multiformats": "^9.6.2",
     "postcss": "^8.4.0",
     "sanitize-html": "^2.17.0",
     "undici": "^7.16.0",
     "url-join": "^4.0.1"
+  },
+  "peerDependencies": {
+    "ethers": "^6",
+    "viem": "^2"
+  },
+  "peerDependenciesMeta": {
+    "ethers": {
+      "optional": true
+    },
+    "viem": {
+      "optional": true
+    }
   },
   "volta": {
     "node": "20.20.0"

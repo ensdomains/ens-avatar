@@ -1,5 +1,6 @@
 import { ImageURIOpts } from '../types';
 import { assert } from './assert';
+import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { resolveURI } from './resolveURI';
 import { sanitizeSVG } from './sanitize';
@@ -34,7 +35,7 @@ export function convertToRawSVG(input: string): string | null {
   if (input.startsWith(base64Prefix)) {
     const base64Data = input.substring(base64Prefix.length);
     try {
-      return Buffer.from(base64Data, 'base64').toString();
+      return base64ToUtf8(base64Data);
     } catch (error) {
       console.error('Invalid base64 encoded SVG');
       return null;
@@ -53,9 +54,8 @@ export function convertToRawSVG(input: string): string | null {
   }
 }
 
-function _sanitize(data: string): Buffer {
-  const cleanSVG = sanitizeSVG(data);
-  return Buffer.from(cleanSVG);
+function _sanitize(data: string): string {
+  return sanitizeSVG(data);
 }
 
 export function getImageURI({
@@ -84,8 +84,8 @@ export function getImageURI({
     if (!rawSVG) return null;
 
     try {
-      const data = _sanitize(rawSVG);
-      return `data:image/svg+xml;base64,${data.toString('base64')}`;
+      const cleanSVG = _sanitize(rawSVG);
+      return `data:image/svg+xml;base64,${utf8ToBase64(cleanSVG)}`;
     } catch (error) {
       console.error('SVG sanitization failed:', error);
       return null;
