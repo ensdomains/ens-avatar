@@ -384,6 +384,13 @@ const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
 /**
  * Sanitize SVG content to prevent XSS, phishing, and external resource loading.
+ *
+ * This is the same engine the resolver applies to inline/on-chain SVG avatars,
+ * exported so you can apply it to SVG bytes you fetch yourself — e.g. a remote
+ * `http(s)` SVG avatar, which `getAvatar` returns as an unsanitized URL — before
+ * inlining them into the DOM. (No need to call it when rendering remote SVGs via
+ * a sandboxed context like `<img>`, CSS `background-image`, or `<image href>`.)
+ *
  * @param svg - Raw SVG string
  * @returns Sanitized SVG string
  */
