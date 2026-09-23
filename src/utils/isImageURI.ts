@@ -1,5 +1,6 @@
 import { Fetcher } from '../types';
 import { fetch as defaultFetch } from './fetch';
+import { detectImageMimeType } from './sniffImage';
 import { toHttpURL } from './url';
 
 export const ALLOWED_IMAGE_MIMETYPES = [
@@ -15,14 +16,6 @@ export const ALLOWED_IMAGE_MIMETYPES = [
   'image/heif',
   'image/jxl',
 ];
-
-export const IMAGE_SIGNATURES = {
-  FFD8FF: 'image/jpeg',
-  '89504E47': 'image/png',
-  '47494638': 'image/gif',
-  '424D': 'image/bmp',
-  FF0A: 'image/jxl',
-};
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
 
@@ -54,11 +47,8 @@ async function isStreamAnImage(
     }
 
     // Check the binary signature (magic numbers) of the data
-    const magicNumbers = new DataView(response.data).getUint32(0).toString(16);
-
-    const isBinaryImage = Object.keys(IMAGE_SIGNATURES).some(signature =>
-      magicNumbers.toUpperCase().startsWith(signature)
-    );
+    const isBinaryImage =
+      detectImageMimeType(new Uint8Array(response.data)) !== null;
 
     // Check for SVG image - must start with <svg or <?xml (after stripping whitespace/BOM)
     const chunkAsString = new TextDecoder()

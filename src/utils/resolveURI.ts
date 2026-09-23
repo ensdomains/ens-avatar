@@ -1,9 +1,9 @@
 import urlJoin from 'url-join';
 
 import { Gateways } from '../types';
-import { base64ToBytes, bytesToBase64, bytesToHex } from './base64';
+import { base64ToBytes, bytesToBase64 } from './base64';
 import { isCID } from './isCID';
-import { IMAGE_SIGNATURES } from './isImageURI';
+import { detectImageMimeType } from './sniffImage';
 
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
@@ -25,29 +25,20 @@ function _getImageMimeType(uri: string) {
     return null; // not enough data to determine the type
   }
 
-  // get the hex representation of the first 12 bytes
-  const hex = bytesToHex(bytes, 0, 12).toUpperCase();
-
-  // check against magic number mapping
-  for (const [magicNumber, mimeType] of Object.entries({
-    ...IMAGE_SIGNATURES,
-    '52494646': 'special_webp_check',
-    '3C737667': 'image/svg+xml',
-  })) {
-    if (hex.startsWith(magicNumber.toUpperCase())) {
-      if (mimeType === 'special_webp_check') {
-        // RIFF (bytes 0-3) + size (4-7) + 'WEBP' (8-11). The 'WE' marker
-        // (0x5745) is at bytes 8-9 → hex chars 16-19, not 8-11.
-        return hex.slice(16, 20) === '5745' ? 'image/webp' : null;
-      }
-      return mimeType;
-    }
+  const mimeType = detectImageMimeType(bytes);
+  if (mimeType) return mimeType;
+  // "<svg" — base64 SVG data URIs
+  if (String.fromCharCode(...Array.from(bytes.subarray(0, 4))) === '<svg') {
+    return 'image/svg+xml';
   }
-
   return null;
 }
 
-function _isValidBase64(uri: string) {
+/**
+ * True for a well-formed base64 data URI: a JSON document, or an image whose
+ * bytes match the MIME type in its header.
+ */
+export function isValidBase64DataURI(uri: string) {
   if (typeof uri !== 'string') {
     return false;
   }
@@ -98,7 +89,7 @@ export function resolveURI(
   customGateway?: string
 ): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
-  const isEncoded = _isValidBase64(uri);
+  const isEncoded = isValidBase64DataURI(uri);
   if (isEncoded || uri.startsWith('http')) {
     uri = _replaceGateway(uri, 'https://ipfs.io/', gateways?.ipfs);
     uri = _replaceGateway(uri, 'https://arweave.net/', gateways?.arweave);

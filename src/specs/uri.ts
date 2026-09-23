@@ -6,6 +6,7 @@ import {
   resolveURI,
 } from '../utils';
 import { isHostDenied } from '../utils/isHostDenied';
+import { parseOnChainMetadata } from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
 
 export default class URI {
@@ -21,11 +22,18 @@ export default class URI {
     // Use provided fetcher or create a new one
     const fetch = fetcher || createFetcherFromOptions(options);
 
-    const { uri: resolvedURI, isOnChain } = resolveURI(uri, {
+    const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(uri, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,
     });
     if (isOnChain) {
+      // An inline JSON document is metadata (its `image` is resolved next);
+      // anything else inline (e.g. an <svg> or data:image URI) is the image.
+      if (/^data:application\/json[;,]/i.test(uri)) {
+        return {
+          metadata: parseOnChainMetadata(resolvedURI, isEncoded) as NFTMetadata,
+        };
+      }
       return { metadata: { image: resolvedURI } };
     }
 

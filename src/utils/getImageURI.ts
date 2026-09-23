@@ -2,7 +2,7 @@ import { ImageURIOpts } from '../types';
 import { assert } from './assert';
 import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
-import { resolveURI } from './resolveURI';
+import { isValidBase64DataURI, resolveURI } from './resolveURI';
 import { sanitizeSVG } from './sanitize';
 import { toHttpURL } from './url';
 
@@ -145,7 +145,11 @@ export function getImageURI({
     }
   }
 
-  if (isImageDataUri(parsedURI)) return parsedURI;
+  // resolveURI only strips the first `data:…,` prefix, so a nested URI
+  // (`data:,data:image/png;base64,…`) arrives here unchecked: validate it.
+  if (isImageDataUri(parsedURI)) {
+    return isValidBase64DataURI(parsedURI) ? parsedURI : null;
+  }
 
   // Return the parsed form, so the URL callers check is the one they use.
   const url = toHttpURL(parsedURI);

@@ -4,8 +4,7 @@ import {
   handleSettled,
   resolveURI,
 } from '../utils';
-import { base64ToUtf8 } from '../utils/base64';
-import { MetadataParsingError } from '../utils/error';
+import { parseOnChainMetadata } from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
 import { AvatarResolverOpts, Fetcher } from '../types';
 import { ChainClient } from '../chain/client';
@@ -72,21 +71,8 @@ export default class ERC721 {
       ipfs: options?.ipfs,
       arweave: options?.arweave,
     });
-    let _resolvedUri = resolvedURI;
     if (isOnChain) {
-      if (isEncoded) {
-        _resolvedUri = base64ToUtf8(
-          resolvedURI.replace('data:application/json;base64,', '')
-        );
-      }
-      let metadata: Record<string, unknown>;
-      try {
-        metadata = JSON.parse(_resolvedUri);
-      } catch (e) {
-        throw new MetadataParsingError(
-          `Failed to parse token metadata: ${(e as Error).message}`
-        );
-      }
+      const metadata = parseOnChainMetadata(resolvedURI, isEncoded);
       return { ...metadata, is_owner: isOwner };
     }
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenID);

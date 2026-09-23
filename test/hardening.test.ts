@@ -17,6 +17,8 @@ import {
   MAX_INLINE_SVG_LENGTH,
 } from '../src/utils/getImageURI';
 import { Fetcher } from '../src/types';
+import { detectImageMimeType } from '../src/utils/sniffImage';
+import { MetadataParsingError } from '../src/utils/error';
 
 const decodeDataURI = (uri: string | null) =>
   uri && Buffer.from(uri.split(',')[1], 'base64').toString();
@@ -624,5 +626,169 @@ describe('runtime detection', () => {
 
   it('detects Node.js', () => {
     expect(load().isNode).toBe(true);
+  });
+});
+
+const bytes = (...parts: Array<string | number[]>) =>
+  new Uint8Array(
+    parts.flatMap(p =>
+      typeof p === 'string' ? Array.from(p, c => c.charCodeAt(0)) : p
+    )
+  );
+const toBase64 = (b: Uint8Array) => Buffer.from(b).toString('base64');
+
+// 1x1 PNG
+const PNG_B64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+
+describe('nested data: URIs are validated', () => {
+  const html = toBase64(bytes('<html><script>alert(1)</script>'));
+
+  it.each([
+    ['non-image bytes', `data:text/plain,data:image/png;base64,${html}`],
+    ['invalid base64', 'data:,data:image/gif;base64,!!!notbase64!!!'],
+    ['mismatched type', `data:,data:image/gif;base64,${PNG_B64}`],
+    ['non-base64 raster', 'data:,data:image/png,rawbytes'],
+  ])('rejects a nested URI with %s', (_label, image) => {
+    expect(getImageURI({ metadata: { image } })).toBeNull();
+  });
+
+  it('accepts a nested URI whose bytes match its type', () => {
+    expect(
+      getImageURI({
+        metadata: { image: `data:,data:image/png;base64,${PNG_B64}` },
+      })
+    ).toBe(`data:image/png;base64,${PNG_B64}`);
+  });
+
+  it('still accepts a plain valid data URI', () => {
+    const uri = `data:image/png;base64,${PNG_B64}`;
+    expect(getImageURI({ metadata: { image: uri } })).toBe(uri);
+  });
+});
+
+describe('detectImageMimeType', () => {
+  const size = [0, 0, 0, 0x1c];
+  it.each([
+    ['image/jpeg', bytes([0xff, 0xd8, 0xff, 0xe0])],
+    ['image/png', bytes([0x89], 'PNG', [0x0d, 0x0a, 0x1a, 0x0a])],
+    ['image/gif', bytes('GIF89a')],
+    ['image/gif', bytes('GIF87a')],
+    ['image/bmp', bytes('BM', [0, 0])],
+    ['image/webp', bytes('RIFF', [0x24, 0, 0, 0], 'WEBPVP8 ')],
+    ['image/avif', bytes(size, 'ftypavif')],
+    ['image/heic', bytes(size, 'ftypheic')],
+    ['image/heif', bytes(size, 'ftypmif1')],
+    ['image/jxl', bytes([0xff, 0x0a])],
+    ['image/jxl', bytes([0, 0, 0, 0x0c], 'JXL ', [0x0d, 0x0a, 0x87, 0x0a])],
+  ])('detects %s', (mime, input) => {
+    expect(detectImageMimeType(input)).toBe(mime);
+  });
+
+  it.each([
+    ['empty', bytes()],
+    ['text', bytes('<html>')],
+    ['RIFF audio', bytes('RIFF', [0, 0, 0, 0], 'WAVE')],
+    ['MP4 video', bytes(size, 'ftypisom')],
+    ['truncated PNG', bytes([0x89], 'PNG')],
+  ])('returns null for %s', (_label, input) => {
+    expect(detectImageMimeType(input)).toBeNull();
+  });
+});
+
+describe('octet-stream images are sniffed for every allowed format', () => {
+  const octetFetcher = (body: Uint8Array): Fetcher => ({
+    get: jest.fn(),
+    head: jest.fn(async () => ({
+      status: 200,
+      headers: { 'content-type': 'application/octet-stream' },
+      data: undefined,
+    })),
+    getArrayBuffer: jest.fn(async () => ({
+      status: 206,
+      headers: {},
+      data: body.slice().buffer as ArrayBuffer,
+    })),
+  });
+  const size = [0, 0, 0, 0x1c];
+
+  it.each([
+    ['webp', bytes('RIFF', [0x24, 0, 0, 0], 'WEBPVP8 ')],
+    ['avif', bytes(size, 'ftypavif')],
+    ['heic', bytes(size, 'ftypheic')],
+  ])('accepts %s', async (_label, body) => {
+    expect(
+      await isImageURI('https://example.com/img', octetFetcher(body))
+    ).toBe(true);
+  });
+
+  it('rejects unknown bytes', async () => {
+    expect(
+      await isImageURI(
+        'https://example.com/img',
+        octetFetcher(bytes(size, 'ftypisom'))
+      )
+    ).toBe(false);
+  });
+});
+
+describe('on-chain JSON avatar records', () => {
+  let server: Awaited<ReturnType<typeof startServer>>;
+
+  beforeAll(async () => {
+    server = await startServer((req, res) => {
+      res.writeHead(req.url === '/a.png' ? 200 : 404, {
+        'content-type': 'image/png',
+      });
+      res.end();
+    });
+  });
+  afterAll(() => server.close());
+
+  const resolverFor = (record: string) =>
+    new AvatarResolver(
+      {
+        getEnsRecord: async () => ({ record, address: null }),
+        readContract: async () => {
+          throw new Error('unused');
+        },
+      },
+      { allowPrivateIPs: true }
+    );
+  const jsonB64 = (value: unknown) =>
+    `data:application/json;base64,${toBase64(bytes(JSON.stringify(value)))}`;
+
+  it('resolves the image of a base64 JSON record', async () => {
+    const record = jsonB64({ name: 'x', image: server.url('/a.png') });
+    const avt = resolverFor(record);
+    expect(await avt.getAvatar('x.eth')).toBe(server.url('/a.png'));
+    expect(await avt.getMetadata('x.eth')).toEqual({
+      name: 'x',
+      image: server.url('/a.png'),
+      uri: 'x.eth',
+    });
+  });
+
+  it('still content-checks the image of a JSON record', async () => {
+    const record = jsonB64({ image: server.url('/missing.png') });
+    expect(await resolverFor(record).getAvatar('x.eth')).toBeNull();
+  });
+
+  it('resolves a non-base64 JSON record with an inline SVG', async () => {
+    const record =
+      'data:application/json,{"image":"<svg><rect onclick=\'x()\'/></svg>"}';
+    const out = await resolverFor(record).getAvatar('x.eth');
+    expect(decodeDataURI(out)).toBe('<svg><rect></rect></svg>');
+  });
+
+  it('throws MetadataParsingError for malformed JSON', async () => {
+    await expect(
+      resolverFor('data:application/json,{not json').getMetadata('x.eth')
+    ).rejects.toBeInstanceOf(MetadataParsingError);
+  });
+
+  it('still treats a data:image record as the image itself', async () => {
+    const uri = `data:image/png;base64,${PNG_B64}`;
+    expect(await resolverFor(uri).getAvatar('x.eth')).toBe(uri);
   });
 });
