@@ -33,6 +33,8 @@ and edge runtimes (Cloudflare Workers) — no DOM polyfill (jsdom) required.
 ```bash
 # npm
 npm i @ensdomains/ens-avatar
+# pnpm
+pnpm add @ensdomains/ens-avatar
 # yarn
 yarn add @ensdomains/ens-avatar
 ```
@@ -261,6 +263,6 @@ node example/node.js ENS_NAME
 - Browser example
 
 ```bash
-yarn build:demo
+pnpm build:demo
 http-server example
 ```

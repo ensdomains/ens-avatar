@@ -8,4 +8,5 @@ node_modules
 test
 .gitignore
 tsconfig.json
-yarn.lock
+pnpm-lock.yaml
+pnpm-workspace.yaml
