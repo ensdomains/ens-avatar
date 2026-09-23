@@ -85,8 +85,13 @@ export interface AvatarResolverOpts {
    * @default false
    */
   allowPrivateIPs?: boolean;
-  /** HTTP request timeout in milliseconds @default 30000 */
+  /**
+   * Deadline in milliseconds for each HTTP request, covering redirects, the
+   * response headers and the body. @default 30000
+   */
   timeout?: number;
+  /** Maximum size in bytes of a fetched response body. @default 10485760 (10 MiB) */
+  maxContentLength?: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

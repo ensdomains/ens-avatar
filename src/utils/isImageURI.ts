@@ -1,5 +1,6 @@
 import { Fetcher } from '../types';
 import { fetch as defaultFetch } from './fetch';
+import { toHttpURL } from './url';
 
 export const ALLOWED_IMAGE_MIMETYPES = [
   'application/octet-stream',
@@ -84,11 +85,12 @@ export async function isImageURI(
   url: string,
   fetcher?: Fetcher
 ): Promise<boolean> {
-  const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
+  const checkedURL = toHttpURL(url);
+  if (!checkedURL) return false;
   const _fetcher = fetcher || defaultFetch;
 
   try {
-    const result = await _fetcher.head(encodedURI);
+    const result = await _fetcher.head(checkedURL);
 
     if (result.status === 200) {
       const contentType = result.headers['content-type']
@@ -112,7 +114,7 @@ export async function isImageURI(
 
       if (contentType === 'application/octet-stream') {
         // if image served with generic mimetype, do additional check
-        return isStreamAnImage(encodedURI, _fetcher);
+        return isStreamAnImage(checkedURL, _fetcher);
       }
 
       return true;
@@ -150,7 +152,7 @@ export async function isImageURI(
         img.src = '';
         resolve(false);
       };
-      img.src = encodedURI;
+      img.src = checkedURL;
     });
   }
 }

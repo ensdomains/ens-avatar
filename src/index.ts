@@ -4,7 +4,7 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
-  createFetcher,
+  createFetcherFromOptions,
   getImageURI,
   isImageURI,
   parseNFT,
@@ -19,6 +19,7 @@ import {
   Spec,
 } from './types';
 import { ChainClient } from './chain/client';
+import { toHttpURL } from './utils/url';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
@@ -30,6 +31,9 @@ export class UnsupportedNamespace extends BaseError {}
 
 export interface UnsupportedMediaKey {}
 export class UnsupportedMediaKey extends BaseError {}
+
+export interface ChainMismatch {}
+export class ChainMismatch extends BaseError {}
 
 export interface AvatarResolver {
   client: ChainClient;
@@ -62,36 +66,38 @@ export class AvatarResolver implements AvatarResolver {
   constructor(client: ChainClient, options?: AvatarResolverOpts) {
     this.client = client;
     this.options = options;
-    this.fetcher = createFetcher({
-      ttl: options?.cache,
-      dispatcher: options?.dispatcher,
-      allowPrivateIPs: options?.allowPrivateIPs,
-      timeout: options?.timeout,
-      urlDenyList: options?.urlDenyList,
-    });
+    this.fetcher = createFetcherFromOptions(options);
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
+    return (await this._resolveMetadata(ens, key)).metadata;
+  }
+
+  /**
+   * getMetadata plus `verifiedImage`: the image URL already confirmed to be an
+   * image while resolving (a record pointing straight at an image).
+   */
+  async _resolveMetadata(
+    ens: string,
+    key: MediaKey
+  ): Promise<{ metadata: NFTMetadata | null; verifiedImage?: string }> {
     // resolve the avatar/header text record + owner address via the chain
     // client (CCIP-read and ENSIP-10 wildcard aware in the bundled adapters)
     const {
       record: mediaURI,
       address: resolvedAddress,
     } = await this.client.getEnsRecord(ens, key);
-    if (!mediaURI) return null;
+    if (!mediaURI) return { metadata: null };
 
     // test case-insensitive in case of uppercase records
     if (!/eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(
+      const { metadata, verifiedImage } = await uriSpec.getMetadata(
         mediaURI,
         this.options,
         this.fetcher
       );
-      return {
-        ...(typeof metadata === 'object' ? metadata : { image: metadata }),
-        uri: ens,
-      };
+      return { metadata: { ...metadata, uri: ens }, verifiedImage };
     }
 
     // parse retrieved avatar uri
@@ -100,6 +106,16 @@ export class AvatarResolver implements AvatarResolver {
     // prototype pollution via __proto__/constructor namespace injection
     if (!Object.prototype.hasOwnProperty.call(specs, namespace)) {
       throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
+    }
+    // The contract lives on `chainID`; reading the same address on another
+    // chain would return another contract's data (and a wrong is_owner).
+    if (this.client.getChainId) {
+      const clientChainId = await this.client.getChainId();
+      if (clientChainId !== chainID) {
+        throw new ChainMismatch(
+          `NFT is on chain ${chainID} but the client reads chain ${clientChainId}`
+        );
+      }
     }
     const Spec = specs[namespace];
     const spec = new Spec();
@@ -122,7 +138,7 @@ export class AvatarResolver implements AvatarResolver {
       this.options,
       this.fetcher
     );
-    return { ...metadata, uri: ens, host_meta };
+    return { metadata: { ...metadata, uri: ens, host_meta } };
   }
 
   async getAvatar(
@@ -144,7 +160,10 @@ export class AvatarResolver implements AvatarResolver {
   }
 
   async _getMedia(ens: string, mediaKey: MediaKey = 'avatar') {
-    const metadata = await this.getMetadata(ens, mediaKey);
+    const { metadata, verifiedImage } = await this._resolveMetadata(
+      ens,
+      mediaKey
+    );
     if (!metadata) return null;
     const imageURI = getImageURI({
       metadata,
@@ -154,11 +173,9 @@ export class AvatarResolver implements AvatarResolver {
       },
       urlDenyList: this.options?.urlDenyList,
     });
-    if (
-      // do check only NFTs since raw uri has this check built-in
-      metadata.hasOwnProperty('host_meta') &&
-      imageURI?.startsWith('http')
-    ) {
+    // Every remote URL we return must be an image. Skip only the URL the
+    // record pointed at directly, which was checked while resolving.
+    if (imageURI && toHttpURL(imageURI) && imageURI !== verifiedImage) {
       const isImage = await isImageURI(imageURI, this.fetcher);
       return isImage ? imageURI : null;
     }

@@ -1,51 +1,54 @@
-import { AvatarResolverOpts, Fetcher } from '../types';
-import { BaseError, createFetcher, isImageURI, resolveURI } from '../utils';
+import { AvatarResolverOpts, Fetcher, NFTMetadata } from '../types';
+import {
+  BaseError,
+  createFetcherFromOptions,
+  isImageURI,
+  resolveURI,
+} from '../utils';
 import { isHostDenied } from '../utils/isHostDenied';
-import { isURIEncoded } from '../utils/isImageURI';
+import { toHttpURL } from '../utils/url';
 
 export default class URI {
+  /**
+   * Resolve a non-NFT media record. `verifiedImage` is set when the record
+   * itself was confirmed to be an image, so callers need not check it again.
+   */
   async getMetadata(
     uri: string,
     options?: AvatarResolverOpts,
     fetcher?: Fetcher
-  ) {
+  ): Promise<{ metadata: NFTMetadata; verifiedImage?: string }> {
     // Use provided fetcher or create a new one
-    const fetch =
-      fetcher ||
-      createFetcher({
-        ttl: options?.cache,
-        dispatcher: options?.dispatcher,
-        allowPrivateIPs: options?.allowPrivateIPs,
-        timeout: options?.timeout,
-        urlDenyList: options?.urlDenyList,
-      });
+    const fetch = fetcher || createFetcherFromOptions(options);
 
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,
     });
     if (isOnChain) {
-      return resolvedURI;
+      return { metadata: { image: resolvedURI } };
     }
 
-    if (isHostDenied(resolvedURI, options?.urlDenyList)) {
-      return { image: null };
+    const url = toHttpURL(resolvedURI);
+    if (!url || isHostDenied(url, options?.urlDenyList)) {
+      return { metadata: ({ image: null } as unknown) as NFTMetadata };
     }
 
-    // check if resolvedURI is an image, if it is return the url
-    const isImage = await isImageURI(resolvedURI, fetch);
-    if (isImage) {
-      return { image: resolvedURI };
+    // check if the URL is an image, if it is return the url
+    if (await isImageURI(url, fetch)) {
+      return { metadata: { image: url }, verifiedImage: url };
     }
 
-    // if resolvedURI is not an image, try retrieve the data.
-    const finalURI = isURIEncoded(resolvedURI)
-      ? resolvedURI
-      : encodeURI(resolvedURI);
-    const response = await fetch.get(finalURI);
+    // if the URL is not an image, try retrieve the metadata JSON.
+    const response = await fetch.get(url);
     if (!response?.data) {
       throw new BaseError('Failed to retrieve metadata from URI');
     }
-    return await response?.data;
+    const data = response.data;
+    return {
+      metadata: (typeof data === 'object'
+        ? data
+        : { image: data }) as NFTMetadata,
+    };
   }
 }

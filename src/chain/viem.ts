@@ -32,6 +32,8 @@ export interface ViemClientLike {
     functionName: string;
     args?: readonly unknown[];
   }): Promise<unknown>;
+  /** viem's `getChainId` action; when present, NFT chain ids are enforced. */
+  getChainId?(): Promise<number>;
 }
 
 export interface FromViemOptions {
@@ -48,22 +50,34 @@ export function fromViem(
   client: ViemClientLike,
   opts?: FromViemOptions
 ): ChainClient {
+  let chainId: Promise<number> | undefined;
+  const getChainId = client.getChainId?.bind(client);
+
   return {
+    getChainId: getChainId
+      ? () => {
+          if (!chainId) {
+            chainId = getChainId();
+            chainId.catch(() => (chainId = undefined)); // retry after a failure
+          }
+          return chainId;
+        }
+      : undefined,
+
     async getEnsRecord(name: string, key: string): Promise<EnsRecord> {
+      // viem already returns null when the name has no resolver or record.
+      // Anything it throws is a real failure (RPC, gateway) and must surface,
+      // or an outage would read as "no avatar".
       const [record, address] = await Promise.all([
-        client
-          .getEnsText({
-            name,
-            key,
-            universalResolverAddress: opts?.universalResolverAddress,
-          })
-          .catch(() => null),
-        client
-          .getEnsAddress({
-            name,
-            universalResolverAddress: opts?.universalResolverAddress,
-          })
-          .catch(() => null),
+        client.getEnsText({
+          name,
+          key,
+          universalResolverAddress: opts?.universalResolverAddress,
+        }),
+        client.getEnsAddress({
+          name,
+          universalResolverAddress: opts?.universalResolverAddress,
+        }),
       ]);
       return { record: record ?? null, address: address ?? null };
     },

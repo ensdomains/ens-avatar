@@ -1,7 +1,12 @@
-import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import {
+  BaseError,
+  createFetcherFromOptions,
+  handleSettled,
+  resolveURI,
+} from '../utils';
 import { base64ToUtf8 } from '../utils/base64';
 import { MetadataParsingError } from '../utils/error';
-import { isURIEncoded } from '../utils/isImageURI';
+import { toHttpURL } from '../utils/url';
 import { AvatarResolverOpts, Fetcher } from '../types';
 import { ChainClient } from '../chain/client';
 
@@ -32,15 +37,7 @@ export default class ERC721 {
     fetcher?: Fetcher
   ) {
     // Use provided fetcher or create a new one
-    const fetch =
-      fetcher ||
-      createFetcher({
-        ttl: options?.cache,
-        dispatcher: options?.dispatcher,
-        allowPrivateIPs: options?.allowPrivateIPs,
-        timeout: options?.timeout,
-        urlDenyList: options?.urlDenyList,
-      });
+    const fetch = fetcher || createFetcherFromOptions(options);
 
     const id = BigInt(tokenID);
     const [tokenURI, owner] = await handleSettled([
@@ -93,7 +90,7 @@ export default class ERC721 {
       return { ...metadata, is_owner: isOwner };
     }
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenID);
-    const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
+    const finalURI = toHttpURL(replaced) ?? replaced;
     const response = await fetch.get(finalURI);
     if (!response?.data) {
       throw new BaseError('Failed to retrieve token metadata from URI');

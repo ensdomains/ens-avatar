@@ -5,7 +5,13 @@ import { BaseError, MetadataParsingError } from './error';
 import { convertToRawSVG, getImageURI } from './getImageURI';
 import { isHostDenied } from './isHostDenied';
 import { resolveURI } from './resolveURI';
-import { createFetcher, fetch, isPrivateHostname, validateUrl } from './fetch';
+import {
+  createFetcher,
+  createFetcherFromOptions,
+  fetch,
+  isPrivateHostname,
+  validateUrl,
+} from './fetch';
 import { isCID } from './isCID';
 import {
   ALLOWED_IMAGE_MIMETYPES,
@@ -21,6 +27,7 @@ export {
   assert,
   convertToRawSVG,
   createFetcher,
+  createFetcherFromOptions,
   fetch,
   getImageURI,
   handleSettled,

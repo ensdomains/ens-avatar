@@ -1,7 +1,12 @@
-import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
+import {
+  BaseError,
+  createFetcherFromOptions,
+  handleSettled,
+  resolveURI,
+} from '../utils';
 import { base64ToUtf8 } from '../utils/base64';
 import { MetadataParsingError } from '../utils/error';
-import { isURIEncoded } from '../utils/isImageURI';
+import { toHttpURL } from '../utils/url';
 import { AvatarResolverOpts, Fetcher } from '../types';
 import { ChainClient } from '../chain/client';
 
@@ -45,15 +50,7 @@ export default class ERC1155 {
     fetcher?: Fetcher
   ) {
     // Use provided fetcher or create a new one
-    const fetch =
-      fetcher ||
-      createFetcher({
-        ttl: options?.cache,
-        dispatcher: options?.dispatcher,
-        allowPrivateIPs: options?.allowPrivateIPs,
-        timeout: options?.timeout,
-        urlDenyList: options?.urlDenyList,
-      });
+    const fetch = fetcher || createFetcherFromOptions(options);
 
     const id = BigInt(tokenID);
     const [tokenURI, balance] = await handleSettled([
@@ -114,7 +111,7 @@ export default class ERC1155 {
           .toString(16)
           .padStart(64, '0');
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex);
-    const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
+    const finalURI = toHttpURL(replaced) ?? replaced;
     const response = await fetch.get(
       finalURI,
       marketplaceKey ? { headers: marketplaceKey } : {}

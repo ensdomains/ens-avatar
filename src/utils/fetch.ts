@@ -1,9 +1,16 @@
 import { Dispatcher } from 'undici';
 import { isNode } from './detectPlatform';
+import { hostMatchesDenyList, normalizeHostname } from './hostname';
 import { isPrivateIp } from './ip';
-import { Fetcher, FetcherResponse } from '../types';
+import { AvatarResolverOpts, Fetcher, FetcherResponse } from '../types';
 
 const MAX_REDIRECTS = 10;
+/** Default cap on a response body read by the fetcher (10 MiB). */
+export const DEFAULT_MAX_CONTENT_LENGTH = 10 * 1024 * 1024;
+// Request headers that may follow a redirect to another origin. Anything else
+// (API keys, Authorization, cookies) is dropped, as the Fetch spec does for
+// Authorization.
+const CROSS_ORIGIN_SAFE_HEADERS = new Set(['accept', 'range']);
 
 /**
  * Checks if a hostname denotes a private/reserved target.
@@ -17,12 +24,9 @@ const MAX_REDIRECTS = 10;
  * compressed `::`, hex-embedded / IPv4-mapped / NAT64 forms) is caught.
  */
 export function isPrivateHostname(hostname: string): boolean {
-  if (!hostname) return true;
-  // Strip the brackets the WHATWG URL parser puts around IPv6 hosts.
-  const h = hostname
-    .toLowerCase()
-    .replace(/^\[/, '')
-    .replace(/\]$/, '');
+  // Lowercase, strip IPv6 brackets and trailing dots (`localhost.`, `127.0.0.1..`).
+  const h = normalizeHostname(hostname);
+  if (!h) return true;
 
   if (
     h === 'localhost' ||
@@ -33,12 +37,12 @@ export function isPrivateHostname(hostname: string): boolean {
     return true;
   }
 
-  return isPrivateIp(hostname);
+  return isPrivateIp(h);
 }
 
 /**
- * Validates a URL against private hostname and deny list checks.
- * Throws if the URL targets a private address or denied host.
+ * Validates a URL against scheme, private hostname and deny list checks.
+ * Throws unless the URL is http(s) and targets a public, non-denied host.
  */
 export function validateUrl(
   url: string,
@@ -52,18 +56,17 @@ export function validateUrl(
     throw new Error(`Invalid URL: ${url}`);
   }
 
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`Unsupported URL scheme: ${parsed.protocol}`);
+  }
+
   const hostname = parsed.hostname;
 
   if (!allowPrivateIPs && isPrivateHostname(hostname)) {
     throw new Error(`Request to private address blocked: ${hostname}`);
   }
 
-  if (
-    urlDenyList?.length &&
-    urlDenyList.some(
-      denied => hostname === denied || hostname.endsWith('.' + denied)
-    )
-  ) {
+  if (urlDenyList?.length && hostMatchesDenyList(hostname, urlDenyList)) {
     throw new Error(`Request to denied host blocked: ${hostname}`);
   }
 }
@@ -252,6 +255,22 @@ function createSSRFSafeAgent(
 
 type FetchFn = typeof globalThis.fetch;
 
+/** Discard a response body we won't read, so the connection is released. */
+function discardBody(response: Response): void {
+  response.body?.cancel().catch(() => {});
+}
+
+function stripCrossOriginHeaders(
+  headers: RequestInit['headers']
+): Record<string, string> | undefined {
+  if (!headers) return undefined;
+  const kept: Record<string, string> = {};
+  new Headers(headers).forEach((value, key) => {
+    if (CROSS_ORIGIN_SAFE_HEADERS.has(key.toLowerCase())) kept[key] = value;
+  });
+  return kept;
+}
+
 async function fetchWithRedirects(
   url: string,
   init: RequestInit & { dispatcher?: Dispatcher },
@@ -262,23 +281,31 @@ async function fetchWithRedirects(
   }
 ): Promise<Response> {
   let currentUrl = url;
+  let headers = init.headers;
+  const origin = new URL(url).origin;
 
   for (let i = 0; i <= MAX_REDIRECTS; i++) {
     validateUrl(currentUrl, opts.urlDenyList, opts.allowPrivateIPs);
 
     const response = await opts.fetchFn(currentUrl, {
       ...init,
+      headers,
       redirect: 'manual',
     } as RequestInit);
 
     const status = response.status;
     if (status >= 300 && status < 400) {
+      discardBody(response);
       const location = response.headers.get('location');
       if (!location) {
         throw new Error(`Redirect with no Location header from ${currentUrl}`);
       }
       // Resolve relative redirects
       currentUrl = new URL(location, currentUrl).toString();
+      // Once a hop leaves the original origin, credentials stay behind.
+      if (new URL(currentUrl).origin !== origin) {
+        headers = stripCrossOriginHeaders(headers);
+      }
       continue;
     }
 
@@ -291,6 +318,47 @@ async function fetchWithRedirects(
 // ---------------------------------------------------------------------------
 // Response header helper
 // ---------------------------------------------------------------------------
+
+/**
+ * Read a response body, failing once it exceeds `maxBytes` (checked against
+ * Content-Length up front, then while streaming, since the header can lie).
+ */
+async function readBodyCapped(
+  response: Response,
+  maxBytes: number
+): Promise<Uint8Array> {
+  const declared = parseInt(response.headers.get('content-length') || '', 10);
+  if (declared > maxBytes) {
+    discardBody(response);
+    throw new Error(`Response body exceeds ${maxBytes} bytes`);
+  }
+  const reader = response.body?.getReader();
+  if (!reader) return new Uint8Array(0);
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      reader.cancel().catch(() => {});
+      throw new Error(`Response body exceeds ${maxBytes} bytes`);
+    }
+    chunks.push(value);
+  }
+  return concatChunks(chunks, total);
+}
+
+function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return merged;
+}
 
 function headersToRecord(headers: Headers): Record<string, string> {
   const result: Record<string, string> = {};
@@ -354,12 +422,16 @@ export function createFetcher({
   allowPrivateIPs,
   timeout = 30000,
   urlDenyList,
+  maxContentLength = DEFAULT_MAX_CONTENT_LENGTH,
 }: {
   ttl?: number;
   dispatcher?: Dispatcher;
   allowPrivateIPs?: boolean;
+  /** Deadline in ms for the whole request: redirects, headers and body. */
   timeout?: number;
   urlDenyList?: string[];
+  /** Maximum response body size in bytes. */
+  maxContentLength?: number;
 } = {}): Fetcher {
   const cache = ttl && ttl > 0 ? new TTLCache(ttl) : null;
 
@@ -371,41 +443,43 @@ export function createFetcher({
     return runtime;
   };
 
-  async function doFetch(
+  /**
+   * Fetch `url` and consume the response with `read`, all under one deadline:
+   * the timeout aborts a stalled body as well as a stalled connection. A
+   * caller-provided signal aborts the request too.
+   */
+  async function request<T>(
     url: string,
-    init: RequestInit & { dispatcher?: Dispatcher } = {}
-  ): Promise<Response> {
+    init: RequestInit & { signal?: AbortSignal },
+    read: (response: Response) => Promise<T>
+  ): Promise<T> {
     const { fetchFn, ssrfDispatcher } = await getRuntime();
 
-    const fetchInit: RequestInit & {
-      dispatcher?: Dispatcher;
-      signal?: AbortSignal | null;
-    } = { ...init };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const callerSignal = init.signal;
+    const onCallerAbort = () => controller.abort();
+    if (callerSignal?.aborted) controller.abort();
+    callerSignal?.addEventListener('abort', onCallerAbort);
 
+    const fetchInit: RequestInit & { dispatcher?: Dispatcher } = {
+      ...init,
+      signal: controller.signal,
+    };
     if (ssrfDispatcher) {
       fetchInit.dispatcher = ssrfDispatcher;
     }
 
-    // Timeout via AbortController — clear timer on completion to prevent leaks
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    if (!fetchInit.signal) {
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), timeout);
-      fetchInit.signal = controller.signal;
-    }
-
     try {
-      return await fetchWithRedirects(
-        url,
-        fetchInit as RequestInit & { dispatcher?: Dispatcher },
-        {
-          fetchFn,
-          urlDenyList,
-          allowPrivateIPs,
-        }
-      );
+      const response = await fetchWithRedirects(url, fetchInit, {
+        fetchFn,
+        urlDenyList,
+        allowPrivateIPs,
+      });
+      return await read(response);
     } finally {
-      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
+      callerSignal?.removeEventListener('abort', onCallerAbort);
     }
   }
 
@@ -420,17 +494,18 @@ export function createFetcher({
         if (cached) return cached;
       }
 
-      const response = await doFetch(url, {
-        method: 'GET',
-        headers: opts?.headers,
-      });
-
-      const data = (await response.json()) as T;
-      const result: FetcherResponse<T> = {
-        status: response.status,
-        headers: headersToRecord(response.headers),
-        data,
-      };
+      const result = await request(
+        url,
+        { method: 'GET', headers: opts?.headers },
+        async (response): Promise<FetcherResponse<T>> => {
+          const body = await readBodyCapped(response, maxContentLength);
+          return {
+            status: response.status,
+            headers: headersToRecord(response.headers),
+            data: JSON.parse(new TextDecoder().decode(body)) as T,
+          };
+        }
+      );
 
       if (cache) cache.set(cacheKey, result);
       return result;
@@ -443,13 +518,18 @@ export function createFetcher({
         if (cached) return cached;
       }
 
-      const response = await doFetch(url, { method: 'HEAD' });
-
-      const result = {
-        status: response.status,
-        headers: headersToRecord(response.headers),
-        data: undefined,
-      } as FetcherResponse<void>;
+      const result = await request(
+        url,
+        { method: 'HEAD' },
+        async (response): Promise<FetcherResponse<void>> => {
+          discardBody(response);
+          return {
+            status: response.status,
+            headers: headersToRecord(response.headers),
+            data: undefined,
+          };
+        }
+      );
 
       if (cache) cache.set(cacheKey, result);
       return result;
@@ -459,49 +539,55 @@ export function createFetcher({
       url: string,
       opts?: { headers?: Record<string, string>; signal?: AbortSignal }
     ): Promise<FetcherResponse<ArrayBuffer>> {
-      const response = await doFetch(url, {
-        method: 'GET',
-        headers: opts?.headers,
-        signal: opts?.signal,
-      });
+      return request(
+        url,
+        { method: 'GET', headers: opts?.headers, signal: opts?.signal },
+        async (response): Promise<FetcherResponse<ArrayBuffer>> => {
+          // Read only the first 1024 bytes then cancel the stream
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('Response body is not readable');
+          }
 
-      // Read only first 1024 bytes then cancel the stream
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Response body is not readable');
-      }
+          const chunks: Uint8Array[] = [];
+          let totalBytes = 0;
 
-      const chunks: Uint8Array[] = [];
-      let totalBytes = 0;
+          try {
+            while (totalBytes < 1024) {
+              const { done, value } = await reader.read();
+              if (done || !value) break;
+              chunks.push(value as Uint8Array);
+              totalBytes += (value as Uint8Array).byteLength;
+            }
+          } finally {
+            reader.cancel().catch(() => {});
+          }
 
-      try {
-        while (totalBytes < 1024) {
-          const { done, value } = await reader.read();
-          if (done || !value) break;
-          chunks.push(value as Uint8Array);
-          totalBytes += (value as Uint8Array).byteLength;
+          return {
+            status: response.status,
+            headers: headersToRecord(response.headers),
+            data: concatChunks(chunks, totalBytes).buffer as ArrayBuffer,
+          };
         }
-      } finally {
-        reader.cancel().catch(() => {});
-      }
-
-      // Merge chunks into a single ArrayBuffer
-      const merged = new Uint8Array(totalBytes);
-      let offset = 0;
-      for (const chunk of chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.byteLength;
-      }
-
-      return {
-        status: response.status,
-        headers: headersToRecord(response.headers),
-        data: merged.buffer,
-      };
+      );
     },
   };
 
   return fetcher;
+}
+
+/** A fetcher configured from the resolver options. */
+export function createFetcherFromOptions(
+  options?: AvatarResolverOpts
+): Fetcher {
+  return createFetcher({
+    ttl: options?.cache,
+    dispatcher: options?.dispatcher,
+    allowPrivateIPs: options?.allowPrivateIPs,
+    timeout: options?.timeout,
+    urlDenyList: options?.urlDenyList,
+    maxContentLength: options?.maxContentLength,
+  });
 }
 
 // Default fetch instance without any configuration

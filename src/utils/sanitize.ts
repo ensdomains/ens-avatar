@@ -94,13 +94,30 @@ const FORBIDDEN_AT_RULES = new Set<string>([
 ]);
 
 /**
+ * Remove CSS comments in linear time. (`/\/\*[\s\S]*?\*\//g` rescans to the
+ * end of the input for every unterminated `/*`, which is quadratic.) An
+ * unterminated comment is kept, so its text is still checked (fail closed).
+ */
+function stripCssComments(value: string): string {
+  let out = '';
+  let i = 0;
+  while (i < value.length) {
+    const start = value.indexOf('/*', i);
+    if (start === -1) return out + value.slice(i);
+    out += value.slice(i, start);
+    const end = value.indexOf('*/', start + 2);
+    if (end === -1) return out + value.slice(start);
+    i = end + 2;
+  }
+  return out;
+}
+
+/**
  * Normalizes CSS escape sequences and comments so obfuscated payloads
  * (e.g. `ur\6c(...)`, `ur/* *​/l(...)`) are caught by the checks below.
  */
 function normalizeForDetection(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\/\*[\s\S]*?\*\//g, '') // strip comments
+  return stripCssComments(value.toLowerCase())
     .replace(/\\([0-9a-f]{1,6})\s?/g, (_match, hex) =>
       String.fromCharCode(parseInt(hex, 16))
     ) // hex escapes: \6c -> l
@@ -120,13 +137,20 @@ function isSafeCssValue(value: string): boolean {
   ) {
     return false;
   }
-  const urls = normalized.match(/url\s*\([^)]*\)/g) || [];
-  for (const url of urls) {
-    const inner = url
-      .replace(/^url\s*\(\s*['"]?/, '')
-      .replace(/['"]?\s*\)\s*$/, '')
+  // Scan url(...) tokens in linear time; `/url\s*\([^)]*\)/g` rescans to the
+  // end of the input for every unterminated `url(`, which is quadratic.
+  const urlOpen = /url\s*\(/g;
+  while (urlOpen.exec(normalized) !== null) {
+    const close = normalized.indexOf(')', urlOpen.lastIndex);
+    if (close === -1) return false; // unterminated url( — fail closed
+    const inner = normalized
+      .slice(urlOpen.lastIndex, close)
+      .trim()
+      .replace(/^['"]/, '')
+      .replace(/['"]$/, '')
       .trim();
     if (!inner.startsWith('#')) return false; // only internal references
+    urlOpen.lastIndex = close + 1;
   }
   return true;
 }

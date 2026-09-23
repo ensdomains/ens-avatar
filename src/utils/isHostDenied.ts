@@ -1,10 +1,9 @@
+import { hostMatchesDenyList } from './hostname';
+
 export function isHostDenied(url: string, denyList?: string[]): boolean {
   if (!denyList?.length) return false;
   try {
-    const hostname = new URL(url).hostname;
-    return denyList.some(
-      denied => hostname === denied || hostname.endsWith('.' + denied)
-    );
+    return hostMatchesDenyList(new URL(url).hostname, denyList);
   } catch {
     return true;
   }

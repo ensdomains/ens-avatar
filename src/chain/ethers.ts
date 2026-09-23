@@ -12,6 +12,7 @@ import {
   ZeroAddress,
   dnsEncode,
   getAddress,
+  isError,
   namehash,
 } from 'ethers';
 import { ChainClient, EnsRecord, ReadContractParams } from './client';
@@ -48,13 +49,26 @@ export function fromEthers(
     'function multicall(bytes[] data) external view returns (bytes[])',
   ]);
 
+  let chainId: Promise<number> | undefined;
+
   return {
+    getChainId() {
+      if (!chainId) {
+        chainId = provider
+          .getNetwork()
+          .then(network => Number(network.chainId));
+        chainId.catch(() => (chainId = undefined)); // retry after a failure
+      }
+      return chainId;
+    },
+
     async getEnsRecord(name: string, key: string): Promise<EnsRecord> {
       const node = namehash(name);
       const dnsName = dnsEncode(name);
 
-      // One UR resolve() call. Returns null when the name has no resolver or
-      // the call reverts (so callers get null instead of an exception).
+      // One UR resolve() call. Returns null when the call reverts (no
+      // resolver, unsupported profile, …); rethrows RPC/gateway failures so an
+      // outage doesn't read as "no avatar".
       const resolve = async (
         data: string
       ): Promise<{ response: string; resolver: string } | null> => {
@@ -66,8 +80,12 @@ export function fromEthers(
           );
           if (!resolver || resolver === ZeroAddress) return null;
           return { response, resolver };
-        } catch {
-          return null;
+        } catch (error) {
+          // A revert, or an empty (0x) result that can't be decoded.
+          if (isError(error, 'CALL_EXCEPTION') || isError(error, 'BAD_DATA')) {
+            return null;
+          }
+          throw error;
         }
       };
 

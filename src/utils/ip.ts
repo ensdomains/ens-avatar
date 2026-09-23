@@ -96,44 +96,74 @@ export function parseIPv6(input: string): number[] | null {
   return groups.length === 8 ? groups : null;
 }
 
-/** True if a uint32 IPv4 address is loopback / private / link-local / CGNAT / unspecified. */
+// IPv4 ranges that are not globally routable unicast (IANA IPv4
+// Special-Purpose Address Registry, plus multicast and reserved space).
+// [network, prefix length]
+const NON_PUBLIC_IPV4: Array<[number, number]> = [
+  [0x00000000, 8], // 0.0.0.0/8 "this network"
+  [0x0a000000, 8], // 10.0.0.0/8 private (RFC 1918)
+  [0x64400000, 10], // 100.64.0.0/10 CGNAT (RFC 6598)
+  [0x7f000000, 8], // 127.0.0.0/8 loopback
+  [0xa9fe0000, 16], // 169.254.0.0/16 link-local (cloud metadata)
+  [0xac100000, 12], // 172.16.0.0/12 private (RFC 1918)
+  [0xc0000000, 24], // 192.0.0.0/24 IETF protocol assignments
+  [0xc0000200, 24], // 192.0.2.0/24 TEST-NET-1
+  [0xc0586300, 24], // 192.88.99.0/24 deprecated 6to4 relay anycast
+  [0xc0a80000, 16], // 192.168.0.0/16 private (RFC 1918)
+  [0xc6120000, 15], // 198.18.0.0/15 benchmarking
+  [0xc6336400, 24], // 198.51.100.0/24 TEST-NET-2
+  [0xcb007100, 24], // 203.0.113.0/24 TEST-NET-3
+  [0xe0000000, 4], // 224.0.0.0/4 multicast
+  [0xf0000000, 4], // 240.0.0.0/4 reserved, incl. 255.255.255.255 broadcast
+];
+
+/**
+ * True if a uint32 IPv4 address is NOT globally routable unicast: private,
+ * loopback, link-local, CGNAT, documentation, benchmarking, multicast,
+ * reserved, broadcast, or "this network".
+ */
 export function isPrivateIPv4(n: number): boolean {
-  const a = (n >>> 24) & 0xff;
-  const b = (n >>> 16) & 0xff;
-  if (a === 0) return true; // 0.0.0.0/8 "this network"
-  if (a === 10) return true; // 10.0.0.0/8 (RFC 1918)
-  if (a === 127) return true; // 127.0.0.0/8 loopback
-  if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local (cloud metadata)
-  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12 (RFC 1918)
-  if (a === 192 && b === 168) return true; // 192.168.0.0/16 (RFC 1918)
-  if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 CGNAT (RFC 6598)
-  return false;
+  return NON_PUBLIC_IPV4.some(([net, len]) => {
+    const mask = (~0 << (32 - len)) >>> 0;
+    return (n & mask) >>> 0 === net;
+  });
 }
 
-/** True if eight IPv6 groups denote a loopback / private / link-local / embedded-private address. */
+/**
+ * True if eight IPv6 groups do NOT denote a globally routable unicast address.
+ *
+ * Allowlist: only global unicast (2000::/3) can be public, minus the
+ * special-purpose blocks inside it. Addresses embedding an IPv4 address
+ * (IPv4-mapped, NAT64 well-known prefix) are classified by that IPv4 address.
+ * Everything else — ::, ::1, IPv4-compatible, IPv4-translated
+ * (::ffff:0:0:0/96), local-use NAT64 (64:ff9b:1::/48), discard (100::/64),
+ * ULA, link-local, site-local, multicast — is not public.
+ */
 export function isPrivateIPv6(g: number[]): boolean {
   const embeddedV4 = () => isPrivateIPv4(((g[6] << 16) | g[7]) >>> 0);
+  const zeros = (from: number, to: number) =>
+    g.slice(from, to).every(x => x === 0);
 
-  if (g.every(x => x === 0)) return true; // :: unspecified
-  if (g.slice(0, 7).every(x => x === 0) && g[7] === 1) return true; // ::1 loopback
-
-  // IPv4-mapped (::ffff:0:0/96) and deprecated IPv4-compatible (::/96):
-  // classify by the embedded IPv4 so 127.0.0.1 in any embedding is caught.
-  if (g.slice(0, 5).every(x => x === 0) && (g[5] === 0xffff || g[5] === 0)) {
-    return embeddedV4();
-  }
+  // IPv4-mapped ::ffff:a.b.c.d
+  if (zeros(0, 5) && g[5] === 0xffff) return embeddedV4();
   // NAT64 well-known prefix 64:ff9b::/96
-  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every(x => x === 0)) {
-    return embeddedV4();
-  }
-  if ((g[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 unique-local
-  if ((g[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+  if (g[0] === 0x64 && g[1] === 0xff9b && zeros(2, 6)) return embeddedV4();
+
+  // Outside global unicast 2000::/3: never public.
+  if ((g[0] & 0xe000) !== 0x2000) return true;
+
+  // 2001::/23 IETF protocol assignments (incl. Teredo 2001::/32)
+  if (g[0] === 0x2001 && g[1] < 0x0200) return true;
+  if (g[0] === 0x2001 && g[1] === 0x0db8) return true; // 2001:db8::/32 documentation
+  if (g[0] === 0x2002) return true; // 2002::/16 6to4 (deprecated; embeds IPv4)
+  if (g[0] === 0x3fff && g[1] < 0x1000) return true; // 3fff::/20 documentation (RFC 9637)
+  if (g[0] === 0x5f00) return true; // 5f00::/16 SRv6 SIDs (RFC 9602)
   return false;
 }
 
 /**
- * True if `host` is an IP literal (in any textual encoding) that targets a
- * private/reserved range. Returns false for DNS hostnames and public IPs.
+ * True if `host` is an IP literal (in any textual encoding) that is not a
+ * globally routable unicast address. Returns false for DNS hostnames and public IPs.
  * Surrounding brackets (as produced by `new URL(...).hostname` for IPv6) are
  * stripped before parsing.
  */

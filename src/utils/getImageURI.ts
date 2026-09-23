@@ -4,6 +4,7 @@ import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { resolveURI } from './resolveURI';
 import { sanitizeSVG } from './sanitize';
+import { toHttpURL } from './url';
 
 function isSVGString(str: string): boolean {
   const trimmed = str.trimStart();
@@ -54,8 +55,59 @@ export function convertToRawSVG(input: string): string | null {
   }
 }
 
-function _sanitize(data: string): string {
-  return sanitizeSVG(data);
+/**
+ * Upper bound on an inline / data: SVG (in UTF-16 code units, before
+ * sanitizing). On-chain SVGs are far smaller; this caps the CPU an attacker
+ * controlling a record or CCIP gateway can make us spend.
+ */
+export const MAX_INLINE_SVG_LENGTH = 2 * 1024 * 1024;
+
+const isWhitespace = (c: string) => /\s/.test(c);
+
+/**
+ * Remove whitespace around tags, i.e. `str.replace(/\s*(<[^>]+>)\s*\/g, '$1')`,
+ * in linear time. The regex form is quadratic: every unterminated `<` rescans
+ * to the end of the input, so ~1 MiB of `<` took tens of minutes.
+ */
+export function collapseTagWhitespace(str: string): string {
+  let out = '';
+  let i = 0;
+  while (i < str.length) {
+    const open = str.indexOf('<', i);
+    if (open === -1) break;
+    const close = str.indexOf('>', open + 1);
+    // No '>' after this '<' means no complete tag remains anywhere after it.
+    if (close === -1) break;
+    if (close === open + 1) {
+      // '<>' is not a tag (the regex needs at least one char between).
+      out += str.slice(i, close + 1);
+      i = close + 1;
+      continue;
+    }
+    let textEnd = open;
+    while (textEnd > i && isWhitespace(str[textEnd - 1])) textEnd--;
+    out += str.slice(i, textEnd) + str.slice(open, close + 1);
+    i = close + 1;
+    while (i < str.length && isWhitespace(str[i])) i++;
+  }
+  return out + str.slice(i);
+}
+
+/**
+ * Keep only the root <svg> element of sanitized output. sanitize-html keeps
+ * text nodes outside the root (e.g. `<?xml?>GIF89a<svg>…` → `GIF89a<svg>…`),
+ * which makes the document invalid and lets its first bytes be sniffed as
+ * another format. Returns null when there is no root <svg>.
+ */
+function extractSVGRoot(svg: string): string | null {
+  const start = svg.search(/<svg[\s>]/);
+  const end = svg.lastIndexOf('</svg>');
+  if (start === -1 || end < start) return null;
+  return svg.slice(start, end + '</svg>'.length);
+}
+
+function _sanitize(data: string): string | null {
+  return extractSVGRoot(sanitizeSVG(data));
 }
 
 export function getImageURI({
@@ -77,14 +129,15 @@ export function getImageURI({
 
   if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
-    const rawSVG = convertToRawSVG(parsedURI)?.replace(
-      /\s*(<[^>]+>)\s*/g,
-      '$1'
-    );
-    if (!rawSVG) return null;
+    // The encoded form (base64, %XX) is at most 3x the decoded SVG.
+    if (parsedURI.length > MAX_INLINE_SVG_LENGTH * 3) return null;
+    const decoded = convertToRawSVG(parsedURI);
+    if (!decoded || decoded.length > MAX_INLINE_SVG_LENGTH) return null;
+    const rawSVG = collapseTagWhitespace(decoded);
 
     try {
       const cleanSVG = _sanitize(rawSVG);
+      if (!cleanSVG) return null;
       return `data:image/svg+xml;base64,${utf8ToBase64(cleanSVG)}`;
     } catch (error) {
       console.error('SVG sanitization failed:', error);
@@ -92,9 +145,13 @@ export function getImageURI({
     }
   }
 
-  if (isImageDataUri(parsedURI) || parsedURI.startsWith('http')) {
-    if (isHostDenied(parsedURI, urlDenyList)) return null;
-    return parsedURI;
+  if (isImageDataUri(parsedURI)) return parsedURI;
+
+  // Return the parsed form, so the URL callers check is the one they use.
+  const url = toHttpURL(parsedURI);
+  if (url) {
+    if (isHostDenied(url, urlDenyList)) return null;
+    return url;
   }
 
   return null;
