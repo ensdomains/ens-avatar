@@ -1,6 +1,6 @@
 const { ethers } = require('ethers');
-const { AvatarResolver } = require('../dist/index');
-const { fromEthers } = require('../dist/chain/ethers');
+const { AvatarResolver } = require('../dist/index.cjs');
+const { fromEthers } = require('../dist/chain/ethers.cjs');
 
 const provider = new ethers.JsonRpcProvider(
   'https://ethereum-rpc.publicnode.com',
