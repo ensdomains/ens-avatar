@@ -28,7 +28,7 @@
     "src"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "start": "rollup -c --watch",
@@ -126,7 +126,7 @@
     }
   },
   "volta": {
-    "node": "20.20.0"
+    "node": "22.23.2"
   },
   "packageManager": "pnpm@12.5.1"
 }

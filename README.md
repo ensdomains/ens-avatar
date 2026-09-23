@@ -14,7 +14,7 @@ Avatar resolver library for Node.js, browsers, and edge runtimes (Cloudflare Wor
 ## Platform Support
 
 This library works seamlessly across:
-- ✅ **Node.js** 18+ (uses native fetch or http adapter)
+- ✅ **Node.js** 22+ (uses native fetch or http adapter)
 - ✅ **Browsers** (all modern browsers)
 - ✅ **Cloudflare Workers**
 - ✅ **Other edge runtimes** that support standard Fetch API
