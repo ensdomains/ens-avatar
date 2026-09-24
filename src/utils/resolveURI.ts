@@ -47,7 +47,7 @@ export function isValidBase64DataURI(uri: string) {
   }
 
   const [header, str] = uri.split('base64,');
-  if (header != JSON_MIMETYPE) {
+  if (header !== JSON_MIMETYPE) {
     const mimeType = _getImageMimeType(uri);
     if (!mimeType || !header.includes(mimeType)) {
       return false;
