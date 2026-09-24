@@ -214,7 +214,7 @@ Common local development scenarios:
 - **viem:** create the client with a `chain`. Without one the adapter has to ask the RPC for `eth_chainId`; it does so without viem's request dedupe, because Workers hang when a promise started in one request is awaited in another.
 - **viem transport:** don't enable request batching (`http(url, { batch: true })`) or `batch: { multicall: true }` on a client shared across requests: both hold calls in a queue whose promises can end up awaited by a different request, which hangs.
 - Requires viem **2.35 or later** (Universal Resolver v3 error handling).
-- **ethers:** use `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
+- **ethers:** use **6.13 or later** (earlier 6.x releases never time out a hung request, even with `FetchRequest.timeout` set) and `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
 
 ## Security
 

@@ -1391,10 +1391,25 @@ describe('CSS work per SVG is bounded', () => {
     expect(elapsed(() => sanitizeSVG(svg))).toBeLessThan(1000);
   });
 
-  it('caps total <style> bytes per SVG, not per block', () => {
-    const block = `<style>a{fill:red}${' '.repeat(40 * 1024)}</style>`;
+  it('caps the CSS kept per SVG (64 KiB after sanitizing), not per block', () => {
+    const block = `<style>a{fill:${'x'.repeat(40 * 1024)}}</style>`;
     const out = sanitizeSVG(`<svg>${block}${block}</svg>`);
     expect(out.match(/<style>/g)).toHaveLength(1);
+  });
+
+  it('a large block that is discarded anyway does not use up the budget', () => {
+    const discarded = `<style>@font-face{font-family:x}${' '.repeat(
+      60 * 1024
+    )}</style>`;
+    const kept = '<style>a{fill:red}</style>';
+    expect(sanitizeSVG(`<svg>${discarded}${kept}</svg>`)).toBe(
+      '<svg><style>a{fill:red}</style></svg>'
+    );
+  });
+
+  it('drops a single block over 64 KiB of raw CSS', () => {
+    const block = `<style>a{fill:red}${' '.repeat(65 * 1024)}</style>`;
+    expect(sanitizeSVG(`<svg>${block}</svg>`)).toBe('<svg></svg>');
   });
 
   it('drops a block with more than 2000 CSS nodes', () => {
@@ -1846,12 +1861,40 @@ describe('fromEthers: Universal Resolver v3 results', () => {
     await expect(resolve()).rejects.toThrow(/Universal Resolver call failed/);
   });
 
-  it('throws when the text call failed with Error(string)', async () => {
-    callReply = multicallResult(
-      addrResult,
-      errors.encodeErrorResult('Error', ['gateway broke'])
-    );
+  it.each([
+    ['Error(string)', errors.encodeErrorResult('Error', ['resolver says no'])],
+    ['a custom error', '0xdeadbeef' + '0'.repeat(64)],
+    [
+      'a gateway 404',
+      errors.encodeErrorResult('HttpError', [404, 'not found']),
+    ],
+    ['a gateway 410', errors.encodeErrorResult('HttpError', [410, 'gone'])],
+  ])('a text call that failed with %s means "no record"', async (_l, data) => {
+    callReply = multicallResult(addrResult, data);
+    expect((await resolve()).record).toBeNull();
+  });
+
+  it.each([
+    ['a gateway 400', errors.encodeErrorResult('HttpError', [400, 'bad'])],
+    ['a gateway 429', errors.encodeErrorResult('HttpError', [429, 'slow'])],
+    ['InvalidBatchGatewayResponse', '0x4a5c31ea' + '0'.repeat(64)],
+  ])('a text call that failed with %s throws', async (_l, data) => {
+    callReply = multicallResult(addrResult, data);
     await expect(resolve()).rejects.toThrow(/Universal Resolver call failed/);
+  });
+
+  it('a top-level gateway 404 means "no record", other statuses throw', async () => {
+    const revert = (status: number) => ({
+      error: {
+        code: 3,
+        message: 'execution reverted',
+        data: errors.encodeErrorResult('HttpError', [status, 'x']),
+      },
+    });
+    callReply = revert(404);
+    expect(await resolve()).toEqual({ record: null, address: null });
+    callReply = revert(502);
+    await expect(resolve()).rejects.toThrow();
   });
 
   it('returns a null record for UnsupportedResolverProfile', async () => {
@@ -2108,5 +2151,46 @@ describe('joinURL matches url-join', () => {
     ['ar://abc///', 'https://arweave.net/abc/'],
   ])('%s → %s', (input, expected) => {
     expect(resolveURI(input).uri).toBe(expected);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Round 5
+// ---------------------------------------------------------------------------
+
+describe('string safety net checks attribute names, not values', () => {
+  it.each([
+    '<svg><text font-family="Sans onx=1">a</text></svg>',
+    '<svg><g class="btn on=1"></g></svg>',
+    "<svg><text font-family='onload=x'>a</text></svg>",
+  ])('keeps %s', svg => {
+    expect(sanitizeSVG(svg)).not.toBe('');
+  });
+
+  it('still produces no event handlers', () => {
+    const { handlers } = browserParse(
+      sanitizeSVG('<svg><rect onclick="x()" onload=y /></svg>')
+    );
+    expect(handlers).toEqual([]);
+  });
+});
+
+describe('gateway options are plain base URLs', () => {
+  const client = {
+    getEnsRecord: async () => ({ record: null, address: null }),
+    readContract: async () => null as never,
+  };
+  it.each([
+    'https://gw.example/?token=x',
+    'https://gw.example/#frag',
+    'https://user:pass@gw.example/',
+  ])('rejects %s', ipfs => {
+    expect(() => new AvatarResolver(client, { ipfs })).toThrow(TypeError);
+  });
+
+  it('accepts a path prefix', () => {
+    expect(
+      () => new AvatarResolver(client, { arweave: 'https://gw.example/ar/' })
+    ).not.toThrow();
   });
 });

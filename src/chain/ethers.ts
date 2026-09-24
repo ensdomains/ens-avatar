@@ -31,10 +31,8 @@ export interface FromEthersOptions {
 }
 
 // Universal Resolver custom errors that mean "no such resolver / record /
-// profile". Everything else is a failure: HttpError and
-// InvalidBatchGatewayResponse (a CCIP gateway failed), Error(string), Panic,
-// OffchainLookup, and JSON-RPC errors (which ethers also reports as
-// CALL_EXCEPTION, e.g. "header not found" or rate limits).
+// profile". JSON-RPC errors (which ethers also reports as CALL_EXCEPTION, e.g.
+// "header not found" or rate limits) and any other revert are failures.
 const NO_RESULT_SELECTORS = new Set(
   [
     'ResolverNotFound(bytes)',
@@ -43,29 +41,55 @@ const NO_RESULT_SELECTORS = new Set(
     'ResolverError(bytes)',
   ].map(signature => id(signature).slice(0, 10))
 );
+// A CCIP gateway failed. 404/410 mean the name isn't there (as in the viem
+// adapter, and as ethers' own CCIP-read treats a 4xx); other statuses throw.
+const HTTP_ERROR = id('HttpError(uint16,string)').slice(0, 10);
+const INVALID_BATCH_GATEWAY_RESPONSE = id(
+  'InvalidBatchGatewayResponse()'
+).slice(0, 10);
+const NOT_FOUND_STATUSES = new Set([404, 410]);
+const gatewayErrors = new Interface([
+  'error HttpError(uint16 status, string message)',
+]);
 
 const selectorOf = (data: string) => data.slice(0, 10).toLowerCase();
 
+function isNotFoundHttpError(data: string): boolean {
+  try {
+    const [status] = gatewayErrors.decodeErrorResult('HttpError', data);
+    return NOT_FOUND_STATUSES.has(Number(status));
+  } catch {
+    return false;
+  }
+}
+
 /** True if a failed Universal Resolver call means "no result". */
 function isNoResult(error: unknown): boolean {
-  if (!isError(error, 'CALL_EXCEPTION')) return false;
-  const data = error.data;
-  return !!data && NO_RESULT_SELECTORS.has(selectorOf(data));
+  if (!isError(error, 'CALL_EXCEPTION') || !error.data) return false;
+  const selector = selectorOf(error.data);
+  if (NO_RESULT_SELECTORS.has(selector)) return true;
+  return selector === HTTP_ERROR && isNotFoundHttpError(error.data);
 }
 
 /**
- * Check one result of the UR multicall. UR v3 reports a failed call (e.g. a
- * CCIP gateway HttpError) by putting its revert data in place of the result,
- * inside an otherwise successful response. Revert data is a 4-byte selector
- * plus ABI words; return data is whole 32-byte words. Returns the result, null
- * for a "no result" error, and throws for any other error.
+ * Check one result of the UR multicall. UR v3 reports a failed call by putting
+ * its revert data in place of the result, inside an otherwise successful
+ * response. Revert data is a 4-byte selector plus ABI words; return data is
+ * whole 32-byte words. Returns the result, or null when the call failed with
+ * "no result": the resolver's own revert (which the UR reports as
+ * ResolverError at the top level) or a gateway 404/410. Throws when a CCIP
+ * gateway failed otherwise.
  */
 function checkCallResult(encoded: string): string | null {
   const bytes = (encoded.length - 2) / 2;
   if (bytes % 32 !== 4) return encoded;
-  if (NO_RESULT_SELECTORS.has(selectorOf(encoded))) return null;
+  const selector = selectorOf(encoded);
+  const gatewayFailed =
+    selector === INVALID_BATCH_GATEWAY_RESPONSE ||
+    (selector === HTTP_ERROR && !isNotFoundHttpError(encoded));
+  if (!gatewayFailed) return null;
   throw Object.assign(
-    new Error(`Universal Resolver call failed (${selectorOf(encoded)})`),
+    new Error(`Universal Resolver call failed (${selector})`),
     { data: encoded }
   );
 }

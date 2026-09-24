@@ -52,8 +52,19 @@ function normalizeOptions(
     const url = normalized[gateway];
     if (url === undefined) continue;
     const canonical = typeof url === 'string' ? toHttpURL(url) : null;
-    if (!canonical) {
-      throw new TypeError(`${gateway} gateway must be an http(s) URL`);
+    const parsed = canonical ? new URL(canonical) : null;
+    // A gateway is a base URL: a query, fragment or credentials would end up
+    // in (or leak through) every URL built from it.
+    if (
+      !parsed ||
+      parsed.search ||
+      parsed.hash ||
+      parsed.username ||
+      parsed.password
+    ) {
+      throw new TypeError(
+        `${gateway} gateway must be an http(s) URL without query, fragment or credentials`
+      );
     }
     normalized[gateway] = canonical;
   }

@@ -27,9 +27,11 @@ const MAX_SVG_NESTING_DEPTH = 256;
 const MAX_STYLE_ELEMENTS = 64;
 // postcss is quadratic on some single declarations/selectors (e.g. repeated
 // "important", comments in selectors) and in removing nodes while walking, so
-// the CSS of one SVG (all <style> blocks together) and its node count are capped.
-const MAX_STYLE_TOTAL_LENGTH = 64 * 1024;
+// each <style> block's raw CSS and node count are capped. The CSS kept per SVG
+// (after sanitizing, so discarded rules don't count) is capped too.
+const MAX_STYLE_BLOCK_LENGTH = 64 * 1024;
 const MAX_CSS_NODES = 2000;
+const MAX_STYLE_OUTPUT_LENGTH = 64 * 1024;
 const MAX_STYLE_ATTRIBUTE_LENGTH = 16 * 1024;
 
 // CSS properties allowed in `style` attributes and `<style>` blocks.
@@ -469,12 +471,45 @@ function isInertMarkup(html: string): boolean {
     TAG_START.lastIndex = i;
     const match = TAG_START.exec(html);
     if (!match || !ALLOWED_TAGS_LOWER.has(match[1].toLowerCase())) return false;
-    const end = html.indexOf('>', i);
+    const end = scanAttributes(html, TAG_START.lastIndex);
     if (end === -1) return false;
-    if (/\son[a-z]*\s*=/i.test(html.slice(i, end))) return false;
     i = html.indexOf('<', end);
   }
   return true;
+}
+
+/**
+ * Walk a tag's attributes from `i` (just past the tag name). Returns the
+ * index of the closing '>', or -1 if the tag is malformed or has an event
+ * handler attribute. Only attribute names are checked: quoted values are
+ * skipped, so text like title="turn onx=1" isn't mistaken for a handler.
+ */
+function scanAttributes(html: string, i: number): number {
+  const WHITESPACE = /\s/;
+  for (;;) {
+    while (i < html.length && WHITESPACE.test(html[i])) i++;
+    if (i >= html.length) return -1;
+    if (html[i] === '>') return i;
+    if (html[i] === '/') {
+      i++;
+      continue;
+    }
+    const nameStart = i;
+    while (i < html.length && !/[\s/>=]/.test(html[i])) i++;
+    if (/^on/i.test(html.slice(nameStart, i))) return -1;
+    while (i < html.length && WHITESPACE.test(html[i])) i++;
+    if (html[i] !== '=') continue;
+    i++;
+    while (i < html.length && WHITESPACE.test(html[i])) i++;
+    const quote = html[i];
+    if (quote === '"' || quote === "'") {
+      const close = html.indexOf(quote, i + 1);
+      if (close === -1) return -1;
+      i = close + 1;
+    } else {
+      while (i < html.length && !/[\s>]/.test(html[i])) i++;
+    }
+  }
 }
 
 /**
@@ -584,15 +619,16 @@ export function sanitizeSVG(
 
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
-  let styleBudget = MAX_STYLE_TOTAL_LENGTH;
+  let styleBudget = MAX_STYLE_OUTPUT_LENGTH;
   const output = cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
-    styleBudget -= css.length;
-    if (styleBudget < 0) return '';
+    if (css.length > MAX_STYLE_BLOCK_LENGTH) return '';
     const safe = sanitizeStyleBlock(css);
     // Inlined into HTML, <style> inside <svg> is parsed as markup, not raw
     // text: a '<' (or an entity that decodes to one) in the CSS would become a
     // live element. CSS never needs them, so drop such blocks.
     if (!safe || /[<&]/.test(safe)) return '';
+    if (safe.length > styleBudget) return '';
+    styleBudget -= safe.length;
     return `<style>${safe}</style>`;
   });
   return isInertMarkup(output) ? output : '';
