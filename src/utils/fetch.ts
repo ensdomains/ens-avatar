@@ -6,6 +6,7 @@ import {
   normalizeHostname,
 } from './hostname';
 import { isPrivateIp } from './ip';
+import { parseJSON } from './json';
 import { assertBoolean, assertLimit, assertStringArray } from './limits';
 import { AvatarResolverOpts, Fetcher, FetcherResponse } from '../types';
 
@@ -96,39 +97,55 @@ export function validateUrl(
 interface CacheEntry<T> {
   value: T;
   expiry: number;
+  size: number;
 }
 
-// Keys are attacker-influenced URLs, so the cache is bounded (LRU).
+// Keys are attacker-influenced URLs, so the cache is bounded (LRU) by entry
+// count and by size (UTF-16 code units of cached text).
 export const MAX_CACHE_ENTRIES = 1000;
+export const MAX_CACHE_SIZE = 8 * 1024 * 1024;
 
 /** @internal — exported for tests. */
 export class TTLCache {
   private store = new Map<string, CacheEntry<unknown>>();
   private ttlMs: number;
+  private size = 0;
 
   constructor(ttlSeconds: number) {
     this.ttlMs = ttlSeconds * 1000;
   }
 
+  private remove(key: string): void {
+    const entry = this.store.get(key);
+    if (!entry) return;
+    this.size -= entry.size;
+    this.store.delete(key);
+  }
+
   get<T>(key: string): T | undefined {
     const entry = this.store.get(key);
     if (!entry) return undefined;
-    this.store.delete(key);
+    this.remove(key);
     if (Date.now() > entry.expiry) return undefined;
     this.store.set(key, entry); // most recently used goes last
+    this.size += entry.size;
     return entry.value as T;
   }
 
-  set<T>(key: string, value: T): void {
-    this.store.delete(key);
-    if (this.store.size >= MAX_CACHE_ENTRIES) {
+  set<T>(key: string, value: T, size = 1): void {
+    this.remove(key);
+    if (size > MAX_CACHE_SIZE) return;
+    const full = () =>
+      this.store.size >= MAX_CACHE_ENTRIES || this.size + size > MAX_CACHE_SIZE;
+    if (full()) {
       const now = Date.now();
-      for (const [k, e] of this.store) if (now > e.expiry) this.store.delete(k);
+      for (const [k, e] of this.store) if (now > e.expiry) this.remove(k);
     }
-    if (this.store.size >= MAX_CACHE_ENTRIES) {
-      this.store.delete(this.store.keys().next().value as string); // least recent
+    while (full()) {
+      this.remove(this.store.keys().next().value as string); // least recent
     }
-    this.store.set(key, { value, expiry: Date.now() + this.ttlMs });
+    this.store.set(key, { value, expiry: Date.now() + this.ttlMs, size });
+    this.size += size;
   }
 }
 
@@ -529,26 +546,47 @@ export function createFetcher({
       url: string,
       opts?: { headers?: Record<string, string> }
     ): Promise<FetcherResponse<T>> {
-      const cacheKey = `get:${url}`;
+      // Headers are part of the key: a response fetched with an API key must
+      // not be served to a request without one (or vice versa).
+      const cacheKey = `get:${url}:${JSON.stringify(opts?.headers ?? {})}`;
+      // The body text is cached (not the parsed object): its size is what the
+      // cache budget measures, and each hit gets a fresh object.
+      type Cached = {
+        status: number;
+        headers: Record<string, string>;
+        text: string;
+      };
+      const toResult = (c: Cached): FetcherResponse<T> => ({
+        status: c.status,
+        headers: c.headers,
+        data: parseJSON(c.text) as T,
+      });
       if (cache) {
-        const cached = cache.get<FetcherResponse<T>>(cacheKey);
-        if (cached) return cached;
+        const cached = cache.get<Cached>(cacheKey);
+        if (cached) return toResult(cached);
       }
 
-      const result = await request(
+      const entry = await request(
         url,
         { method: 'GET', headers: opts?.headers },
-        async (response): Promise<FetcherResponse<T>> => {
+        async (response): Promise<Cached> => {
           const body = await readBodyCapped(response, maxContentLength);
           return {
             status: response.status,
             headers: headersToRecord(response.headers),
-            data: JSON.parse(new TextDecoder().decode(body)) as T,
+            text: new TextDecoder().decode(body),
           };
         }
       );
 
-      if (cache) cache.set(cacheKey, result);
+      const result = toResult(entry);
+      if (cache) {
+        cache.set(
+          cacheKey,
+          entry,
+          entry.text.length + JSON.stringify(entry.headers).length
+        );
+      }
       return result;
     },
 
@@ -572,7 +610,9 @@ export function createFetcher({
         }
       );
 
-      if (cache) cache.set(cacheKey, result);
+      if (cache) {
+        cache.set(cacheKey, result, JSON.stringify(result.headers).length);
+      }
       return result;
     },
 

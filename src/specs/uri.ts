@@ -8,6 +8,7 @@ import {
 import { isHostDenied } from '../utils/isHostDenied';
 import {
   asMetadataObject,
+  assertDataURISize,
   parseOnChainMetadata,
 } from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
@@ -35,6 +36,9 @@ export default class URI {
     // Use provided fetcher or create a new one
     const fetch = fetcher || createFetcherFromOptions(options);
 
+    if (/^data:application\/json[;,]/i.test(uri)) {
+      assertDataURISize(uri, options?.maxContentLength);
+    }
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(uri, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,

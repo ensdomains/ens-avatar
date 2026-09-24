@@ -1,6 +1,6 @@
 import http from 'http';
 import { AddressInfo } from 'net';
-import { AvatarResolver, ChainMismatch } from '../src';
+import { AvatarResolver, AvatarResolverOpts, ChainMismatch } from '../src';
 import { ChainClient } from '../src/chain/client';
 import { fromViem, ViemClientLike } from '../src/chain/viem';
 import {
@@ -21,11 +21,12 @@ import { isSvgDocument } from '../src/utils/isImageURI';
 import { MAX_CACHE_ENTRIES, TTLCache } from '../src/utils/fetch';
 import { toHttpURL } from '../src/utils/url';
 import { resolveURI } from '../src/utils/resolveURI';
+import { parse as parseHTML } from 'parse5';
 import { BaseError, MetadataParsingError } from '../src/utils/error';
 import { normalizeHostname } from '../src/utils/hostname';
 import { assert } from '../src/utils/assert';
 import { fromEthers } from '../src/chain/ethers';
-import { Interface, JsonRpcProvider } from 'ethers';
+import { getAddress, Interface, JsonRpcProvider } from 'ethers';
 
 const decodeDataURI = (uri: string | null) =>
   uri && Buffer.from(uri.split(',')[1], 'base64').toString();
@@ -1490,13 +1491,25 @@ describe('option types are validated', () => {
     ).not.toThrow();
   });
 
-  it('getImageURI rejects maxSvgLength: null instead of nulling every SVG', () => {
-    expect(() =>
+  it('null and "" options mean "unset" (not "invalid" or "zero")', () => {
+    expect(
       getImageURI({
-        metadata: { image: '<svg/>' },
+        metadata: { image: '<svg><rect/></svg>' },
         maxSvgLength: (null as unknown) as number,
       })
-    ).toThrow(TypeError);
+    ).not.toBeNull();
+    const client = {
+      getEnsRecord: async () => ({ record: null, address: null }),
+      readContract: async () => null as never,
+    };
+    const nulls = ({
+      ipfs: '',
+      arweave: null,
+      timeout: null,
+      maxSvgLength: null,
+      maxContentLength: null,
+    } as unknown) as AvatarResolverOpts;
+    expect(() => new AvatarResolver(client, nulls)).not.toThrow();
   });
 });
 
@@ -1678,6 +1691,421 @@ describe('IPFS/Arweave path joining is linear', () => {
     ],
     ['ipns://example.eth/?x=1', 'https://ipfs.io/ipns/example.eth?x=1'],
     ['ar://abc/def', 'https://arweave.net/abc/def'],
+  ])('%s → %s', (input, expected) => {
+    expect(resolveURI(input).uri).toBe(expected);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Round 4
+// ---------------------------------------------------------------------------
+
+/** Elements and attributes a browser would create when inlining `html`. */
+function browserParse(html: string) {
+  const elements: string[] = [];
+  const handlers: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const walk = (node: any) => {
+    if (node.tagName) {
+      elements.push(node.tagName.toLowerCase());
+      for (const attr of node.attrs || []) {
+        if (/^on/i.test(attr.name)) handlers.push(attr.name);
+      }
+    }
+    for (const child of node.childNodes || []) walk(child);
+    if (node.content) walk(node.content); // <template>
+  };
+  walk(parseHTML(`<!doctype html><body>${html}</body>`));
+  return { elements, handlers };
+}
+
+describe('mXSS: browser-parsed output has no live markup', () => {
+  it.each([
+    '<svg><style>a{}</STYLE><img src=x onerror=alert(1)></style></svg>',
+    '<svg><STYLE>a{}</style><img src=x onerror=alert(1)></STYLE></svg>',
+    '<svg><title>x</TITLE><img src=x onerror=alert(1)></title></svg>',
+    '<svg><TITLE>&lt;/title&gt;&lt;img src=x onerror=alert(1)&gt;</TITLE></svg>',
+    '<svg><desc><style/>&lt;/style&gt;&lt;img src=x onerror=alert(1)&gt;</desc></svg>',
+    '<svg><desc><StYlE/>&lt;img src=x onerror=alert(1)&gt;</desc></svg>',
+    '<svg><foreignObject><style/>&lt;img src=x onerror=alert(1)&gt;</foreignObject></svg>',
+    '<svg><title><style>&lt;/title&gt;&lt;img src=x onerror=alert(1)&gt;</style></title></svg>',
+  ])('%s', payload => {
+    const { elements, handlers } = browserParse(sanitizeSVG(payload));
+    expect(elements).not.toContain('img');
+    expect(handlers).toEqual([]);
+  });
+});
+
+describe('sanitizer bounds (round 4)', () => {
+  it('fails closed above 64 <style> elements', () => {
+    const svg = (n: number) =>
+      `<svg>${'<rect/><style>a{fill:red}</style>'.repeat(n)}</svg>`;
+    expect(sanitizeSVG(svg(64))).not.toBe('');
+    expect(sanitizeSVG(svg(65))).toBe('');
+  });
+
+  it('isSvgDocument handles megabytes of doctypes quickly', () => {
+    const input = '<!DOCTYPE x>'.repeat((2 * 1024 * 1024) / 12);
+    expect(elapsed(() => isSvgDocument(input))).toBeLessThan(500);
+  });
+
+  it('isImageURI sniffs only the first KiB, whatever the fetcher returns', async () => {
+    const bytes = new Uint8Array(2 * 1024 * 1024).fill(0x20); // spaces …
+    bytes.set(new TextEncoder().encode('<svg>'), 2048); // … then <svg> past 1 KiB
+    const fetcher: Fetcher = {
+      get: jest.fn(),
+      head: jest.fn(async () => ({
+        status: 200,
+        headers: { 'content-type': 'application/octet-stream' },
+        data: undefined,
+      })),
+      getArrayBuffer: jest.fn(async () => ({
+        status: 200,
+        headers: {},
+        data: bytes.buffer,
+      })),
+    };
+    expect(await isImageURI('https://example.com/a', fetcher)).toBe(false);
+  });
+});
+
+describe('fromEthers: Universal Resolver v3 results', () => {
+  const ur = new Interface([
+    'function resolve(bytes name, bytes data) view returns (bytes, address)',
+  ]);
+  const multicall = new Interface([
+    'function multicall(bytes[] data) view returns (bytes[])',
+  ]);
+  const resolver = new Interface([
+    'function addr(bytes32 node, uint256 coinType) view returns (bytes)',
+    'function text(bytes32 node, string key) view returns (string)',
+  ]);
+  const errors = new Interface([
+    'error HttpError(uint16 status, string message)',
+    'error UnsupportedResolverProfile(bytes4 selector)',
+    'error ResolverNotFound(bytes name)',
+    'error Error(string)',
+  ]);
+  const RESOLVER = '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63';
+  const OWNER = '0x5a384227b65fa093dec03ec34e111db80a040615';
+  const addrResult = resolver.encodeFunctionResult('addr', [OWNER]);
+  const textResult = resolver.encodeFunctionResult('text', [
+    'https://example.com/a.png',
+  ]);
+  const httpError = errors.encodeErrorResult('HttpError', [503, 'down']);
+
+  let server: Awaited<ReturnType<typeof startServer>>;
+  let callReply: Record<string, unknown>;
+
+  beforeAll(async () => {
+    server = await startServer((req, res) => {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', () => {
+        const payload = JSON.parse(body);
+        const reply = (p: { id: number; method: string }) =>
+          p.method === 'eth_chainId'
+            ? { jsonrpc: '2.0', id: p.id, result: '0x1' }
+            : { jsonrpc: '2.0', id: p.id, ...callReply };
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify(
+            Array.isArray(payload) ? payload.map(reply) : reply(payload)
+          )
+        );
+      });
+    });
+  });
+  afterAll(() => server.close());
+
+  const multicallResult = (addr: string, text: string) => ({
+    result: ur.encodeFunctionResult('resolve', [
+      multicall.encodeFunctionResult('multicall', [[addr, text]]),
+      RESOLVER,
+    ]),
+  });
+  const resolve = () => {
+    const provider = new JsonRpcProvider(server.url('/'), 'mainnet', {
+      staticNetwork: true,
+    });
+    return fromEthers(provider)
+      .getEnsRecord('nick.eth', 'avatar')
+      .finally(() => provider.destroy());
+  };
+
+  it('decodes a successful multicall', async () => {
+    callReply = multicallResult(addrResult, textResult);
+    expect(await resolve()).toEqual({
+      record: 'https://example.com/a.png',
+      address: getAddress(OWNER),
+    });
+  });
+
+  it('throws when the text call failed with a gateway HttpError', async () => {
+    callReply = multicallResult(addrResult, httpError);
+    await expect(resolve()).rejects.toThrow(/Universal Resolver call failed/);
+  });
+
+  it('throws when the text call failed with Error(string)', async () => {
+    callReply = multicallResult(
+      addrResult,
+      errors.encodeErrorResult('Error', ['gateway broke'])
+    );
+    await expect(resolve()).rejects.toThrow(/Universal Resolver call failed/);
+  });
+
+  it('returns a null record for UnsupportedResolverProfile', async () => {
+    callReply = multicallResult(
+      addrResult,
+      errors.encodeErrorResult('UnsupportedResolverProfile', ['0x59d1d43c'])
+    );
+    expect((await resolve()).record).toBeNull();
+  });
+
+  it('keeps the record when only the addr call failed', async () => {
+    callReply = multicallResult(httpError, textResult);
+    expect(await resolve()).toEqual({
+      record: 'https://example.com/a.png',
+      address: null,
+    });
+  });
+
+  it('throws on an empty 0x result (BAD_DATA is not "no result")', async () => {
+    callReply = { result: '0x' };
+    await expect(resolve()).rejects.toThrow();
+  });
+
+  it.each([
+    ['Error(string)', errors.encodeErrorResult('Error', ['nope'])],
+    ['Panic', '0x4e487b71' + '0'.repeat(62) + '11'],
+    ['OffchainLookup-like data', '0x556f1830' + '0'.repeat(64)],
+  ])('throws for a %s revert', async (_label, data) => {
+    callReply = { error: { code: 3, message: 'execution reverted', data } };
+    await expect(resolve()).rejects.toThrow();
+  });
+});
+
+describe('fromViem gateway status policy and chain id validation', () => {
+  const httpError = (status: number) => {
+    const cause = { data: { errorName: 'HttpError', args: [status, 'x'] } };
+    return Object.assign(new Error(`HttpError ${status}`), {
+      walk: (fn: (e: unknown) => boolean) => (fn(cause) ? cause : undefined),
+    });
+  };
+  const viemWith = (overrides: Partial<ViemClientLike>) =>
+    fromViem({
+      getEnsText: async () => null,
+      getEnsAddress: async () => null,
+      readContract: async () => null,
+      ...overrides,
+    });
+
+  it.each([404, 410])('HttpError %i means "no record"', async status => {
+    const client = viemWith({
+      getEnsText: async () => {
+        throw httpError(status);
+      },
+    });
+    expect((await client.getEnsRecord('x.eth', 'avatar')).record).toBeNull();
+  });
+
+  it.each([429, 500, 503])('HttpError %i throws', async status => {
+    const client = viemWith({
+      getEnsText: async () => {
+        throw httpError(status);
+      },
+    });
+    await expect(client.getEnsRecord('x.eth', 'avatar')).rejects.toThrow(
+      `HttpError ${status}`
+    );
+  });
+
+  it('rejects and does not cache a malformed eth_chainId', async () => {
+    const request = jest
+      .fn()
+      .mockResolvedValueOnce('0xzz')
+      .mockResolvedValueOnce('0x0')
+      .mockResolvedValue('0x1');
+    const client = viemWith({ request });
+    await expect(client.getChainId!()).rejects.toThrow(/Invalid eth_chainId/);
+    await expect(client.getChainId!()).rejects.toThrow(/Invalid eth_chainId/);
+    expect(await client.getChainId!()).toBe(1);
+  });
+});
+
+describe('cache bounds and keys', () => {
+  it('evicts by total size as well as count', () => {
+    const cache = new TTLCache(60);
+    const half = 5 * 1024 * 1024; // two of these exceed the 8 MiB budget
+    cache.set('a', 'A', half);
+    cache.set('b', 'B', half);
+    expect(cache.get('a')).toBeUndefined();
+    expect(cache.get('b')).toBe('B');
+  });
+
+  it('never stores an entry larger than the whole budget', () => {
+    const cache = new TTLCache(60);
+    cache.set('huge', 'x', 9 * 1024 * 1024);
+    expect(cache.get('huge')).toBeUndefined();
+  });
+
+  describe('fetcher cache', () => {
+    let server: Awaited<ReturnType<typeof startServer>>;
+    let hits = 0;
+    beforeAll(async () => {
+      server = await startServer((req, res) => {
+        hits++;
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ key: req.headers['x-api-key'] || null }));
+      });
+    });
+    afterAll(() => server.close());
+
+    it('keys cached responses by request headers', async () => {
+      const fetcher = createFetcher({ allowPrivateIPs: true, ttl: 60 });
+      const url = server.url('/meta');
+      const withKey = await fetcher.get(url, { headers: { 'X-API-KEY': 's' } });
+      const without = await fetcher.get(url);
+      expect(withKey.data).toEqual({ key: 's' });
+      expect(without.data).toEqual({ key: null });
+      expect(hits).toBe(2);
+    });
+
+    it('hands out a fresh object on every hit', async () => {
+      const fetcher = createFetcher({ allowPrivateIPs: true, ttl: 60 });
+      const url = server.url('/fresh');
+      const first = await fetcher.get<Record<string, unknown>>(url);
+      first.data.key = 'mutated';
+      const second = await fetcher.get<Record<string, unknown>>(url);
+      expect(second.data.key).toBeNull();
+    });
+  });
+});
+
+describe('inline data size is checked before decoding', () => {
+  const resolverFor = (record: string, maxContentLength = 1024) =>
+    new AvatarResolver(
+      {
+        getEnsRecord: async () => ({ record, address: null }),
+        readContract: async () => null as never,
+      },
+      { maxContentLength }
+    );
+
+  it('counts UTF-8 bytes, not characters', async () => {
+    // 500 CJK characters: under 1024 characters, over 1024 UTF-8 bytes
+    const record = `data:application/json,{"image":"x","t":"${'中'.repeat(
+      500
+    )}"}`;
+    await expect(resolverFor(record).getMetadata('x.eth')).rejects.toThrow(
+      /exceeds 1024 bytes/
+    );
+  });
+
+  it('rejects oversized inline token URIs', async () => {
+    const json = JSON.stringify({ image: 'x', pad: 'x'.repeat(5000) });
+    const tokenURI = `data:application/json;base64,${toBase64(bytes(json))}`;
+    const client: ChainClient = {
+      getEnsRecord: async () => ({
+        record: 'eip155:1/erc721:0x31385d3520bced94f77aae104b406994d8f2168c/1',
+        address: null,
+      }),
+      readContract: (async () => tokenURI) as ChainClient['readContract'],
+    };
+    await expect(
+      new AvatarResolver(client, { maxContentLength: 1024 }).getMetadata(
+        'x.eth'
+      )
+    ).rejects.toThrow(/exceeds 1024 bytes/);
+  });
+
+  it('caps raster data: URIs at maxContentLength', () => {
+    const png = Buffer.from(PNG_B64, 'base64');
+    const big = Buffer.concat([png, Buffer.alloc(4096)]).toString('base64');
+    const uri = `data:image/png;base64,${big}`;
+    expect(
+      getImageURI({ metadata: { image: uri }, maxContentLength: 1024 })
+    ).toBeNull();
+    expect(
+      getImageURI({ metadata: { image: uri }, maxContentLength: 8192 })
+    ).toBe(uri);
+  });
+
+  it('drops nested "__proto__" keys too', async () => {
+    const record =
+      'data:application/json,{"image":"x","attributes":{"__proto__":{"polluted":true}}}';
+    const meta = (await resolverFor(record, 4096).getMetadata('x.eth')) as {
+      attributes: Record<string, unknown>;
+    };
+    expect(Object.assign({}, meta.attributes).polluted).toBeUndefined();
+  });
+});
+
+describe('image field selection and option handling', () => {
+  it('a malformed image does not hide a valid image_url', () => {
+    expect(
+      getImageURI({
+        metadata: {
+          image: (42 as unknown) as string,
+          image_url: 'https://example.com/a.png',
+        },
+      })
+    ).toBe('https://example.com/a.png');
+  });
+
+  it('an invalid maxSvgLength only matters for SVGs', () => {
+    expect(
+      getImageURI({
+        metadata: { image: 'https://example.com/a.png' },
+        maxSvgLength: NaN,
+      })
+    ).toBe('https://example.com/a.png');
+    expect(() =>
+      getImageURI({ metadata: { image: '<svg/>' }, maxSvgLength: NaN })
+    ).toThrow(TypeError);
+  });
+
+  it('stores gateways in canonical form', () => {
+    const avt = new AvatarResolver(
+      {
+        getEnsRecord: async () => ({ record: null, address: null }),
+        readContract: async () => null as never,
+      },
+      { ipfs: 'HTTPS://Gateway.Example' }
+    );
+    expect(avt.options?.ipfs).toBe('https://gateway.example/');
+  });
+});
+
+describe('deny list canonicalization', () => {
+  it.each([
+    ['https://xn--bcher-kva.example/', 'Bücher.example'],
+    ['https://bücher.example/', 'xn--bcher-kva.example'],
+    ['http://127.1/', '127.0.0.1'],
+    ['http://[::ffff:127.0.0.1]/', '127.0.0.1'],
+    ['http://127.0.0.1/', '::ffff:127.0.0.1'],
+    ['http://[64:ff9b::7f00:1]/', '127.0.0.1'],
+  ])('%s is denied by %s', (url, entry) => {
+    expect(isHostDenied(url, [entry])).toBe(true);
+  });
+
+  it('does not over-match', () => {
+    expect(
+      isHostDenied('https://notmetadata.ens.domains/', ['metadata.ens.domains'])
+    ).toBe(false);
+    expect(isHostDenied('http://127.0.0.2/', ['127.0.0.1'])).toBe(false);
+  });
+});
+
+describe('joinURL matches url-join', () => {
+  const cid = 'QmUShgfoZQSHK3TQyuTfUpsc8UfeNfD8KwPUvDBUdZ4nmR';
+  it.each([
+    [`ipfs://${cid}/`, `https://ipfs.io/ipfs/${cid}/`],
+    [`ipfs://${cid}/&x`, `https://ipfs.io/ipfs/${cid}&x`],
+    [`ipfs://${cid}/a?b?c`, `https://ipfs.io/ipfs/${cid}/a?b&c`],
+    [`ipfs://${cid}/a/#frag`, `https://ipfs.io/ipfs/${cid}/a#frag`],
+    [`ipfs://${cid}/a/#!/x`, `https://ipfs.io/ipfs/${cid}/a/#!/x`],
+    ['ar://abc///', 'https://arweave.net/abc/'],
   ])('%s → %s', (input, expected) => {
     expect(resolveURI(input).uri).toBe(expected);
   });

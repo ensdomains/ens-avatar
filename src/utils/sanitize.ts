@@ -22,6 +22,9 @@ export const DEFAULT_MAX_SVG_LENGTH = 256 * 1024;
 // htmlparser2 keeps open elements in an array it unshifts/scans per tag, so
 // deep nesting is quadratic. Real SVGs nest a few dozen levels at most.
 const MAX_SVG_NESTING_DEPTH = 256;
+// sanitize-html copies its output string for every element exclusiveFilter
+// drops, so the number of <style> elements is capped too.
+const MAX_STYLE_ELEMENTS = 64;
 // postcss is quadratic on some single declarations/selectors (e.g. repeated
 // "important", comments in selectors) and in removing nodes while walking, so
 // the CSS of one SVG (all <style> blocks together) and its node count are capped.
@@ -437,7 +440,7 @@ const allowedAttributes: { [key: string]: string[] } = {
 
 const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
-const TOO_DEEP = new Error('SVG nesting too deep');
+const TOO_DEEP = new Error('SVG too deep or too many <style> elements');
 
 // Parse as SVG does: honour self-closing tags everywhere. In HTML mode a
 // `<style/>` inside <desc>/<title> (HTML integration points) would open a raw
@@ -451,39 +454,45 @@ const PARSER_OPTIONS = {
 };
 
 const ALLOWED_TAGS_LOWER = new Set(allowedTags.map(tag => tag.toLowerCase()));
+const TAG_START = /<\/?([A-Za-z][\w:-]*)/y;
 
 /**
- * Safety net: parse the output the way a browser inlining it into HTML would
- * (htmlparser2's default HTML mode, which switches between HTML and foreign
- * content like the HTML spec) and check that only allowlisted elements and no
- * event-handler attributes come out.
+ * Safety net on the final output: every '<' must open or close an allowlisted
+ * element, and no tag may carry an event-handler attribute. sanitize-html
+ * escapes '<' in text and attribute values, so a raw '<' anywhere else means
+ * markup got through (e.g. inside a <style> or <title>). Linear, and
+ * independent of how any parser treats raw-text elements.
  */
 function isInertMarkup(html: string): boolean {
-  let inert = true;
-  const parser = new Parser({
-    onopentag(name, attribs) {
-      if (!ALLOWED_TAGS_LOWER.has(name.toLowerCase())) inert = false;
-      for (const attr of Object.keys(attribs)) {
-        if (/^on/i.test(attr)) inert = false;
-      }
-    },
-  });
-  parser.write(html);
-  parser.end();
-  return inert;
+  let i = html.indexOf('<');
+  while (i !== -1) {
+    TAG_START.lastIndex = i;
+    const match = TAG_START.exec(html);
+    if (!match || !ALLOWED_TAGS_LOWER.has(match[1].toLowerCase())) return false;
+    const end = html.indexOf('>', i);
+    if (end === -1) return false;
+    if (/\son[a-z]*\s*=/i.test(html.slice(i, end))) return false;
+    i = html.indexOf('<', end);
+  }
+  return true;
 }
 
 /**
- * True if elements nest deeper than `max`. Uses the same parser (and options)
- * as sanitize-html, and stops as soon as the limit is crossed, so the parser's
+ * True if elements nest deeper than `max` or there are more than
+ * MAX_STYLE_ELEMENTS <style> elements. Uses the same parser (and options) as
+ * sanitize-html, and stops as soon as a limit is crossed, so the parser's
  * element stack never grows past `max`.
  */
-function exceedsNestingDepth(svg: string, max: number): boolean {
+function exceedsLimits(svg: string, max: number): boolean {
   let depth = 0;
+  let styles = 0;
   const parser = new Parser(
     {
-      onopentagname() {
+      onopentagname(name) {
         if (++depth > max) throw TOO_DEEP;
+        if (name.toLowerCase() === 'style' && ++styles > MAX_STYLE_ELEMENTS) {
+          throw TOO_DEEP;
+        }
       },
       onclosetag() {
         depth--;
@@ -511,7 +520,7 @@ function exceedsNestingDepth(svg: string, max: number): boolean {
  * a sandboxed context like `<img>`, CSS `background-image`, or `<image href>`.)
  *
  * Returns '' (fail closed) for SVGs longer than `maxLength` or nested deeper
- * than 256 elements.
+ * than 256 elements, or with more than 64 <style> elements.
  *
  * @param svg - Raw SVG string
  * @param options.maxLength - Maximum input length @default 262144 (256 KiB)
@@ -523,7 +532,7 @@ export function sanitizeSVG(
 ): string {
   assertLimit('maxLength', maxLength);
   if (svg.length > maxLength) return '';
-  if (exceedsNestingDepth(svg, MAX_SVG_NESTING_DEPTH)) return '';
+  if (exceedsLimits(svg, MAX_SVG_NESTING_DEPTH)) return '';
 
   const cleaned = sanitizeHtml(svg, {
     allowedTags,

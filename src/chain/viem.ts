@@ -52,8 +52,14 @@ const NO_RESULT_ERRORS = new Set([
   'ReverseAddressMismatch',
 ]);
 
-/** The decoded custom-error name inside a viem error, if any. */
-function contractErrorName(error: unknown): string | undefined {
+// Gateway statuses that mean the name isn't there (as ethers' own CCIP-read
+// treats a 4xx); others (429, 5xx) are outages.
+const NOT_FOUND_STATUSES = new Set([404, 410]);
+
+/** The decoded custom error inside a viem error, if any. */
+function contractError(
+  error: unknown
+): { errorName: string; args?: readonly unknown[] } | undefined {
   const walk = (error as { walk?: (fn: (e: unknown) => boolean) => unknown })
     ?.walk;
   if (typeof walk !== 'function') return undefined;
@@ -61,9 +67,20 @@ function contractErrorName(error: unknown): string | undefined {
     typeof (e as { data?: { errorName?: unknown } })?.data?.errorName ===
     'string';
   const cause = walk.call(error, hasName) as
-    | { data?: { errorName?: string } }
+    | { data?: { errorName: string; args?: readonly unknown[] } }
     | undefined;
-  return cause?.data?.errorName;
+  return cause?.data;
+}
+
+/** True if a strict-mode getEnsText error means "no record". */
+function isNoResult(error: unknown): boolean {
+  const decoded = contractError(error);
+  if (!decoded) return false;
+  if (NO_RESULT_ERRORS.has(decoded.errorName)) return true;
+  if (decoded.errorName === 'HttpError') {
+    return NOT_FOUND_STATUSES.has(Number(decoded.args?.[0]));
+  }
+  return false;
 }
 
 // How long to wait for eth_chainId before giving up.
@@ -99,14 +116,19 @@ export function fromViem(
   const canGetChainId = !!(client.chain || client.request || client.getChainId);
 
   const fetchChainId = async (): Promise<number> => {
-    if (client.request) {
-      const hex = await withTimeout(
-        client.request({ method: 'eth_chainId' }, { dedupe: false }),
-        CHAIN_ID_TIMEOUT_MS
-      );
-      return Number(hex);
+    const id = client.request
+      ? Number(
+          await withTimeout(
+            client.request({ method: 'eth_chainId' }, { dedupe: false }),
+            CHAIN_ID_TIMEOUT_MS
+          )
+        )
+      : await withTimeout(client.getChainId!(), CHAIN_ID_TIMEOUT_MS);
+    // Never cache a malformed reply.
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new Error(`Invalid eth_chainId response: ${id}`);
     }
-    return withTimeout(client.getChainId!(), CHAIN_ID_TIMEOUT_MS);
+    return id;
   };
 
   return {
@@ -131,8 +153,7 @@ export function fromViem(
             strict: true,
           })
           .catch(error => {
-            const errorName = contractErrorName(error);
-            if (errorName && NO_RESULT_ERRORS.has(errorName)) return null;
+            if (isNoResult(error)) return null;
             throw error;
           }),
         client.getEnsAddress({

@@ -4,6 +4,7 @@ import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { isValidBase64DataURI, resolveURI } from './resolveURI';
 import { DEFAULT_MAX_SVG_LENGTH, sanitizeSVG } from './sanitize';
+import { DEFAULT_MAX_CONTENT_LENGTH } from './fetch';
 import { assertLimit } from './limits';
 import { toHttpURL } from './url';
 
@@ -109,25 +110,38 @@ export function getImageURI({
   customGateway,
   gateways,
   urlDenyList,
-  maxSvgLength = DEFAULT_MAX_SVG_LENGTH,
+  maxSvgLength,
+  maxContentLength,
 }: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
   const { image, image_url, image_data } = metadata;
 
-  const _image = image || image_url || image_data;
-  assert(_image, 'Image is not available');
-  if (typeof _image !== 'string') return null;
-  assertLimit('maxSvgLength', maxSvgLength);
-  const { uri: parsedURI } = resolveURI(
-    _image as string,
-    gateways,
-    customGateway
+  assert(image || image_url || image_data, 'Image is not available');
+  // The first field that is a string (a malformed `image` must not hide a
+  // valid `image_url`).
+  const _image = [image, image_url, image_data].find(
+    (value): value is string => typeof value === 'string' && value !== ''
   );
+  if (!_image) return null;
+
+  const svgLimit = maxSvgLength ?? DEFAULT_MAX_SVG_LENGTH;
+  const rasterLimit = maxContentLength ?? DEFAULT_MAX_CONTENT_LENGTH;
+  // Bound inline data before resolveURI validates (decodes) it. An SVG's
+  // encoded form can take up to 9 characters per character (a 3-byte UTF-8
+  // character, percent-encoded); a raster data: URI is base64 (4/3).
+  if (isSVGString(_image) || /^data:image\/svg\+xml/i.test(_image)) {
+    assertLimit('maxSvgLength', svgLimit);
+    if (_image.length > svgLimit * 9) return null;
+  } else if (/^data:/i.test(_image)) {
+    assertLimit('maxContentLength', rasterLimit);
+    if (_image.length > Math.ceil((rasterLimit * 4) / 3) + 256) return null;
+  }
+
+  const { uri: parsedURI } = resolveURI(_image, gateways, customGateway);
 
   if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
-    // svg - image_data
-    // Bound the encoded form before decoding it: one character can take up
-    // to 9 (a 3-byte UTF-8 character, percent-encoded).
+    assertLimit('maxSvgLength', svgLimit);
+    const maxSvgLength = svgLimit;
     if (parsedURI.length > maxSvgLength * 9) return null;
     const decoded = convertToRawSVG(parsedURI);
     if (!decoded || decoded.length > maxSvgLength) return null;

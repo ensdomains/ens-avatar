@@ -36,6 +36,30 @@ export class UnsupportedMediaKey extends BaseError {}
 export interface ChainMismatch {}
 export class ChainMismatch extends BaseError {}
 
+/**
+ * Treat null / '' options as unset (as before validation existed), and store
+ * gateway URLs in the canonical form they were validated in.
+ */
+function normalizeOptions(
+  options?: AvatarResolverOpts
+): AvatarResolverOpts | undefined {
+  if (!options) return options;
+  const normalized: Record<string, unknown> = { ...options };
+  for (const [key, value] of Object.entries(normalized)) {
+    if (value === null || value === '') delete normalized[key];
+  }
+  for (const gateway of ['ipfs', 'arweave'] as const) {
+    const url = normalized[gateway];
+    if (url === undefined) continue;
+    const canonical = typeof url === 'string' ? toHttpURL(url) : null;
+    if (!canonical) {
+      throw new TypeError(`${gateway} gateway must be an http(s) URL`);
+    }
+    normalized[gateway] = canonical;
+  }
+  return normalized as AvatarResolverOpts;
+}
+
 export interface AvatarResolver {
   client: ChainClient;
   options?: AvatarResolverOpts;
@@ -66,16 +90,10 @@ export interface AvatarResolver {
 export class AvatarResolver implements AvatarResolver {
   constructor(client: ChainClient, options?: AvatarResolverOpts) {
     this.client = client;
-    this.options = options;
-    this.fetcher = createFetcherFromOptions(options);
-    if (options?.maxSvgLength !== undefined) {
-      assertLimit('maxSvgLength', options.maxSvgLength);
-    }
-    for (const gateway of ['ipfs', 'arweave'] as const) {
-      const url = options?.[gateway];
-      if (url !== undefined && !toHttpURL(url)) {
-        throw new TypeError(`${gateway} gateway must be an http(s) URL`);
-      }
+    this.options = normalizeOptions(options);
+    this.fetcher = createFetcherFromOptions(this.options);
+    if (this.options?.maxSvgLength !== undefined) {
+      assertLimit('maxSvgLength', this.options.maxSvgLength);
     }
   }
 
@@ -184,6 +202,7 @@ export class AvatarResolver implements AvatarResolver {
       },
       urlDenyList: this.options?.urlDenyList,
       maxSvgLength: this.options?.maxSvgLength,
+      maxContentLength: this.options?.maxContentLength,
     });
     // Every remote URL we return must be an image. Skip only the URL the
     // record pointed at directly, which was checked while resolving.

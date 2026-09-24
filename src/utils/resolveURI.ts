@@ -82,19 +82,18 @@ const trimSlashes = (part: string, leading: boolean, trailing: boolean) => {
  * the parts here (IPFS/Arweave paths) come from records.
  */
 function joinURL(...parts: string[]): string {
-  const last = parts.length - 1;
-  const joined = parts
-    .map((part, i) => {
-      const trimmed = trimSlashes(part, i > 0, true);
-      // keep one trailing slash on the last part, as url-join does
-      return i === last && part.endsWith('/') && trimmed
-        ? trimmed + '/'
-        : trimmed;
-    })
+  let joined = parts
+    .map((part, i) => trimSlashes(part, i > 0, true))
     .filter(Boolean)
     .join('/');
-  // drop a slash before a query or fragment
-  return joined.replace(/\/(\?|#)/g, '$1');
+  // Keep a trailing slash, as url-join does (`ipfs://CID/` stays a directory
+  // URL, which gateways would otherwise redirect to).
+  if (parts[parts.length - 1].endsWith('/')) joined += '/';
+  // url-join's post-processing, kept as is so resolved URLs don't change:
+  // drop a slash before '?', '&' or '#' (except '#!'), then turn every '?'
+  // after the first into '&'.
+  const [base, ...query] = joined.replace(/\/(\?|&|#[^!])/g, '$1').split('?');
+  return base + (query.length > 0 ? '?' : '') + query.join('&');
 }
 
 function _replaceGateway(uri: string, source: string, target?: string) {

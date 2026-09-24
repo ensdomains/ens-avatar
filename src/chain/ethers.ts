@@ -30,26 +30,44 @@ export interface FromEthersOptions {
   universalResolverAddress?: string;
 }
 
-// Universal Resolver errors that mean the gateway failed, not "no record".
-const GATEWAY_ERROR_SELECTORS = new Set([
-  id('HttpError(uint16,string)').slice(0, 10),
-  id('InvalidBatchGatewayResponse()').slice(0, 10),
-]);
+// Universal Resolver custom errors that mean "no such resolver / record /
+// profile". Everything else is a failure: HttpError and
+// InvalidBatchGatewayResponse (a CCIP gateway failed), Error(string), Panic,
+// OffchainLookup, and JSON-RPC errors (which ethers also reports as
+// CALL_EXCEPTION, e.g. "header not found" or rate limits).
+const NO_RESULT_SELECTORS = new Set(
+  [
+    'ResolverNotFound(bytes)',
+    'ResolverNotContract(bytes,address)',
+    'UnsupportedResolverProfile(bytes4)',
+    'ResolverError(bytes)',
+  ].map(signature => id(signature).slice(0, 10))
+);
 
-/**
- * True if a failed Universal Resolver call means "no result" rather than an
- * outage. The UR reports a missing resolver/record/profile with custom-error
- * revert data (ResolverNotFound, ResolverError, UnsupportedResolverProfile,
- * …). Everything else throws: ethers reports every JSON-RPC error on eth_call
- * as CALL_EXCEPTION (including "header not found" or rate limits), an empty
- * `0x` result (BAD_DATA) means the call didn't reach a UR, and HttpError /
- * InvalidBatchGatewayResponse mean a CCIP gateway failed.
- */
+const selectorOf = (data: string) => data.slice(0, 10).toLowerCase();
+
+/** True if a failed Universal Resolver call means "no result". */
 function isNoResult(error: unknown): boolean {
   if (!isError(error, 'CALL_EXCEPTION')) return false;
   const data = error.data;
-  if (!data || data.length < 10) return false;
-  return !GATEWAY_ERROR_SELECTORS.has(data.slice(0, 10).toLowerCase());
+  return !!data && NO_RESULT_SELECTORS.has(selectorOf(data));
+}
+
+/**
+ * Check one result of the UR multicall. UR v3 reports a failed call (e.g. a
+ * CCIP gateway HttpError) by putting its revert data in place of the result,
+ * inside an otherwise successful response. Revert data is a 4-byte selector
+ * plus ABI words; return data is whole 32-byte words. Returns the result, null
+ * for a "no result" error, and throws for any other error.
+ */
+function checkCallResult(encoded: string): string | null {
+  const bytes = (encoded.length - 2) / 2;
+  if (bytes % 32 !== 4) return encoded;
+  if (NO_RESULT_SELECTORS.has(selectorOf(encoded))) return null;
+  throw Object.assign(
+    new Error(`Universal Resolver call failed (${selectorOf(encoded)})`),
+    { data: encoded }
+  );
 }
 
 /** Adapt an ethers v6 Provider to ens-avatar's ChainClient. */
@@ -145,18 +163,30 @@ export function fromEthers(
         ])
       );
       if (batched) {
+        let results: string[] | undefined;
         try {
-          const [results] = multicallIface.decodeFunctionResult(
+          results = multicallIface.decodeFunctionResult(
             'multicall',
             batched.response
-          );
-          const [encodedAddr, encodedText] = results as string[];
-          return {
-            record: decodeText(encodedText),
-            address: decodeAddr(encodedAddr),
-          };
+          )[0] as string[];
         } catch {
           // multicall result didn't decode — fall through to the text-only path
+        }
+        if (results) {
+          const [encodedAddr, encodedText] = results;
+          // A failed text call is a failure (throws); a failed addr call only
+          // costs the ownership check.
+          const text = checkCallResult(encodedText);
+          let addr: string | null = null;
+          try {
+            addr = checkCallResult(encodedAddr);
+          } catch {
+            addr = null;
+          }
+          return {
+            record: text === null ? null : decodeText(text),
+            address: addr === null ? null : decodeAddr(addr),
+          };
         }
       }
 

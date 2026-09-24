@@ -6,6 +6,7 @@ import {
 } from '../utils';
 import {
   asMetadataObject,
+  assertDataURISize,
   parseOnChainMetadata,
 } from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
@@ -70,6 +71,7 @@ export default class ERC721 {
       owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
+    assertDataURISize(tokenURI, options?.maxContentLength);
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,

@@ -18,6 +18,7 @@ export const ALLOWED_IMAGE_MIMETYPES = [
 ];
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
+const SNIFF_BYTES = 1024;
 
 // Non-standard names servers use for allowed types.
 const MIME_TYPE_ALIASES: Record<string, string> = {
@@ -53,13 +54,23 @@ export function isSvgDocument(text: string): boolean {
       i = end + 3;
     } else if (text.slice(i, i + 9).toUpperCase() === '<!DOCTYPE') {
       end = text.indexOf('>', i);
-      const subset = text.indexOf('[', i);
-      if (subset !== -1 && (end === -1 || subset < end)) {
+      if (end === -1) return false;
+      // An internal subset ("[ … ]") opens before the doctype's first '>'.
+      // Only look there: searching the rest of the input for '[' on every
+      // doctype would be quadratic.
+      let subset = -1;
+      for (let j = i + 9; j < end; j++) {
+        if (text[j] === '[') {
+          subset = j;
+          break;
+        }
+      }
+      if (subset !== -1) {
         const subsetEnd = text.indexOf(']', subset);
         if (subsetEnd === -1) return false;
         end = text.indexOf('>', subsetEnd);
+        if (end === -1) return false;
       }
-      if (end === -1) return false;
       i = end + 1;
     } else {
       return /^<svg[\s>/]/i.test(text.slice(i, i + 5));
@@ -96,13 +107,19 @@ async function isStreamAnImage(
       }
     }
 
+    // Only the first KiB is inspected, even if a custom fetcher returned more.
+    const head = new Uint8Array(
+      response.data,
+      0,
+      Math.min(response.data.byteLength, SNIFF_BYTES)
+    );
+
     // Check the binary signature (magic numbers) of the data
-    const isBinaryImage =
-      detectImageMimeType(new Uint8Array(response.data)) !== null;
+    const isBinaryImage = detectImageMimeType(head) !== null;
 
     // Check for SVG image - must start with <svg or <?xml (after stripping whitespace/BOM)
     const chunkAsString = new TextDecoder()
-      .decode(response.data)
+      .decode(head)
       .replace(/^\uFEFF/, '')
       .trimStart();
     const isSvgImage = isSvgDocument(chunkAsString);

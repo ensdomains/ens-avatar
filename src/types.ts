@@ -122,4 +122,6 @@ export interface ImageURIOpts {
   urlDenyList?: string[];
   /** Maximum inline SVG length (decoded). @default 262144 (256 KiB) */
   maxSvgLength?: number;
+  /** Maximum size in bytes of a raster data: URI. @default 1048576 (1 MiB) */
+  maxContentLength?: number;
 }

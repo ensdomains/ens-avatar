@@ -6,6 +6,7 @@ import {
 } from '../utils';
 import {
   asMetadataObject,
+  assertDataURISize,
   parseOnChainMetadata,
 } from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
@@ -79,6 +80,7 @@ export default class ERC1155 {
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance && balance > BigInt(0));
 
+    assertDataURISize(tokenURI, options?.maxContentLength);
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,
