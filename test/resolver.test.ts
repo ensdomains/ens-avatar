@@ -25,6 +25,10 @@ import { fromViem, ViemClientLike } from '../src/chain/viem';
 
 require('dotenv').config();
 
+const RESOLVER_NOT_FOUND_REVERT = new Interface([
+  'error ResolverNotFound(bytes name)',
+]).encodeErrorResult('ResolverNotFound', [dnsEncode('unknown.eth')]);
+
 // Route ethers' HTTP requests through undici so MockAgent can intercept them.
 // By default ethers uses Node's http/https modules, which MockAgent doesn't intercept.
 FetchRequest.registerGetUrl(async (req, signal) => {
@@ -199,7 +203,17 @@ function setupRpcMocks(rpcTable: Record<string, string>) {
           }
 
           if (result === undefined) {
-            result = '0x';
+            // Unmocked calls revert the way the Universal Resolver does for
+            // an unknown name: ResolverNotFound(bytes) revert data.
+            return {
+              jsonrpc: '2.0',
+              id: call.id,
+              error: {
+                code: 3,
+                message: 'execution reverted',
+                data: RESOLVER_NOT_FOUND_REVERT,
+              },
+            };
           }
 
           return { jsonrpc: '2.0', id: call.id, result };
@@ -437,7 +451,7 @@ describe('get avatar', () => {
 
   it('falls back to a text-only resolve when the batched multicall reverts', async () => {
     // Only the text-only resolve is mocked; the batched addr+text multicall is
-    // left unmocked (returns empty), simulating a resolver that doesn't support
+    // left unmocked (reverts), simulating a resolver that doesn't support
     // addr(bytes32,uint256). The avatar should still resolve via the fallback.
     setupRpcMocks({
       eth_chainId: '0x1',
@@ -463,8 +477,8 @@ describe('get avatar', () => {
   });
 
   it('returns null (does not throw) when the name cannot be resolved', async () => {
-    // No Universal Resolver mock — resolve() returns empty, which the resolver
-    // treats as unresolved and returns null rather than throwing.
+    // No Universal Resolver mock — resolve() reverts with ResolverNotFound,
+    // which the resolver treats as unresolved and returns null.
     setupRpcMocks({ eth_chainId: '0x1' });
     provider = new JsonRpcProvider(INFURA_URL.toString(), 'mainnet');
     avt = new AvatarResolver(fromEthers(provider), { dispatcher: mockAgent });

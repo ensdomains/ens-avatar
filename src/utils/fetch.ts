@@ -6,13 +6,14 @@ import {
   normalizeHostname,
 } from './hostname';
 import { isPrivateIp } from './ip';
-import { assertLimit } from './limits';
+import { assertBoolean, assertLimit, assertStringArray } from './limits';
 import { AvatarResolverOpts, Fetcher, FetcherResponse } from '../types';
 
 /**
  * Default redirects followed per request. Each hop is a subrequest, and one
- * resolution makes up to four requests, so this bounds the total (Cloudflare
- * Workers Free allows 50 subrequests per invocation).
+ * resolution makes up to five requests (record HEAD + sniff, metadata GET,
+ * image HEAD + sniff), so the default bounds it at 30 HTTP subrequests
+ * (Cloudflare Workers Free allows 50 per invocation).
  */
 export const DEFAULT_MAX_REDIRECTS = 5;
 /**
@@ -78,7 +79,8 @@ export function validateUrl(
 
   const hostname = parsed.hostname;
 
-  if (!allowPrivateIPs && isPrivateHostname(hostname)) {
+  // Only a real `true` disables the check (not e.g. the string "false").
+  if (allowPrivateIPs !== true && isPrivateHostname(hostname)) {
     throw new Error(`Request to private address blocked: ${hostname}`);
   }
 
@@ -96,7 +98,11 @@ interface CacheEntry<T> {
   expiry: number;
 }
 
-class TTLCache {
+// Keys are attacker-influenced URLs, so the cache is bounded (LRU).
+export const MAX_CACHE_ENTRIES = 1000;
+
+/** @internal — exported for tests. */
+export class TTLCache {
   private store = new Map<string, CacheEntry<unknown>>();
   private ttlMs: number;
 
@@ -107,14 +113,21 @@ class TTLCache {
   get<T>(key: string): T | undefined {
     const entry = this.store.get(key);
     if (!entry) return undefined;
-    if (Date.now() > entry.expiry) {
-      this.store.delete(key);
-      return undefined;
-    }
+    this.store.delete(key);
+    if (Date.now() > entry.expiry) return undefined;
+    this.store.set(key, entry); // most recently used goes last
     return entry.value as T;
   }
 
   set<T>(key: string, value: T): void {
+    this.store.delete(key);
+    if (this.store.size >= MAX_CACHE_ENTRIES) {
+      const now = Date.now();
+      for (const [k, e] of this.store) if (now > e.expiry) this.store.delete(k);
+    }
+    if (this.store.size >= MAX_CACHE_ENTRIES) {
+      this.store.delete(this.store.keys().next().value as string); // least recent
+    }
     this.store.set(key, { value, expiry: Date.now() + this.ttlMs });
   }
 }
@@ -420,7 +433,7 @@ async function resolveRuntime(
   // User-provided dispatcher — use as-is, the caller owns SSRF safety.
   if (dispatcher) return { fetchFn, ssrfDispatcher: dispatcher };
   // Private IPs explicitly allowed — no SSRF agent.
-  if (allowPrivateIPs) return { fetchFn };
+  if (allowPrivateIPs === true) return { fetchFn };
 
   const [net, dns] = await Promise.all([
     import('net').then(interopDefault),
@@ -453,6 +466,9 @@ export function createFetcher({
   /** Maximum redirects followed per request. */
   maxRedirects?: number;
 } = {}): Fetcher {
+  if (ttl !== undefined) assertLimit('cache', ttl, { min: 0 }); // 0 = disabled
+  assertBoolean('allowPrivateIPs', allowPrivateIPs);
+  assertStringArray('urlDenyList', urlDenyList);
   assertLimit('timeout', timeout, { max: MAX_TIMEOUT });
   assertLimit('maxContentLength', maxContentLength);
   assertLimit('maxRedirects', maxRedirects, { min: 0, max: 20 });

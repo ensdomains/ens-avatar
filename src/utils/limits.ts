@@ -18,3 +18,19 @@ export function assertLimit(
     );
   }
 }
+
+/** Options like allowPrivateIPs must be real booleans: "false" is truthy. */
+export function assertBoolean(name: string, value: unknown): void {
+  if (value !== undefined && typeof value !== 'boolean') {
+    throw new TypeError(`${name} must be a boolean, got ${typeof value}`);
+  }
+}
+
+export function assertStringArray(name: string, value: unknown): void {
+  if (
+    value !== undefined &&
+    (!Array.isArray(value) || value.some(v => typeof v !== 'string'))
+  ) {
+    throw new TypeError(`${name} must be an array of strings`);
+  }
+}

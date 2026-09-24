@@ -23,8 +23,10 @@ export const DEFAULT_MAX_SVG_LENGTH = 256 * 1024;
 // deep nesting is quadratic. Real SVGs nest a few dozen levels at most.
 const MAX_SVG_NESTING_DEPTH = 256;
 // postcss is quadratic on some single declarations/selectors (e.g. repeated
-// "important", comments in selectors), so each CSS chunk is capped.
-const MAX_STYLE_BLOCK_LENGTH = 64 * 1024;
+// "important", comments in selectors) and in removing nodes while walking, so
+// the CSS of one SVG (all <style> blocks together) and its node count are capped.
+const MAX_STYLE_TOTAL_LENGTH = 64 * 1024;
+const MAX_CSS_NODES = 2000;
 const MAX_STYLE_ATTRIBUTE_LENGTH = 16 * 1024;
 
 // CSS properties allowed in `style` attributes and `<style>` blocks.
@@ -106,6 +108,8 @@ const SAFE_CSS_PROPERTIES = new Set<string>([
 const ALLOWED_AT_RULES = new Set<string>([
   'media',
   'supports',
+  'container',
+  'layer',
   'keyframes',
   '-webkit-keyframes',
 ]);
@@ -201,13 +205,18 @@ function sanitizeStyleAttribute(css: string): string {
 
 /** Sanitize the CSS text inside a `<style>` block with postcss. */
 function sanitizeStyleBlock(css: string): string {
-  if (css.length > MAX_STYLE_BLOCK_LENGTH) return '';
   let root;
   try {
     root = parseCss(css);
   } catch {
     return ''; // unparseable CSS — fail closed
   }
+  let nodes = 0;
+  root.walk(() => {
+    if (++nodes > MAX_CSS_NODES) return false; // stop walking
+    return undefined;
+  });
+  if (nodes > MAX_CSS_NODES) return '';
   root.walkAtRules(atRule => {
     const name = normalizeForDetection(atRule.name);
     if (!ALLOWED_AT_RULES.has(name) || !isSafeCssValue(atRule.params)) {
@@ -430,6 +439,40 @@ const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
 const TOO_DEEP = new Error('SVG nesting too deep');
 
+// Parse as SVG does: honour self-closing tags everywhere. In HTML mode a
+// `<style/>` inside <desc>/<title> (HTML integration points) would open a raw
+// text element that swallows entity-encoded markup, which is then emitted
+// decoded, e.g. `<desc><style/>&lt;img onerror=…&gt;` → a live <img>.
+const PARSER_OPTIONS = {
+  decodeEntities: true,
+  lowerCaseTags: false,
+  lowerCaseAttributeNames: false,
+  recognizeSelfClosing: true,
+};
+
+const ALLOWED_TAGS_LOWER = new Set(allowedTags.map(tag => tag.toLowerCase()));
+
+/**
+ * Safety net: parse the output the way a browser inlining it into HTML would
+ * (htmlparser2's default HTML mode, which switches between HTML and foreign
+ * content like the HTML spec) and check that only allowlisted elements and no
+ * event-handler attributes come out.
+ */
+function isInertMarkup(html: string): boolean {
+  let inert = true;
+  const parser = new Parser({
+    onopentag(name, attribs) {
+      if (!ALLOWED_TAGS_LOWER.has(name.toLowerCase())) inert = false;
+      for (const attr of Object.keys(attribs)) {
+        if (/^on/i.test(attr)) inert = false;
+      }
+    },
+  });
+  parser.write(html);
+  parser.end();
+  return inert;
+}
+
 /**
  * True if elements nest deeper than `max`. Uses the same parser (and options)
  * as sanitize-html, and stops as soon as the limit is crossed, so the parser's
@@ -446,11 +489,7 @@ function exceedsNestingDepth(svg: string, max: number): boolean {
         depth--;
       },
     },
-    {
-      decodeEntities: true,
-      lowerCaseTags: false,
-      lowerCaseAttributeNames: false,
-    }
+    PARSER_OPTIONS
   );
   try {
     parser.write(svg);
@@ -492,10 +531,9 @@ export function sanitizeSVG(
     // <style> content is sanitized by sanitizeStyleBlock below, not by sanitize-html.
     allowVulnerableTags: true,
     // Preserve case for SVG elements/attributes (viewBox, clipPath, …).
-    parser: {
-      lowerCaseTags: false,
-      lowerCaseAttributeNames: false,
-    },
+    parser: PARSER_OPTIONS,
+    // Drop <style> whose text holds markup or entities (see below).
+    exclusiveFilter: frame => frame.tag === 'style' && /[<&]/.test(frame.text),
     allowedSchemes: ['http', 'https', 'data'],
     allowedSchemesByTag: {
       // image/feImage: only data:image/* (transform enforces further) — no external loading.
@@ -537,7 +575,10 @@ export function sanitizeSVG(
 
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
-  return cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
+  let styleBudget = MAX_STYLE_TOTAL_LENGTH;
+  const output = cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
+    styleBudget -= css.length;
+    if (styleBudget < 0) return '';
     const safe = sanitizeStyleBlock(css);
     // Inlined into HTML, <style> inside <svg> is parsed as markup, not raw
     // text: a '<' (or an entity that decodes to one) in the CSS would become a
@@ -545,4 +586,5 @@ export function sanitizeSVG(
     if (!safe || /[<&]/.test(safe)) return '';
     return `<style>${safe}</style>`;
   });
+  return isInertMarkup(output) ? output : '';
 }

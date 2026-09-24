@@ -4,6 +4,7 @@ import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { isValidBase64DataURI, resolveURI } from './resolveURI';
 import { DEFAULT_MAX_SVG_LENGTH, sanitizeSVG } from './sanitize';
+import { assertLimit } from './limits';
 import { toHttpURL } from './url';
 
 function isSVGString(str: string): boolean {
@@ -115,6 +116,8 @@ export function getImageURI({
 
   const _image = image || image_url || image_data;
   assert(_image, 'Image is not available');
+  if (typeof _image !== 'string') return null;
+  assertLimit('maxSvgLength', maxSvgLength);
   const { uri: parsedURI } = resolveURI(
     _image as string,
     gateways,
@@ -123,8 +126,9 @@ export function getImageURI({
 
   if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
-    // The encoded form (base64, %XX) is at most 3x the decoded SVG.
-    if (parsedURI.length > maxSvgLength * 3) return null;
+    // Bound the encoded form before decoding it: one character can take up
+    // to 9 (a 3-byte UTF-8 character, percent-encoded).
+    if (parsedURI.length > maxSvgLength * 9) return null;
     const decoded = convertToRawSVG(parsedURI);
     if (!decoded || decoded.length > maxSvgLength) return null;
     const rawSVG = collapseTagWhitespace(decoded);

@@ -32,9 +32,40 @@ const MIME_TYPE_ALIASES: Record<string, string> = {
 // only (S3 presigned URLs answer HEAD with 403): sniff with a ranged GET.
 const HEAD_REFUSED_STATUSES = [403, 405, 501];
 
-// An SVG document: optional XML declaration, comments and doctype, then the
-// <svg> root. (A bare "<?xml" prefix would also admit XHTML.)
-const SVG_DOCUMENT = /^(?:<\?xml[^>]*>\s*)?(?:(?:<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)\s*)*<svg[\s>]/i;
+/**
+ * True if `text` starts an SVG document: an XML prolog (declaration, other
+ * processing instructions, comments, a doctype with an optional internal
+ * subset, whitespace) followed by the <svg> root. A bare "<?xml" prefix would
+ * also admit XHTML. Scans forward only, so it is linear in `text`.
+ */
+export function isSvgDocument(text: string): boolean {
+  let i = 0;
+  for (;;) {
+    while (i < text.length && /\s/.test(text[i])) i++;
+    let end: number;
+    if (text.startsWith('<?', i)) {
+      end = text.indexOf('?>', i + 2);
+      if (end === -1) return false;
+      i = end + 2;
+    } else if (text.startsWith('<!--', i)) {
+      end = text.indexOf('-->', i + 4);
+      if (end === -1) return false;
+      i = end + 3;
+    } else if (text.slice(i, i + 9).toUpperCase() === '<!DOCTYPE') {
+      end = text.indexOf('>', i);
+      const subset = text.indexOf('[', i);
+      if (subset !== -1 && (end === -1 || subset < end)) {
+        const subsetEnd = text.indexOf(']', subset);
+        if (subsetEnd === -1) return false;
+        end = text.indexOf('>', subsetEnd);
+      }
+      if (end === -1) return false;
+      i = end + 1;
+    } else {
+      return /^<svg[\s>/]/i.test(text.slice(i, i + 5));
+    }
+  }
+}
 
 export function isURIEncoded(uri: string): boolean {
   try {
@@ -74,7 +105,7 @@ async function isStreamAnImage(
       .decode(response.data)
       .replace(/^\uFEFF/, '')
       .trimStart();
-    const isSvgImage = SVG_DOCUMENT.test(chunkAsString);
+    const isSvgImage = isSvgDocument(chunkAsString);
 
     return isBinaryImage || isSvgImage;
   } catch (error) {

@@ -12,6 +12,7 @@ import {
   ZeroAddress,
   dnsEncode,
   getAddress,
+  id,
   isError,
   namehash,
 } from 'ethers';
@@ -29,20 +30,26 @@ export interface FromEthersOptions {
   universalResolverAddress?: string;
 }
 
+// Universal Resolver errors that mean the gateway failed, not "no record".
+const GATEWAY_ERROR_SELECTORS = new Set([
+  id('HttpError(uint16,string)').slice(0, 10),
+  id('InvalidBatchGatewayResponse()').slice(0, 10),
+]);
+
 /**
- * True if a failed eth_call means "no result" (a revert, or an empty `0x`
- * result) rather than an outage. ethers reports every JSON-RPC error on
- * eth_call as CALL_EXCEPTION, including "header not found" or rate limits,
- * so a real revert is recognised by its revert data or message.
+ * True if a failed Universal Resolver call means "no result" rather than an
+ * outage. The UR reports a missing resolver/record/profile with custom-error
+ * revert data (ResolverNotFound, ResolverError, UnsupportedResolverProfile,
+ * …). Everything else throws: ethers reports every JSON-RPC error on eth_call
+ * as CALL_EXCEPTION (including "header not found" or rate limits), an empty
+ * `0x` result (BAD_DATA) means the call didn't reach a UR, and HttpError /
+ * InvalidBatchGatewayResponse mean a CCIP gateway failed.
  */
 function isNoResult(error: unknown): boolean {
-  if (isError(error, 'BAD_DATA')) return true;
   if (!isError(error, 'CALL_EXCEPTION')) return false;
-  if (error.data && error.data !== '0x') return true;
-  const rpcError = (error.info as { error?: { message?: unknown } } | undefined)
-    ?.error;
-  if (!rpcError) return true; // not from a JSON-RPC error response
-  return /revert/i.test(String(rpcError.message));
+  const data = error.data;
+  if (!data || data.length < 10) return false;
+  return !GATEWAY_ERROR_SELECTORS.has(data.slice(0, 10).toLowerCase());
 }
 
 /** Adapt an ethers v6 Provider to ens-avatar's ChainClient. */

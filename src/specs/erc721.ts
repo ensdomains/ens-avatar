@@ -75,7 +75,11 @@ export default class ERC721 {
       arweave: options?.arweave,
     });
     if (isOnChain) {
-      const metadata = parseOnChainMetadata(resolvedURI, isEncoded);
+      const metadata = parseOnChainMetadata(
+        resolvedURI,
+        isEncoded,
+        options?.maxContentLength
+      );
       return { ...metadata, is_owner: isOwner };
     }
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenID);

@@ -209,7 +209,14 @@ Common local development scenarios:
 
 **Note**: This flag is ignored if you provide custom agents (you control security in that case).
 
+## Cloudflare Workers
+
+- **viem:** create the client with a `chain`. Without one the adapter has to ask the RPC for `eth_chainId`; it does so without viem's request dedupe, because Workers hang when a promise started in one request is awaited in another.
+- **ethers:** use `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
+
 ## Security
+
+> **`getMetadata` returns metadata as published.** Fields like `image`, `image_url` and `image_data` are raw, attacker-controlled values; render them only through `getAvatar` / `getHeader` / `utils.getImageURI`, which validate and sanitize them.
 
 ### XSS Protection
 
@@ -266,6 +273,7 @@ Guard it with your client's hook — viem: `ccipRead: { request }` on `createPub
 - **Check the URL you actually request**, i.e. after substituting `{sender}` and `{data}` into the gateway template. Checking the template is not enough: `https://{data}/` with data `0x7f000001` targets `127.0.0.1`. Use `avtUtils.validateUrl(url)`.
 - **Don't let `fetch` follow redirects.** Use `redirect: 'manual'` and run `validateUrl` on every `Location` hop, with a hop limit.
 - **Bound each request** (timeout, response size) and the lookup as a whole: the number of gateway URLs tried and nested lookups (ethers stops at 10, `MAX_CCIP_REDIRECTS`; viem has no limit of its own).
+- **On Node, also check resolved addresses.** `validateUrl` only sees the URL: a gateway hostname whose DNS points at a private address passes it. Make the gateway requests through an agent that checks the IP it connects to (e.g. an undici `Agent` with a validating `lookup`, or `ssrf-req-filter`).
 
 ### Serving avatars
 

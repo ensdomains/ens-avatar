@@ -1,5 +1,3 @@
-import urlJoin from 'url-join';
-
 import { Gateways } from '../types';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { isCID } from './isCID';
@@ -70,6 +68,35 @@ export function isValidBase64DataURI(uri: string) {
   }
 }
 
+const trimSlashes = (part: string, leading: boolean, trailing: boolean) => {
+  let start = 0;
+  let end = part.length;
+  if (leading) while (start < end && part[start] === '/') start++;
+  if (trailing) while (end > start && part[end - 1] === '/') end--;
+  return part.slice(start, end);
+};
+
+/**
+ * Join URL parts with single slashes, like url-join (which this replaces):
+ * url-join's /[\/]+$/ is quadratic on runs of slashes inside a part, and
+ * the parts here (IPFS/Arweave paths) come from records.
+ */
+function joinURL(...parts: string[]): string {
+  const last = parts.length - 1;
+  const joined = parts
+    .map((part, i) => {
+      const trimmed = trimSlashes(part, i > 0, true);
+      // keep one trailing slash on the last part, as url-join does
+      return i === last && part.endsWith('/') && trimmed
+        ? trimmed + '/'
+        : trimmed;
+    })
+    .filter(Boolean)
+    .join('/');
+  // drop a slash before a query or fragment
+  return joined.replace(/\/(\?|#)/g, '$1');
+}
+
 function _replaceGateway(uri: string, source: string, target?: string) {
   if (uri.startsWith(source) && target) {
     try {
@@ -111,20 +138,20 @@ export function resolveURI(
     networkRegexResult?.groups || {};
   if ((protocol === 'ipns:/' || subpath === 'ipns/') && target) {
     return {
-      uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
+      uri: joinURL(ipfsGateway, IPNS_SUBPATH, target, subtarget),
       isOnChain: false,
       isEncoded: false,
     };
   } else if (isCID(target)) {
     // Assume that it's a regular IPFS CID and not an IPNS key
     return {
-      uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
+      uri: joinURL(ipfsGateway, IPFS_SUBPATH, target, subtarget),
       isOnChain: false,
       isEncoded: false,
     };
   } else if (protocol === 'ar:/' && target) {
     return {
-      uri: urlJoin(arGateway, target, subtarget || ''),
+      uri: joinURL(arGateway, target, subtarget || ''),
       isOnChain: false,
       isEncoded: false,
     };

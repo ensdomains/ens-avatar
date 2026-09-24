@@ -1,3 +1,5 @@
+import { isOverlongHostname, normalizeHostname } from './hostname';
+
 /**
  * Parse an http(s) URL once and return its canonical form (`URL#href`), or
  * null for anything else.
@@ -15,5 +17,6 @@ export function toHttpURL(url: string): string | null {
     return null;
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+  if (isOverlongHostname(normalizeHostname(parsed.hostname))) return null;
   return parsed.href;
 }

@@ -1,9 +1,16 @@
-import { hostMatchesDenyList } from './hostname';
+import {
+  hostMatchesDenyList,
+  isOverlongHostname,
+  normalizeHostname,
+} from './hostname';
 
+/** True if the URL's host is on the deny list (or is not a valid host). */
 export function isHostDenied(url: string, denyList?: string[]): boolean {
-  if (!denyList?.length) return false;
   try {
-    return hostMatchesDenyList(new URL(url).hostname, denyList);
+    const hostname = new URL(url).hostname;
+    if (isOverlongHostname(normalizeHostname(hostname))) return true;
+    if (!denyList?.length) return false;
+    return hostMatchesDenyList(hostname, denyList);
   } catch {
     return true;
   }

@@ -84,7 +84,11 @@ export default class ERC1155 {
       arweave: options?.arweave,
     });
     if (isOnChain) {
-      const metadata = parseOnChainMetadata(resolvedURI, isEncoded);
+      const metadata = parseOnChainMetadata(
+        resolvedURI,
+        isEncoded,
+        options?.maxContentLength
+      );
       return { ...metadata, is_owner: isOwner };
     }
 

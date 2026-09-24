@@ -45,7 +45,11 @@ export default class URI {
       if (/^data:application\/json[;,]/i.test(uri)) {
         return {
           metadata: recordMetadata(
-            parseOnChainMetadata(resolvedURI, isEncoded)
+            parseOnChainMetadata(
+              resolvedURI,
+              isEncoded,
+              options?.maxContentLength
+            )
           ),
         };
       }

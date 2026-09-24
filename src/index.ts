@@ -71,6 +71,12 @@ export class AvatarResolver implements AvatarResolver {
     if (options?.maxSvgLength !== undefined) {
       assertLimit('maxSvgLength', options.maxSvgLength);
     }
+    for (const gateway of ['ipfs', 'arweave'] as const) {
+      const url = options?.[gateway];
+      if (url !== undefined && !toHttpURL(url)) {
+        throw new TypeError(`${gateway} gateway must be an http(s) URL`);
+      }
+    }
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
