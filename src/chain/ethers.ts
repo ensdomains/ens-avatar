@@ -72,27 +72,43 @@ function isNoResult(error: unknown): boolean {
 }
 
 /**
- * Check one result of the UR multicall. UR v3 reports a failed call by putting
- * its revert data in place of the result, inside an otherwise successful
- * response. Revert data is a 4-byte selector plus ABI words; return data is
- * whole 32-byte words. Returns the result, or null when the call failed with
- * "no result": the resolver's own revert (which the UR reports as
- * ResolverError at the top level) or a gateway 404/410. Throws when a CCIP
- * gateway failed otherwise.
+ * Classify one result of the UR multicall. UR v3 reports a failed call by
+ * putting its revert data in place of the result, inside an otherwise
+ * successful response. Revert data is a 4-byte selector plus ABI words; return
+ * data is whole 32-byte words.
+ *
+ * - 'ok': the call succeeded (`data` is its result)
+ * - 'none': no result (a "no result" UR error, or a gateway 404/410)
+ * - 'failed': a CCIP gateway failed (other HttpError statuses,
+ *   InvalidBatchGatewayResponse)
+ * - 'ambiguous': anything else, e.g. Error(string). Inside the multicall a
+ *   resolver's own revert and a batch-gateway network failure (timeout,
+ *   unreachable, garbage body) look the same; resolving the call on its own
+ *   tells them apart, since the UR then wraps a resolver revert in
+ *   ResolverError and passes a gateway failure through.
  */
-function checkCallResult(encoded: string): string | null {
-  const bytes = (encoded.length - 2) / 2;
-  if (bytes % 32 !== 4) return encoded;
-  const selector = selectorOf(encoded);
-  const gatewayFailed =
-    selector === INVALID_BATCH_GATEWAY_RESPONSE ||
-    (selector === HTTP_ERROR && !isNotFoundHttpError(encoded));
-  if (!gatewayFailed) return null;
-  throw Object.assign(
-    new Error(`Universal Resolver call failed (${selector})`),
-    { data: encoded }
-  );
+type CallResult =
+  | { kind: 'ok'; data: string }
+  | { kind: 'none' | 'failed' | 'ambiguous'; data: string };
+
+function classifyCallResult(data: string): CallResult {
+  if (((data.length - 2) / 2) % 32 !== 4) return { kind: 'ok', data };
+  const selector = selectorOf(data);
+  if (NO_RESULT_SELECTORS.has(selector)) return { kind: 'none', data };
+  if (selector === HTTP_ERROR) {
+    return { kind: isNotFoundHttpError(data) ? 'none' : 'failed', data };
+  }
+  if (selector === INVALID_BATCH_GATEWAY_RESPONSE) {
+    return { kind: 'failed', data };
+  }
+  return { kind: 'ambiguous', data };
 }
+
+const callFailed = (data: string) =>
+  Object.assign(
+    new Error(`Universal Resolver call failed (${selectorOf(data)})`),
+    { data }
+  );
 
 /** Adapt an ethers v6 Provider to ens-avatar's ChainClient. */
 export function fromEthers(
@@ -198,19 +214,28 @@ export function fromEthers(
         }
         if (results) {
           const [encodedAddr, encodedText] = results;
-          // A failed text call is a failure (throws); a failed addr call only
-          // costs the ownership check.
-          const text = checkCallResult(encodedText);
-          let addr: string | null = null;
-          try {
-            addr = checkCallResult(encodedAddr);
-          } catch {
-            addr = null;
+          // A failed addr call only costs the ownership check.
+          const addr = classifyCallResult(encodedAddr);
+          const address = addr.kind === 'ok' ? decodeAddr(addr.data) : null;
+          const text = classifyCallResult(encodedText);
+          switch (text.kind) {
+            case 'ok':
+              return { record: decodeText(text.data), address };
+            case 'none':
+              return { record: null, address };
+            case 'failed':
+              throw callFailed(text.data);
+            case 'ambiguous': {
+              // Resolve the text record on its own: resolve() returns null for
+              // ResolverError (the resolver reverted) and throws for a gateway
+              // failure.
+              const retried = await resolve(textCalldata);
+              return {
+                record: retried ? decodeText(retried.response) : null,
+                address,
+              };
+            }
           }
-          return {
-            record: text === null ? null : decodeText(text),
-            address: addr === null ? null : decodeAddr(addr),
-          };
         }
       }
 

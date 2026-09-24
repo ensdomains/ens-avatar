@@ -9,7 +9,7 @@ Avatar resolver library for Node.js, browsers, and edge runtimes (Cloudflare Wor
   - viem: `import { fromViem } from '@ensdomains/ens-avatar/viem'` → `new AvatarResolver(fromViem(client))`
   - `ethers` and `viem` are **optional peer dependencies** — install only the one you use.
 - **Version 1.0.4+** uses the native Fetch API for maximum compatibility across platforms including Cloudflare Workers and other edge runtimes.
-- **Name resolution uses the ENS [Universal Resolver](https://docs.ens.domains/resolvers/universal/)**, so offchain (gateway/L2) and ENSIP-10 wildcard names resolve out of the box. The ethers adapter fetches the owner address and the avatar/header record in a single CCIP-read-aware call; the viem adapter uses viem's `getEnsText` and `getEnsAddress` (two calls). Override the contract via the adapter's `universalResolverAddress` option for non-default networks.
+- **Name resolution uses the ENS [Universal Resolver](https://docs.ens.domains/resolvers/universal/)**, so offchain (gateway/L2) and ENSIP-10 wildcard names resolve out of the box. The ethers adapter fetches the owner address and the avatar/header record in a single CCIP-read-aware call (plus one more only to classify an ambiguous failure); the viem adapter uses viem's `getEnsText` and `getEnsAddress` (two calls). Override the contract via the adapter's `universalResolverAddress` option for non-default networks.
 - **NFT avatars must be on the client's chain.** Both adapters report their chain id, and an `eip155:<chainId>/…` avatar on another chain throws `ChainMismatch` instead of being read from the wrong chain. A custom `ChainClient` opts in by implementing `getChainId()`.
 
 ## Platform Support
@@ -214,7 +214,7 @@ Common local development scenarios:
 - **viem:** create the client with a `chain`. Without one the adapter has to ask the RPC for `eth_chainId`; it does so without viem's request dedupe, because Workers hang when a promise started in one request is awaited in another.
 - **viem transport:** don't enable request batching (`http(url, { batch: true })`) or `batch: { multicall: true }` on a client shared across requests: both hold calls in a queue whose promises can end up awaited by a different request, which hangs.
 - Requires viem **2.35 or later** (Universal Resolver v3 error handling).
-- **ethers:** use **6.13 or later** (earlier 6.x releases never time out a hung request, even with `FetchRequest.timeout` set) and `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
+- **ethers:** **6.13 or later** is required (earlier 6.x releases never time out a hung request, even with `FetchRequest.timeout` set). Use `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
 
 ## Security
 

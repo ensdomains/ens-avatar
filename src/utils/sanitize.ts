@@ -27,9 +27,11 @@ const MAX_SVG_NESTING_DEPTH = 256;
 const MAX_STYLE_ELEMENTS = 64;
 // postcss is quadratic on some single declarations/selectors (e.g. repeated
 // "important", comments in selectors) and in removing nodes while walking, so
-// each <style> block's raw CSS and node count are capped. The CSS kept per SVG
-// (after sanitizing, so discarded rules don't count) is capped too.
-const MAX_STYLE_BLOCK_LENGTH = 64 * 1024;
+// the raw CSS it parses is capped per <style> block and per SVG, and so is a
+// block's node count. The CSS kept per SVG is capped separately, after
+// sanitizing, so discarded rules don't count against it.
+const MAX_STYLE_BLOCK_LENGTH = 32 * 1024;
+const MAX_STYLE_PARSE_LENGTH = 128 * 1024;
 const MAX_CSS_NODES = 2000;
 const MAX_STYLE_OUTPUT_LENGTH = 64 * 1024;
 const MAX_STYLE_ATTRIBUTE_LENGTH = 16 * 1024;
@@ -619,9 +621,13 @@ export function sanitizeSVG(
 
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
+  let parseBudget = MAX_STYLE_PARSE_LENGTH;
   let styleBudget = MAX_STYLE_OUTPUT_LENGTH;
   const output = cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
-    if (css.length > MAX_STYLE_BLOCK_LENGTH) return '';
+    if (css.length > MAX_STYLE_BLOCK_LENGTH || css.length > parseBudget) {
+      return '';
+    }
+    parseBudget -= css.length;
     const safe = sanitizeStyleBlock(css);
     // Inlined into HTML, <style> inside <svg> is parsed as markup, not raw
     // text: a '<' (or an entity that decodes to one) in the CSS would become a

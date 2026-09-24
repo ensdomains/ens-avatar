@@ -1392,14 +1392,37 @@ describe('CSS work per SVG is bounded', () => {
   });
 
   it('caps the CSS kept per SVG (64 KiB after sanitizing), not per block', () => {
-    const block = `<style>a{fill:${'x'.repeat(40 * 1024)}}</style>`;
-    const out = sanitizeSVG(`<svg>${block}${block}</svg>`);
-    expect(out.match(/<style>/g)).toHaveLength(1);
+    const block = `<style>a{fill:${'x'.repeat(30 * 1024)}}</style>`;
+    const out = sanitizeSVG(`<svg>${block}${block}${block}</svg>`);
+    expect(out.match(/<style>/g)).toHaveLength(2);
+  });
+
+  it('caps the raw CSS handed to postcss per SVG (128 KiB)', () => {
+    // 30 KiB blocks that are all discarded, then a small kept one
+    const discarded = `<style>@font-face{font-family:x}${' '.repeat(
+      30 * 1024
+    )}</style>`;
+    // a 10 KiB block that is kept: fits after three discarded blocks
+    // (~90 KiB parsed), not after four (~120 KiB of the 128 KiB budget)
+    const kept = `<style>a{fill:${'x'.repeat(10 * 1024)}}</style>`;
+    expect(sanitizeSVG(`<svg>${discarded.repeat(3)}${kept}</svg>`)).toContain(
+      'fill:x'
+    );
+    expect(sanitizeSVG(`<svg>${discarded.repeat(4)}${kept}</svg>`)).toBe(
+      '<svg></svg>'
+    );
+  });
+
+  it('the worst CSS shapes within the caps stay well under a second', () => {
+    const block = `<style>rect{fill:${'a '.repeat(16350)}important}</style>`;
+    expect(
+      elapsed(() => sanitizeSVG(`<svg>${block.repeat(8)}</svg>`))
+    ).toBeLessThan(1500);
   });
 
   it('a large block that is discarded anyway does not use up the budget', () => {
     const discarded = `<style>@font-face{font-family:x}${' '.repeat(
-      60 * 1024
+      30 * 1024
     )}</style>`;
     const kept = '<style>a{fill:red}</style>';
     expect(sanitizeSVG(`<svg>${discarded}${kept}</svg>`)).toBe(
@@ -1407,8 +1430,8 @@ describe('CSS work per SVG is bounded', () => {
     );
   });
 
-  it('drops a single block over 64 KiB of raw CSS', () => {
-    const block = `<style>a{fill:red}${' '.repeat(65 * 1024)}</style>`;
+  it('drops a single block over 32 KiB of raw CSS', () => {
+    const block = `<style>a{fill:red}${' '.repeat(33 * 1024)}</style>`;
     expect(sanitizeSVG(`<svg>${block}</svg>`)).toBe('<svg></svg>');
   });
 
@@ -1810,7 +1833,16 @@ describe('fromEthers: Universal Resolver v3 results', () => {
   const httpError = errors.encodeErrorResult('HttpError', [503, 'down']);
 
   let server: Awaited<ReturnType<typeof startServer>>;
+  // Reply to the batched addr+text multicall, and (if set) to a text-only call.
   let callReply: Record<string, unknown>;
+  let textReply: Record<string, unknown> | undefined;
+  let calls: string[] = [];
+  const TEXT_SELECTOR = resolver.getFunction('text')!.selector;
+
+  beforeEach(() => {
+    textReply = undefined;
+    calls = [];
+  });
 
   beforeAll(async () => {
     server = await startServer((req, res) => {
@@ -1818,10 +1850,23 @@ describe('fromEthers: Universal Resolver v3 results', () => {
       req.on('data', chunk => (body += chunk));
       req.on('end', () => {
         const payload = JSON.parse(body);
-        const reply = (p: { id: number; method: string }) =>
-          p.method === 'eth_chainId'
-            ? { jsonrpc: '2.0', id: p.id, result: '0x1' }
-            : { jsonrpc: '2.0', id: p.id, ...callReply };
+        const reply = (p: {
+          id: number;
+          method: string;
+          params?: Array<{ data?: string }>;
+        }) => {
+          if (p.method === 'eth_chainId') {
+            return { jsonrpc: '2.0', id: p.id, result: '0x1' };
+          }
+          const inner = ur.decodeFunctionData('resolve', p.params![0].data!)[1];
+          const isText = inner.slice(0, 10) === TEXT_SELECTOR;
+          calls.push(isText ? 'text' : 'multicall');
+          return {
+            jsonrpc: '2.0',
+            id: p.id,
+            ...(isText && textReply ? textReply : callReply),
+          };
+        };
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(
           JSON.stringify(
@@ -1861,18 +1906,61 @@ describe('fromEthers: Universal Resolver v3 results', () => {
     await expect(resolve()).rejects.toThrow(/Universal Resolver call failed/);
   });
 
+  const revert = (data: string) => ({
+    error: { code: 3, message: 'execution reverted', data },
+  });
+  const resolverError = (inner: string) =>
+    new Interface([
+      'error ResolverError(bytes errorData)',
+    ]).encodeErrorResult('ResolverError', [inner]);
+
   it.each([
-    ['Error(string)', errors.encodeErrorResult('Error', ['resolver says no'])],
-    ['a custom error', '0xdeadbeef' + '0'.repeat(64)],
     [
       'a gateway 404',
       errors.encodeErrorResult('HttpError', [404, 'not found']),
     ],
     ['a gateway 410', errors.encodeErrorResult('HttpError', [410, 'gone'])],
-  ])('a text call that failed with %s means "no record"', async (_l, data) => {
-    callReply = multicallResult(addrResult, data);
-    expect((await resolve()).record).toBeNull();
-  });
+  ])(
+    'a text call that failed with %s means "no record" (one call)',
+    async (_l, data) => {
+      callReply = multicallResult(addrResult, data);
+      expect((await resolve()).record).toBeNull();
+      expect(calls).toEqual(['multicall']);
+    }
+  );
+
+  it.each([
+    ['Error(string)', errors.encodeErrorResult('Error', ['resolver says no'])],
+    ['a custom error', '0xdeadbeef' + '0'.repeat(64)],
+    ['bad callback data', errors.encodeErrorResult('Error', ['invalid data'])],
+  ])(
+    'a resolver revert (%s) means "no record": resolved alone it is a ResolverError',
+    async (_l, data) => {
+      callReply = multicallResult(addrResult, data);
+      textReply = revert(resolverError(data));
+      expect(await resolve()).toEqual({
+        record: null,
+        address: getAddress(OWNER),
+      });
+      expect(calls).toEqual(['multicall', 'text']);
+    }
+  );
+
+  it.each([
+    ['timed out'],
+    ['fetch failed (unreachable)'],
+    ['invalid response: garbage body'],
+    ['invalid response: text/html 200'],
+  ])(
+    'a batch-gateway failure (%s) throws: resolved alone it is not a ResolverError',
+    async message => {
+      const data = errors.encodeErrorResult('Error', [message]);
+      callReply = multicallResult(addrResult, data);
+      textReply = revert(data);
+      await expect(resolve()).rejects.toThrow();
+      expect(calls).toEqual(['multicall', 'text']);
+    }
+  );
 
   it.each([
     ['a gateway 400', errors.encodeErrorResult('HttpError', [400, 'bad'])],
