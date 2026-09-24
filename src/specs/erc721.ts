@@ -4,7 +4,10 @@ import {
   handleSettled,
   resolveURI,
 } from '../utils';
-import { parseOnChainMetadata } from '../utils/parseOnChainMetadata';
+import {
+  asMetadataObject,
+  parseOnChainMetadata,
+} from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
 import { AvatarResolverOpts, Fetcher } from '../types';
 import { ChainClient } from '../chain/client';
@@ -81,7 +84,7 @@ export default class ERC721 {
     if (!response?.data) {
       throw new BaseError('Failed to retrieve token metadata from URI');
     }
-    const metadata = response?.data as Record<string, unknown>;
+    const metadata = asMetadataObject(response.data);
     return { ...metadata, is_owner: isOwner };
   }
 }

@@ -1,12 +1,28 @@
 import { Dispatcher } from 'undici';
 import { isNode } from './detectPlatform';
-import { hostMatchesDenyList, normalizeHostname } from './hostname';
+import {
+  hostMatchesDenyList,
+  isOverlongHostname,
+  normalizeHostname,
+} from './hostname';
 import { isPrivateIp } from './ip';
+import { assertLimit } from './limits';
 import { AvatarResolverOpts, Fetcher, FetcherResponse } from '../types';
 
-const MAX_REDIRECTS = 10;
-/** Default cap on a response body read by the fetcher (10 MiB). */
-export const DEFAULT_MAX_CONTENT_LENGTH = 10 * 1024 * 1024;
+/**
+ * Default redirects followed per request. Each hop is a subrequest, and one
+ * resolution makes up to four requests, so this bounds the total (Cloudflare
+ * Workers Free allows 50 subrequests per invocation).
+ */
+export const DEFAULT_MAX_REDIRECTS = 5;
+/**
+ * Default cap on a response body read by the fetcher (1 MiB). Metadata JSON
+ * is small; a few MiB of hostile JSON (e.g. from a tiny compressed body) can
+ * expand to far more memory once parsed.
+ */
+export const DEFAULT_MAX_CONTENT_LENGTH = 1024 * 1024;
+// setTimeout clamps larger delays to 1 ms.
+const MAX_TIMEOUT = 2 ** 31 - 1;
 // Request headers that may follow a redirect to another origin. Anything else
 // (API keys, Authorization, cookies) is dropped, as the Fetch spec does for
 // Authorization.
@@ -26,7 +42,7 @@ const CROSS_ORIGIN_SAFE_HEADERS = new Set(['accept', 'range']);
 export function isPrivateHostname(hostname: string): boolean {
   // Lowercase, strip IPv6 brackets and trailing dots (`localhost.`, `127.0.0.1..`).
   const h = normalizeHostname(hostname);
-  if (!h) return true;
+  if (!h || isOverlongHostname(h)) return true;
 
   if (
     h === 'localhost' ||
@@ -278,13 +294,14 @@ async function fetchWithRedirects(
     fetchFn: FetchFn;
     urlDenyList?: string[];
     allowPrivateIPs?: boolean;
+    maxRedirects: number;
   }
 ): Promise<Response> {
   let currentUrl = url;
   let headers = init.headers;
   const origin = new URL(url).origin;
 
-  for (let i = 0; i <= MAX_REDIRECTS; i++) {
+  for (let i = 0; i <= opts.maxRedirects; i++) {
     validateUrl(currentUrl, opts.urlDenyList, opts.allowPrivateIPs);
 
     const response = await opts.fetchFn(currentUrl, {
@@ -312,7 +329,7 @@ async function fetchWithRedirects(
     return response;
   }
 
-  throw new Error(`Too many redirects (max ${MAX_REDIRECTS})`);
+  throw new Error(`Too many redirects (max ${opts.maxRedirects})`);
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +440,7 @@ export function createFetcher({
   timeout = 30000,
   urlDenyList,
   maxContentLength = DEFAULT_MAX_CONTENT_LENGTH,
+  maxRedirects = DEFAULT_MAX_REDIRECTS,
 }: {
   ttl?: number;
   dispatcher?: Dispatcher;
@@ -432,7 +450,13 @@ export function createFetcher({
   urlDenyList?: string[];
   /** Maximum response body size in bytes. */
   maxContentLength?: number;
+  /** Maximum redirects followed per request. */
+  maxRedirects?: number;
 } = {}): Fetcher {
+  assertLimit('timeout', timeout, { max: MAX_TIMEOUT });
+  assertLimit('maxContentLength', maxContentLength);
+  assertLimit('maxRedirects', maxRedirects, { min: 0, max: 20 });
+
   const cache = ttl && ttl > 0 ? new TTLCache(ttl) : null;
 
   // Resolve the runtime (fetch fn + optional SSRF dispatcher) once, lazily, on
@@ -475,6 +499,7 @@ export function createFetcher({
         fetchFn,
         urlDenyList,
         allowPrivateIPs,
+        maxRedirects,
       });
       return await read(response);
     } finally {
@@ -587,6 +612,7 @@ export function createFetcherFromOptions(
     timeout: options?.timeout,
     urlDenyList: options?.urlDenyList,
     maxContentLength: options?.maxContentLength,
+    maxRedirects: options?.maxRedirects,
   });
 }
 

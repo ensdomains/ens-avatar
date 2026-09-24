@@ -3,7 +3,7 @@ import { assert } from './assert';
 import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { isValidBase64DataURI, resolveURI } from './resolveURI';
-import { sanitizeSVG } from './sanitize';
+import { DEFAULT_MAX_SVG_LENGTH, sanitizeSVG } from './sanitize';
 import { toHttpURL } from './url';
 
 function isSVGString(str: string): boolean {
@@ -55,13 +55,6 @@ export function convertToRawSVG(input: string): string | null {
   }
 }
 
-/**
- * Upper bound on an inline / data: SVG (in UTF-16 code units, before
- * sanitizing). On-chain SVGs are far smaller; this caps the CPU an attacker
- * controlling a record or CCIP gateway can make us spend.
- */
-export const MAX_INLINE_SVG_LENGTH = 2 * 1024 * 1024;
-
 const isWhitespace = (c: string) => /\s/.test(c);
 
 /**
@@ -106,8 +99,8 @@ function extractSVGRoot(svg: string): string | null {
   return svg.slice(start, end + '</svg>'.length);
 }
 
-function _sanitize(data: string): string | null {
-  return extractSVGRoot(sanitizeSVG(data));
+function _sanitize(data: string, maxLength: number): string | null {
+  return extractSVGRoot(sanitizeSVG(data, { maxLength }));
 }
 
 export function getImageURI({
@@ -115,6 +108,7 @@ export function getImageURI({
   customGateway,
   gateways,
   urlDenyList,
+  maxSvgLength = DEFAULT_MAX_SVG_LENGTH,
 }: ImageURIOpts) {
   // retrieves image uri from metadata, if image is onchain then convert to base64
   const { image, image_url, image_data } = metadata;
@@ -130,13 +124,13 @@ export function getImageURI({
   if (isSVGString(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
     // The encoded form (base64, %XX) is at most 3x the decoded SVG.
-    if (parsedURI.length > MAX_INLINE_SVG_LENGTH * 3) return null;
+    if (parsedURI.length > maxSvgLength * 3) return null;
     const decoded = convertToRawSVG(parsedURI);
-    if (!decoded || decoded.length > MAX_INLINE_SVG_LENGTH) return null;
+    if (!decoded || decoded.length > maxSvgLength) return null;
     const rawSVG = collapseTagWhitespace(decoded);
 
     try {
-      const cleanSVG = _sanitize(rawSVG);
+      const cleanSVG = _sanitize(rawSVG, maxSvgLength);
       if (!cleanSVG) return null;
       return `data:image/svg+xml;base64,${utf8ToBase64(cleanSVG)}`;
     } catch (error) {

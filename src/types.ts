@@ -90,8 +90,15 @@ export interface AvatarResolverOpts {
    * response headers and the body. @default 30000
    */
   timeout?: number;
-  /** Maximum size in bytes of a fetched response body. @default 10485760 (10 MiB) */
+  /** Maximum size in bytes of a fetched response body. @default 1048576 (1 MiB) */
   maxContentLength?: number;
+  /** Maximum redirects followed per request. @default 5 */
+  maxRedirects?: number;
+  /**
+   * Maximum length of an inline / data: SVG avatar (decoded); larger ones
+   * resolve to null. @default 262144 (256 KiB)
+   */
+  maxSvgLength?: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -113,4 +120,6 @@ export interface ImageURIOpts {
   customGateway?: string;
   gateways?: Gateways;
   urlDenyList?: string[];
+  /** Maximum inline SVG length (decoded). @default 262144 (256 KiB) */
+  maxSvgLength?: number;
 }

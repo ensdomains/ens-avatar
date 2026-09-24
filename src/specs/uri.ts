@@ -6,8 +6,21 @@ import {
   resolveURI,
 } from '../utils';
 import { isHostDenied } from '../utils/isHostDenied';
-import { parseOnChainMetadata } from '../utils/parseOnChainMetadata';
+import {
+  asMetadataObject,
+  parseOnChainMetadata,
+} from '../utils/parseOnChainMetadata';
 import { toHttpURL } from '../utils/url';
+
+// Fields the resolver sets itself. A record's own JSON must not supply them
+// (e.g. a fake is_owner / host_meta for a name that owns no NFT).
+const RESERVED_KEYS = ['is_owner', 'host_meta', 'uri'];
+
+function recordMetadata(value: Record<string, unknown>): NFTMetadata {
+  const metadata: Record<string, unknown> = { ...value };
+  for (const key of RESERVED_KEYS) delete metadata[key];
+  return metadata as NFTMetadata;
+}
 
 export default class URI {
   /**
@@ -31,7 +44,9 @@ export default class URI {
       // anything else inline (e.g. an <svg> or data:image URI) is the image.
       if (/^data:application\/json[;,]/i.test(uri)) {
         return {
-          metadata: parseOnChainMetadata(resolvedURI, isEncoded) as NFTMetadata,
+          metadata: recordMetadata(
+            parseOnChainMetadata(resolvedURI, isEncoded)
+          ),
         };
       }
       return { metadata: { image: resolvedURI } };
@@ -52,11 +67,13 @@ export default class URI {
     if (!response?.data) {
       throw new BaseError('Failed to retrieve metadata from URI');
     }
+    // A bare JSON string is taken as the image URL.
     const data = response.data;
     return {
-      metadata: (typeof data === 'object'
-        ? data
-        : { image: data }) as NFTMetadata,
+      metadata:
+        typeof data === 'string'
+          ? { image: data }
+          : recordMetadata(asMetadataObject(data)),
     };
   }
 }

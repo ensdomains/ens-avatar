@@ -19,6 +19,23 @@ export const ALLOWED_IMAGE_MIMETYPES = [
 
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
 
+// Non-standard names servers use for allowed types.
+const MIME_TYPE_ALIASES: Record<string, string> = {
+  'image/jpg': 'image/jpeg',
+  'image/pjpeg': 'image/jpeg',
+  'image/x-png': 'image/png',
+  'image/x-ms-bmp': 'image/bmp',
+  'image/x-bmp': 'image/bmp',
+};
+
+// Status codes from hosts that refuse HEAD (405, 501) or sign URLs for GET
+// only (S3 presigned URLs answer HEAD with 403): sniff with a ranged GET.
+const HEAD_REFUSED_STATUSES = [403, 405, 501];
+
+// An SVG document: optional XML declaration, comments and doctype, then the
+// <svg> root. (A bare "<?xml" prefix would also admit XHTML.)
+const SVG_DOCUMENT = /^(?:<\?xml[^>]*>\s*)?(?:(?:<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)\s*)*<svg[\s>]/i;
+
 export function isURIEncoded(uri: string): boolean {
   try {
     return uri !== decodeURIComponent(uri);
@@ -38,6 +55,8 @@ async function isStreamAnImage(
       },
     });
 
+    if (response.status !== 200 && response.status !== 206) return false;
+
     if (response.headers['content-length']) {
       const contentLength = parseInt(response.headers['content-length'], 10);
       if (contentLength > MAX_FILE_SIZE) {
@@ -55,7 +74,7 @@ async function isStreamAnImage(
       .decode(response.data)
       .replace(/^\uFEFF/, '')
       .trimStart();
-    const isSvgImage = /^<(?:svg[\s>]|\?xml\s)/.test(chunkAsString);
+    const isSvgImage = SVG_DOCUMENT.test(chunkAsString);
 
     return isBinaryImage || isSvgImage;
   } catch (error) {
@@ -83,10 +102,11 @@ export async function isImageURI(
     const result = await _fetcher.head(checkedURL);
 
     if (result.status === 200) {
-      const contentType = result.headers['content-type']
+      const rawType = result.headers['content-type']
         ?.toLowerCase()
         .split(';')[0]
         .trim();
+      const contentType = rawType && (MIME_TYPE_ALIASES[rawType] ?? rawType);
 
       if (!contentType || !ALLOWED_IMAGE_MIMETYPES.includes(contentType)) {
         console.warn(`isImageURI: Invalid content type ${contentType}`);
@@ -108,6 +128,8 @@ export async function isImageURI(
       }
 
       return true;
+    } else if (HEAD_REFUSED_STATUSES.includes(result.status)) {
+      return isStreamAnImage(checkedURL, _fetcher);
     } else {
       console.warn(`isImageURI: HTTP error ${result.status}`);
       return false;

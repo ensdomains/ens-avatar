@@ -25,6 +25,17 @@ const FTYP_BRANDS: Record<string, string> = {
   msf1: 'image/heif',
 };
 
+// "BM" alone matches ordinary text, so also require the reserved header
+// bytes to be zero and a known DIB header size.
+const DIB_HEADER_SIZES = new Set([12, 16, 40, 52, 56, 64, 108, 124]);
+function isBMP(bytes: Uint8Array): boolean {
+  if (bytes.length < 18 || ascii(bytes, 0, 2) !== 'BM') return false;
+  if (bytes[6] || bytes[7] || bytes[8] || bytes[9]) return false;
+  const dibSize =
+    bytes[14] | (bytes[15] << 8) | (bytes[16] << 16) | (bytes[17] << 24);
+  return DIB_HEADER_SIZES.has(dibSize);
+}
+
 export function detectImageMimeType(bytes: Uint8Array): string | null {
   if (startsWith(bytes, [0xff, 0xd8, 0xff])) return 'image/jpeg';
   if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
@@ -33,15 +44,15 @@ export function detectImageMimeType(bytes: Uint8Array): string | null {
   if (ascii(bytes, 0, 6) === 'GIF87a' || ascii(bytes, 0, 6) === 'GIF89a') {
     return 'image/gif';
   }
-  if (ascii(bytes, 0, 2) === 'BM') return 'image/bmp';
+  if (isBMP(bytes)) return 'image/bmp';
   if (ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 12) === 'WEBP') {
     return 'image/webp';
   }
   if (ascii(bytes, 4, 8) === 'ftyp') {
     return FTYP_BRANDS[ascii(bytes, 8, 12)] ?? null;
   }
-  // JPEG XL: bare codestream, or the ISOBMFF-style container.
-  if (startsWith(bytes, [0xff, 0x0a])) return 'image/jxl';
+  // JPEG XL container. (The bare codestream signature, FF 0A, is too short
+  // to tell apart from arbitrary bytes, so it is not accepted.)
   if (
     startsWith(bytes, [
       0,

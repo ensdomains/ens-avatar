@@ -29,6 +29,22 @@ export interface FromEthersOptions {
   universalResolverAddress?: string;
 }
 
+/**
+ * True if a failed eth_call means "no result" (a revert, or an empty `0x`
+ * result) rather than an outage. ethers reports every JSON-RPC error on
+ * eth_call as CALL_EXCEPTION, including "header not found" or rate limits,
+ * so a real revert is recognised by its revert data or message.
+ */
+function isNoResult(error: unknown): boolean {
+  if (isError(error, 'BAD_DATA')) return true;
+  if (!isError(error, 'CALL_EXCEPTION')) return false;
+  if (error.data && error.data !== '0x') return true;
+  const rpcError = (error.info as { error?: { message?: unknown } } | undefined)
+    ?.error;
+  if (!rpcError) return true; // not from a JSON-RPC error response
+  return /revert/i.test(String(rpcError.message));
+}
+
 /** Adapt an ethers v6 Provider to ens-avatar's ChainClient. */
 export function fromEthers(
   provider: Provider,
@@ -49,15 +65,14 @@ export function fromEthers(
     'function multicall(bytes[] data) external view returns (bytes[])',
   ]);
 
-  let chainId: Promise<number> | undefined;
+  // Cache the settled number, never a pending promise: in Cloudflare Workers a
+  // promise created while serving one request hangs when awaited by another.
+  let chainId: number | undefined;
 
   return {
-    getChainId() {
-      if (!chainId) {
-        chainId = provider
-          .getNetwork()
-          .then(network => Number(network.chainId));
-        chainId.catch(() => (chainId = undefined)); // retry after a failure
+    async getChainId() {
+      if (chainId === undefined) {
+        chainId = Number((await provider.getNetwork()).chainId);
       }
       return chainId;
     },
@@ -81,10 +96,7 @@ export function fromEthers(
           if (!resolver || resolver === ZeroAddress) return null;
           return { response, resolver };
         } catch (error) {
-          // A revert, or an empty (0x) result that can't be decoded.
-          if (isError(error, 'CALL_EXCEPTION') || isError(error, 'BAD_DATA')) {
-            return null;
-          }
+          if (isNoResult(error)) return null;
           throw error;
         }
       };

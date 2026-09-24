@@ -6,19 +6,22 @@ import { fromViem, ViemClientLike } from '../src/chain/viem';
 import {
   createFetcher,
   getImageURI,
+  isCID,
   isHostDenied,
   isImageURI,
   isPrivateHostname,
   sanitizeSVG,
   validateUrl,
 } from '../src/utils';
-import {
-  collapseTagWhitespace,
-  MAX_INLINE_SVG_LENGTH,
-} from '../src/utils/getImageURI';
+import { collapseTagWhitespace } from '../src/utils/getImageURI';
+import { DEFAULT_MAX_SVG_LENGTH } from '../src/utils/sanitize';
 import { Fetcher } from '../src/types';
 import { detectImageMimeType } from '../src/utils/sniffImage';
-import { MetadataParsingError } from '../src/utils/error';
+import { BaseError, MetadataParsingError } from '../src/utils/error';
+import { normalizeHostname } from '../src/utils/hostname';
+import { assert } from '../src/utils/assert';
+import { fromEthers } from '../src/chain/ethers';
+import { JsonRpcProvider } from 'ethers';
 
 const decodeDataURI = (uri: string | null) =>
   uri && Buffer.from(uri.split(',')[1], 'base64').toString();
@@ -86,13 +89,11 @@ describe('inline SVG processing is linear time', () => {
 
   it('handles 1 MiB of unterminated "<" quickly (was ~26 minutes)', () => {
     const svg = '<svg>' + '<'.repeat(1024 * 1024);
-    expect(
-      elapsed(() => getImageURI({ metadata: { image: svg } }))
-    ).toBeLessThan(2000);
+    expect(elapsed(() => collapseTagWhitespace(svg))).toBeLessThan(1000);
   });
 
-  it('rejects inline SVGs above MAX_INLINE_SVG_LENGTH', () => {
-    const svg = '<svg>' + ' '.repeat(MAX_INLINE_SVG_LENGTH) + '</svg>';
+  it('rejects inline SVGs above DEFAULT_MAX_SVG_LENGTH', () => {
+    const svg = '<svg>' + ' '.repeat(DEFAULT_MAX_SVG_LENGTH) + '</svg>';
     expect(getImageURI({ metadata: { image: svg } })).toBeNull();
     const b64 = Buffer.from(svg).toString('base64');
     expect(
@@ -521,15 +522,16 @@ describe('chain adapters surface failures', () => {
     ).rejects.toThrow('RPC down');
   });
 
-  it('fromViem propagates getEnsAddress errors', async () => {
+  it('fromViem keeps the record when only the address lookup fails', async () => {
     const client = viemClient({
       getEnsAddress: async () => {
         throw new Error('RPC down');
       },
     });
-    await expect(
-      fromViem(client).getEnsRecord('nick.eth', 'avatar')
-    ).rejects.toThrow('RPC down');
+    expect(await fromViem(client).getEnsRecord('nick.eth', 'avatar')).toEqual({
+      record: 'https://example.com/a.png',
+      address: null,
+    });
   });
 
   it('fromViem still returns nulls when viem does', async () => {
@@ -674,12 +676,20 @@ describe('detectImageMimeType', () => {
     ['image/png', bytes([0x89], 'PNG', [0x0d, 0x0a, 0x1a, 0x0a])],
     ['image/gif', bytes('GIF89a')],
     ['image/gif', bytes('GIF87a')],
-    ['image/bmp', bytes('BM', [0, 0])],
+    [
+      'image/bmp',
+      bytes(
+        'BM',
+        [0x46, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0x36, 0, 0, 0],
+        [40, 0, 0, 0]
+      ),
+    ],
     ['image/webp', bytes('RIFF', [0x24, 0, 0, 0], 'WEBPVP8 ')],
     ['image/avif', bytes(size, 'ftypavif')],
     ['image/heic', bytes(size, 'ftypheic')],
     ['image/heif', bytes(size, 'ftypmif1')],
-    ['image/jxl', bytes([0xff, 0x0a])],
     ['image/jxl', bytes([0, 0, 0, 0x0c], 'JXL ', [0x0d, 0x0a, 0x87, 0x0a])],
   ])('detects %s', (mime, input) => {
     expect(detectImageMimeType(input)).toBe(mime);
@@ -691,6 +701,8 @@ describe('detectImageMimeType', () => {
     ['RIFF audio', bytes('RIFF', [0, 0, 0, 0], 'WAVE')],
     ['MP4 video', bytes(size, 'ftypisom')],
     ['truncated PNG', bytes([0x89], 'PNG')],
+    ['text starting with BM', bytes('BMW is a car brand, not a bitmap')],
+    ['bare JPEG XL codestream marker', bytes([0xff, 0x0a], '<html>')],
   ])('returns null for %s', (_label, input) => {
     expect(detectImageMimeType(input)).toBeNull();
   });
@@ -790,5 +802,505 @@ describe('on-chain JSON avatar records', () => {
   it('still treats a data:image record as the image itself', async () => {
     const uri = `data:image/png;base64,${PNG_B64}`;
     expect(await resolverFor(uri).getAvatar('x.eth')).toBe(uri);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Round 2
+// ---------------------------------------------------------------------------
+
+describe('sanitizeSVG resource limits', () => {
+  it('returns "" above maxLength (default 256 KiB) and honours the option', () => {
+    const big = '<svg>' + ' '.repeat(DEFAULT_MAX_SVG_LENGTH) + '</svg>';
+    expect(sanitizeSVG(big)).toBe('');
+    expect(sanitizeSVG('<svg><rect/></svg>', { maxLength: 10 })).toBe('');
+    expect(sanitizeSVG('<svg><rect/></svg>', { maxLength: 100 })).toBe(
+      '<svg><rect></rect></svg>'
+    );
+  });
+
+  it('returns "" for nesting deeper than 256 and keeps ordinary depth', () => {
+    const nested = (n: number) =>
+      '<svg>' + '<g>'.repeat(n) + '</g>'.repeat(n) + '</svg>';
+    expect(sanitizeSVG(nested(300))).toBe('');
+    expect(sanitizeSVG(nested(200))).toContain('<g><g>');
+  });
+
+  it('flat siblings do not count as nesting', () => {
+    const flat = '<svg>' + '<rect/>'.repeat(5000) + '</svg>';
+    expect(sanitizeSVG(flat)).toContain('<rect></rect>');
+  });
+
+  it('drops oversized <style> blocks and style attributes', () => {
+    const block = `<svg><style>a{fill:red}${' '.repeat(
+      65 * 1024
+    )}</style></svg>`;
+    expect(sanitizeSVG(block)).toBe('<svg></svg>');
+    const attr = `<svg><rect style="fill:red;${' '.repeat(17 * 1024)}"/></svg>`;
+    expect(sanitizeSVG(attr)).toBe('<svg><rect></rect></svg>');
+  });
+
+  it('worst cases within the limits stay fast', () => {
+    const max = DEFAULT_MAX_SVG_LENGTH - 100;
+    const cases = [
+      ('<svg>' + '<g>'.repeat(254) + '<rect/>'.repeat(max / 7)).slice(0, max),
+      '<svg>' +
+        ('<style>a{fill:red' + ' important'.repeat(6300) + '}</style>').repeat(
+          4
+        ) +
+        '</svg>',
+      '<svg><style>' + 'a/**/'.repeat(12600) + '{fill:red}</style></svg>',
+      '<svg>' + '<g>'.repeat(max / 3),
+    ];
+    for (const svg of cases) {
+      expect(elapsed(() => sanitizeSVG(svg))).toBeLessThan(1500);
+    }
+  });
+
+  it('getImageURI honours maxSvgLength', () => {
+    const svg = '<svg><rect/></svg>';
+    expect(
+      getImageURI({ metadata: { image: svg }, maxSvgLength: 10 })
+    ).toBeNull();
+    expect(
+      getImageURI({ metadata: { image: svg }, maxSvgLength: 1000 })
+    ).not.toBeNull();
+  });
+});
+
+describe('<style> content cannot become markup when inlined', () => {
+  const style = (css: string) =>
+    sanitizeSVG(`<svg><style>${css}</style></svg>`);
+
+  it('drops style blocks containing "<" or "&"', () => {
+    expect(style('a{fill:"<img src=x onerror=alert(1)>"}')).toBe('<svg></svg>');
+    expect(style('a{fill:"&lt;img src=x&gt;"}')).toBe('<svg></svg>');
+  });
+
+  it('keeps ordinary style blocks (">" combinator included)', () => {
+    expect(style('g > rect{fill:red}')).toBe(
+      '<svg><style>g > rect{fill:red}</style></svg>'
+    );
+  });
+});
+
+describe('CSS at-rules are allowlisted after unescaping', () => {
+  const style = (css: string) =>
+    sanitizeSVG(`<svg><style>${css}</style></svg>`);
+
+  it.each([
+    '@i\\mport url(https://evil.example/x.css);',
+    '@IMPORT url(https://evil.example/x.css);',
+    '@font-face{font-family:x}',
+    '@namespace svg url(http://www.w3.org/2000/svg);',
+  ])('removes %s', rule => {
+    expect(style(`${rule}a{fill:red}`)).toBe(
+      '<svg><style>a{fill:red}</style></svg>'
+    );
+  });
+
+  it('drops hex-escaped at-rules (postcss rejects the block)', () => {
+    const out = style('@\\69mport url(https://evil.example/x.css);a{fill:red}');
+    expect(out).not.toMatch(/mport|evil/);
+  });
+
+  it('keeps @media, @supports and @keyframes', () => {
+    for (const css of [
+      '@media (min-width:10px){a{fill:red}}',
+      '@supports (fill:red){a{fill:red}}',
+      '@keyframes spin{from{opacity:0}to{opacity:1}}',
+    ]) {
+      expect(style(css)).toContain(css.slice(0, 6));
+    }
+  });
+});
+
+describe('linear-time string handling', () => {
+  it('isCID rejects long strings quickly', () => {
+    const long = 'Qm' + '1'.repeat(100000);
+    expect(elapsed(() => expect(isCID(long)).toBe(false))).toBeLessThan(100);
+  });
+
+  it('normalizeHostname handles long runs of dots quickly', () => {
+    const host = '.'.repeat(100000) + 'a' + '.'.repeat(100000);
+    expect(elapsed(() => normalizeHostname(host))).toBeLessThan(100);
+    expect(normalizeHostname('Example.COM...')).toBe('example.com');
+  });
+
+  it('overlong hostnames fail closed', () => {
+    const host = 'a'.repeat(250) + '.com';
+    expect(isPrivateHostname(host)).toBe(true);
+    expect(isHostDenied(`https://${host}/`, ['other.example'])).toBe(true);
+    expect(() => validateUrl(`https://${host}/`)).toThrow();
+    expect(isPrivateHostname('a'.repeat(249) + '.com')).toBe(false);
+  });
+});
+
+describe('limit options are validated', () => {
+  it.each([NaN, Infinity, -1, 0, 1.5])('createFetcher rejects %s', value => {
+    expect(() => createFetcher({ timeout: value })).toThrow(TypeError);
+    expect(() => createFetcher({ maxContentLength: value })).toThrow(TypeError);
+    expect(() => sanitizeSVG('<svg/>', { maxLength: value })).toThrow(
+      TypeError
+    );
+  });
+
+  it('maxRedirects accepts 0 but not more than 20', () => {
+    expect(() => createFetcher({ maxRedirects: 0 })).not.toThrow();
+    expect(() => createFetcher({ maxRedirects: 21 })).toThrow(TypeError);
+  });
+
+  it('AvatarResolver validates its options up front', () => {
+    const client = {
+      getEnsRecord: async () => ({ record: null, address: null }),
+      readContract: async () => null as never,
+    };
+    expect(() => new AvatarResolver(client, { maxSvgLength: NaN })).toThrow(
+      TypeError
+    );
+    expect(() => new AvatarResolver(client, { timeout: Infinity })).toThrow(
+      TypeError
+    );
+  });
+});
+
+describe('fetcher defaults', () => {
+  let server: Awaited<ReturnType<typeof startServer>>;
+  let hits = 0;
+
+  beforeAll(async () => {
+    server = await startServer((req, res) => {
+      hits++;
+      const url = new URL(req.url || '/', 'http://x');
+      const hop = Number(url.searchParams.get('hop') || 0);
+      const hops = Number(url.searchParams.get('hops') || 0);
+      if (hop < hops) {
+        res.writeHead(302, {
+          location: `${url.pathname}?hops=${hops}&hop=${hop + 1}`,
+        });
+        return res.end();
+      }
+      if (url.pathname === '/big') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        return res.end('"' + 'x'.repeat(1024 * 1024 + 10) + '"');
+      }
+      if (url.pathname === '/record') {
+        // octet-stream, not an image: forces HEAD + ranged GET, then GET
+        res.writeHead(200, { 'content-type': 'application/octet-stream' });
+        return res.end(
+          req.method === 'HEAD'
+            ? undefined
+            : JSON.stringify({ image: server.url(`/img?hops=${hops}`) })
+        );
+      }
+      if (url.pathname === '/img') {
+        res.writeHead(200, { 'content-type': 'application/octet-stream' });
+        return res.end(
+          req.method === 'HEAD'
+            ? undefined
+            : Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 0, 0])
+        );
+      }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end('{}');
+    });
+  });
+  afterAll(() => server.close());
+  beforeEach(() => (hits = 0));
+
+  it('caps bodies at 1 MiB by default', async () => {
+    const fetcher = createFetcher({ allowPrivateIPs: true });
+    await expect(fetcher.get(server.url('/big'))).rejects.toThrow(
+      /exceeds 1048576 bytes/
+    );
+  });
+
+  it('follows 5 redirects by default, and maxRedirects overrides it', async () => {
+    const fetcher = createFetcher({ allowPrivateIPs: true });
+    await expect(fetcher.get(server.url('/ok?hops=5'))).resolves.toBeTruthy();
+    await expect(fetcher.get(server.url('/ok?hops=6'))).rejects.toThrow(
+      /Too many redirects \(max 5\)/
+    );
+    const strict = createFetcher({ allowPrivateIPs: true, maxRedirects: 0 });
+    await expect(strict.get(server.url('/ok?hops=1'))).rejects.toThrow(/max 0/);
+  });
+
+  it('keeps a worst-case resolution under 50 HTTP requests', async () => {
+    const avt = new AvatarResolver(
+      {
+        getEnsRecord: async () => ({
+          record: server.url('/record?hops=5'),
+          address: null,
+        }),
+        readContract: async () => null as never,
+      },
+      { allowPrivateIPs: true }
+    );
+    expect(await avt.getAvatar('x.eth')).toBe(server.url('/img?hops=5'));
+    // record: HEAD + ranged GET + GET; image: HEAD + ranged GET; 6 hops each
+    expect(hits).toBeLessThanOrEqual(30);
+  });
+});
+
+describe('isImageURI fallbacks', () => {
+  const fetcherWith = (
+    headStatus: number,
+    contentType: string,
+    getStatus = 206
+  ): Fetcher => ({
+    get: jest.fn(),
+    head: jest.fn(async () => ({
+      status: headStatus,
+      headers: { 'content-type': contentType },
+      data: undefined,
+    })),
+    getArrayBuffer: jest.fn(async () => ({
+      status: getStatus,
+      headers: {},
+      data: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]).buffer,
+    })),
+  });
+
+  it.each([403, 405, 501])(
+    'sniffs with a ranged GET when HEAD returns %i',
+    async status => {
+      expect(
+        await isImageURI(
+          'https://example.com/a',
+          fetcherWith(status, 'text/html')
+        )
+      ).toBe(true);
+    }
+  );
+
+  it('does not sniff on other HEAD errors', async () => {
+    const fetcher = fetcherWith(404, 'text/html');
+    expect(await isImageURI('https://example.com/a', fetcher)).toBe(false);
+    expect(fetcher.getArrayBuffer).not.toHaveBeenCalled();
+  });
+
+  it('requires a successful ranged GET', async () => {
+    expect(
+      await isImageURI(
+        'https://example.com/a',
+        fetcherWith(405, 'text/html', 404)
+      )
+    ).toBe(false);
+  });
+
+  it.each(['image/jpg', 'image/pjpeg', 'image/x-png', 'IMAGE/JPG; q=1'])(
+    'accepts the %s alias',
+    async type => {
+      expect(
+        await isImageURI('https://example.com/a', fetcherWith(200, type))
+      ).toBe(true);
+    }
+  );
+});
+
+describe('octet-stream SVG sniffing', () => {
+  const octet = (text: string): Fetcher => ({
+    get: jest.fn(),
+    head: jest.fn(async () => ({
+      status: 200,
+      headers: { 'content-type': 'application/octet-stream' },
+      data: undefined,
+    })),
+    getArrayBuffer: jest.fn(async () => ({
+      status: 200,
+      headers: {},
+      data: new TextEncoder().encode(text).buffer as ArrayBuffer,
+    })),
+  });
+
+  it.each([
+    '<svg xmlns="http://www.w3.org/2000/svg"/>',
+    '<?xml version="1.0"?>\n<!-- hi -->\n<!DOCTYPE svg>\n<svg>',
+  ])('accepts an SVG document: %s', async text => {
+    expect(await isImageURI('https://example.com/a', octet(text))).toBe(true);
+  });
+
+  it('rejects an XML document whose root is not <svg>', async () => {
+    const xhtml =
+      '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><script>x</script></html>';
+    expect(await isImageURI('https://example.com/a', octet(xhtml))).toBe(false);
+  });
+});
+
+describe('record metadata cannot spoof resolver fields', () => {
+  const resolverFor = (record: string) =>
+    new AvatarResolver({
+      getEnsRecord: async () => ({ record, address: null }),
+      readContract: async () => null as never,
+    });
+  const jsonRecord = (value: unknown) =>
+    `data:application/json;base64,${toBase64(bytes(JSON.stringify(value)))}`;
+
+  it('strips is_owner, host_meta and uri from a JSON record', async () => {
+    const record = jsonRecord({
+      name: 'n',
+      image: `data:image/png;base64,${PNG_B64}`,
+      is_owner: true,
+      host_meta: { contract_address: '0xfake' },
+      uri: 'other.eth',
+    });
+    expect(await resolverFor(record).getMetadata('x.eth')).toEqual({
+      name: 'n',
+      image: `data:image/png;base64,${PNG_B64}`,
+      uri: 'x.eth',
+    });
+  });
+
+  it.each([[[1, 2]], ['"just a string"'], [42], [null]])(
+    'rejects non-object JSON %p',
+    async value => {
+      const record = `data:application/json,${
+        typeof value === 'string' ? value : JSON.stringify(value)
+      }`;
+      await expect(
+        resolverFor(record).getMetadata('x.eth')
+      ).rejects.toBeInstanceOf(MetadataParsingError);
+    }
+  );
+});
+
+describe('NFT records are recognised by prefix only', () => {
+  let server: Awaited<ReturnType<typeof startServer>>;
+  beforeAll(async () => {
+    server = await startServer((_req, res) => {
+      res.writeHead(200, { 'content-type': 'image/png' });
+      res.end();
+    });
+  });
+  afterAll(() => server.close());
+
+  const resolverFor = (record: string) =>
+    new AvatarResolver(
+      {
+        getEnsRecord: async () => ({ record, address: null }),
+        readContract: jest.fn(async () => {
+          throw new Error('should not read a contract');
+        }) as ChainClient['readContract'],
+      },
+      { allowPrivateIPs: true }
+    );
+
+  it('treats a URL containing "eip155:" as a URL', async () => {
+    const url = server.url('/eip155:1/erc721:0xabc/1.png');
+    expect(await resolverFor(url).getAvatar('x.eth')).toBe(url);
+  });
+
+  it('treats JSON mentioning "eip155:" as JSON', async () => {
+    const record = `data:application/json,{"description":"eip155:1/erc721:0xabc/1","image":"data:image/png;base64,${PNG_B64}"}`;
+    expect(await resolverFor(record).getAvatar('x.eth')).toBe(
+      `data:image/png;base64,${PNG_B64}`
+    );
+  });
+});
+
+describe('chain id caching', () => {
+  it('fromViem prefers client.chain.id', async () => {
+    const getChainId = jest.fn(async () => 5);
+    const client = fromViem({
+      getEnsText: async () => null,
+      getEnsAddress: async () => null,
+      readContract: async () => null,
+      chain: { id: 1 },
+      getChainId,
+    });
+    expect(await client.getChainId!()).toBe(1);
+    expect(getChainId).not.toHaveBeenCalled();
+  });
+
+  it('fromViem retries getChainId after a failure', async () => {
+    const getChainId = jest
+      .fn<Promise<number>, []>()
+      .mockRejectedValueOnce(new Error('RPC down'))
+      .mockResolvedValue(1);
+    const client = fromViem({
+      getEnsText: async () => null,
+      getEnsAddress: async () => null,
+      readContract: async () => null,
+      getChainId,
+    });
+    await expect(client.getChainId!()).rejects.toThrow('RPC down');
+    expect(await client.getChainId!()).toBe(1);
+    expect(await client.getChainId!()).toBe(1);
+    expect(getChainId).toHaveBeenCalledTimes(2);
+  });
+
+  it('fromEthers reports the provider network', async () => {
+    const provider = new JsonRpcProvider('http://127.0.0.1:1', 'mainnet', {
+      staticNetwork: true,
+    });
+    expect(await fromEthers(provider).getChainId!()).toBe(1);
+    provider.destroy();
+  });
+});
+
+describe('fromEthers tells reverts from outages', () => {
+  let server: Awaited<ReturnType<typeof startServer>>;
+  let callError: Record<string, unknown>;
+
+  beforeAll(async () => {
+    server = await startServer((req, res) => {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', () => {
+        const payload = JSON.parse(body);
+        const reply = (p: { id: number; method: string }) =>
+          p.method === 'eth_chainId'
+            ? { jsonrpc: '2.0', id: p.id, result: '0x1' }
+            : { jsonrpc: '2.0', id: p.id, error: callError };
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify(
+            Array.isArray(payload) ? payload.map(reply) : reply(payload)
+          )
+        );
+      });
+    });
+  });
+  afterAll(() => server.close());
+
+  const resolve = () => {
+    const provider = new JsonRpcProvider(server.url('/'), 'mainnet', {
+      staticNetwork: true,
+    });
+    return fromEthers(provider)
+      .getEnsRecord('nick.eth', 'avatar')
+      .finally(() => provider.destroy());
+  };
+
+  it('returns null for a revert with data (e.g. ResolverNotFound)', async () => {
+    callError = {
+      code: 3,
+      message: 'execution reverted',
+      data: '0x77209fe8' + '0'.repeat(64),
+    };
+    expect(await resolve()).toEqual({ record: null, address: null });
+  });
+
+  it('returns null for a revert without data', async () => {
+    callError = { code: -32000, message: 'execution reverted' };
+    expect(await resolve()).toEqual({ record: null, address: null });
+  });
+
+  it.each([
+    { code: -32000, message: 'header not found' },
+    {
+      code: -32005,
+      message: 'daily request count exceeded, request rate limited',
+    },
+  ])('throws on an RPC outage: $message', async error => {
+    callError = error;
+    await expect(resolve()).rejects.toThrow();
+  });
+});
+
+describe('assert', () => {
+  it('throws an Error, not a bare string', () => {
+    expect(() => assert(false, 'boom')).toThrow(BaseError);
+    expect(() => assert(false, 'boom')).toThrow('boom');
   });
 });

@@ -19,6 +19,7 @@ import {
   Spec,
 } from './types';
 import { ChainClient } from './chain/client';
+import { assertLimit } from './utils/limits';
 import { toHttpURL } from './utils/url';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
@@ -67,6 +68,9 @@ export class AvatarResolver implements AvatarResolver {
     this.client = client;
     this.options = options;
     this.fetcher = createFetcherFromOptions(options);
+    if (options?.maxSvgLength !== undefined) {
+      assertLimit('maxSvgLength', options.maxSvgLength);
+    }
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
@@ -89,8 +93,9 @@ export class AvatarResolver implements AvatarResolver {
     } = await this.client.getEnsRecord(ens, key);
     if (!mediaURI) return { metadata: null };
 
-    // test case-insensitive in case of uppercase records
-    if (!/eip155:/i.test(mediaURI)) {
+    // NFT records start with a CAIP-22/29 or DID id; anything else is a URI
+    // (which may merely contain "eip155:", e.g. in a path or JSON text).
+    if (!/^(?:did:nft:)?eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
       const { metadata, verifiedImage } = await uriSpec.getMetadata(
         mediaURI,
@@ -172,6 +177,7 @@ export class AvatarResolver implements AvatarResolver {
         arweave: this.options?.arweave,
       },
       urlDenyList: this.options?.urlDenyList,
+      maxSvgLength: this.options?.maxSvgLength,
     });
     // Every remote URL we return must be an image. Skip only the URL the
     // record pointed at directly, which was checked while resolving.

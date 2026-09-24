@@ -32,7 +32,9 @@ export interface ViemClientLike {
     functionName: string;
     args?: readonly unknown[];
   }): Promise<unknown>;
-  /** viem's `getChainId` action; when present, NFT chain ids are enforced. */
+  /** The client's configured chain; when set, NFT chain ids are enforced. */
+  chain?: { id: number };
+  /** viem's `getChainId` action, used when `chain` is not set. */
   getChainId?(): Promise<number>;
 }
 
@@ -50,25 +52,26 @@ export function fromViem(
   client: ViemClientLike,
   opts?: FromViemOptions
 ): ChainClient {
-  let chainId: Promise<number> | undefined;
-  const getChainId = client.getChainId?.bind(client);
+  // Cache the settled number, never a pending promise: in Cloudflare Workers a
+  // promise created while serving one request hangs when awaited by another.
+  let fetchedChainId: number | undefined;
+  const canGetChainId = !!client.chain || !!client.getChainId;
 
   return {
-    getChainId: getChainId
-      ? () => {
-          if (!chainId) {
-            chainId = getChainId();
-            chainId.catch(() => (chainId = undefined)); // retry after a failure
+    getChainId: canGetChainId
+      ? async () => {
+          if (client.chain) return client.chain.id;
+          if (fetchedChainId === undefined) {
+            fetchedChainId = await client.getChainId!();
           }
-          return chainId;
+          return fetchedChainId;
         }
       : undefined,
 
     async getEnsRecord(name: string, key: string): Promise<EnsRecord> {
       // viem already returns null when the name has no resolver or record.
-      // Anything it throws is a real failure (RPC, gateway) and must surface,
-      // or an outage would read as "no avatar".
-      const [record, address] = await Promise.all([
+      // Anything it throws is a real failure (RPC, gateway).
+      const [record, address] = await Promise.allSettled([
         client.getEnsText({
           name,
           key,
@@ -79,7 +82,14 @@ export function fromViem(
           universalResolverAddress: opts?.universalResolverAddress,
         }),
       ]);
-      return { record: record ?? null, address: address ?? null };
+      // A failed record lookup must surface, or an outage would read as "no
+      // avatar". The address only feeds the ownership check, so without it the
+      // avatar still resolves (with is_owner false).
+      if (record.status === 'rejected') throw record.reason;
+      return {
+        record: record.value ?? null,
+        address: address.status === 'fulfilled' ? address.value ?? null : null,
+      };
     },
 
     async readContract<T = unknown>({

@@ -139,14 +139,21 @@ const avt = new AvatarResolver(client, {
 });
 ```
 
-### Timeout and response size _(Default: 30000 ms, 10 MiB)_
+### Limits _(Defaults: 30000 ms, 1 MiB, 5 redirects, 256 KiB SVG)_
 
-`timeout` is a deadline for each HTTP request as a whole — redirects, headers and body. `maxContentLength` caps the size of a fetched response body (e.g. NFT metadata JSON); larger responses are rejected.
+- `timeout` — deadline for each HTTP request as a whole: redirects, headers and body.
+- `maxContentLength` — maximum size of a fetched response body (e.g. NFT metadata JSON); larger responses are rejected.
+- `maxRedirects` — redirects followed per request. Each hop is a subrequest; with the default, one resolution makes at most ~30 HTTP requests (under Cloudflare Workers Free's 50).
+- `maxSvgLength` — maximum length of an inline / `data:` SVG avatar; larger ones resolve to `null`. `utils.sanitizeSVG(svg, { maxLength })` takes the same limit.
+
+Values must be positive integers (`maxRedirects` may be 0); `NaN`, `Infinity` and the like throw instead of silently disabling a limit.
 
 ```js
 const avt = new AvatarResolver(client, {
   timeout: 8000,
-  maxContentLength: 2 * 1024 * 1024,
+  maxContentLength: 512 * 1024,
+  maxRedirects: 3,
+  maxSvgLength: 128 * 1024,
 });
 ```
 
@@ -242,7 +249,7 @@ For an SSRF-safe fetch (private-address blocking, redirect re-validation, size c
 - ✅ Only `http:` and `https:` URLs are fetched
 - ✅ Only globally routable unicast addresses are allowed: loopback, private, link-local, CGNAT, multicast, reserved, documentation and other special-purpose ranges are blocked, in every textual encoding (IPv4-mapped/NAT64 IPv6, trailing dots, …)
 - ✅ Every redirect hop is re-validated, and request headers other than `Accept`/`Range` (API keys) are dropped once a redirect leaves the original origin
-- ✅ Each request has one deadline covering the body, and response bodies are size-capped
+- ✅ Each request has one deadline covering the body, response bodies are size-capped, and redirects are limited (see [Limits](#limits-defaults-30000-ms-1-mib-5-redirects-256-kib-svg))
 
 **Custom agents**: If you provide your own HTTP/HTTPS agents, ens-avatar will use them as-is without applying SSRF protection. You are responsible for securing your custom agents.
 
@@ -254,8 +261,11 @@ See the [Custom Agents](#custom-agents-nodejs-only) section for more details.
 
 ens-avatar never makes CCIP-read (EIP-3668) requests itself: offchain lookups are performed by **your** chain client (ethers' provider or viem's `ccipRead`), with that client's HTTP stack and limits. A name's gateway is attacker-controlled input, so on a server:
 
-- **viem** — pass a `ccipRead: { request }` to `createPublicClient` that applies the same private-address checks (e.g. `avtUtils.validateUrl(url)` on every gateway URL), a timeout, and a limit on nested lookups.
-- **ethers** — follows at most 10 nested lookups (`MAX_CCIP_REDIRECTS`); add URL checks with `FetchRequest.registerGetUrl` if the provider runs server-side.
+Guard it with your client's hook — viem: `ccipRead: { request }` on `createPublicClient`; ethers: `FetchRequest.registerGetUrl` — and in it:
+
+- **Check the URL you actually request**, i.e. after substituting `{sender}` and `{data}` into the gateway template. Checking the template is not enough: `https://{data}/` with data `0x7f000001` targets `127.0.0.1`. Use `avtUtils.validateUrl(url)`.
+- **Don't let `fetch` follow redirects.** Use `redirect: 'manual'` and run `validateUrl` on every `Location` hop, with a hop limit.
+- **Bound each request** (timeout, response size) and the lookup as a whole: the number of gateway URLs tried and nested lookups (ethers stops at 10, `MAX_CCIP_REDIRECTS`; viem has no limit of its own).
 
 ### Serving avatars
 
