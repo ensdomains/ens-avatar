@@ -9,7 +9,8 @@ Avatar resolver library for Node.js, browsers, and edge runtimes (Cloudflare Wor
   - viem: `import { fromViem } from '@ensdomains/ens-avatar/viem'` → `new AvatarResolver(fromViem(client))`
   - `ethers` and `viem` are **optional peer dependencies** — install only the one you use.
 - **Version 1.0.4+** uses the native Fetch API for maximum compatibility across platforms including Cloudflare Workers and other edge runtimes.
-- **Name resolution uses the ENS [Universal Resolver](https://docs.ens.domains/resolvers/universal/)**: the resolver address, owner address, and avatar/header record are fetched in a single CCIP-read-aware call, so offchain (gateway/L2) and ENSIP-10 wildcard names resolve out of the box. Override the contract via the adapter's `universalResolverAddress` option for non-default networks.
+- **Name resolution uses the ENS [Universal Resolver](https://docs.ens.domains/resolvers/universal/)**, so offchain (gateway/L2) and ENSIP-10 wildcard names resolve out of the box. The ethers adapter fetches the owner address and the avatar/header record in a single CCIP-read-aware call (plus one more only to classify an ambiguous failure); the viem adapter uses viem's `getEnsText` and `getEnsAddress` (two calls). Override the contract via the adapter's `universalResolverAddress` option for non-default networks.
+- **NFT avatars must be on the client's chain.** Both adapters report their chain id, and an `eip155:<chainId>/…` avatar on another chain throws `ChainMismatch` instead of being read from the wrong chain. A custom `ChainClient` opts in by implementing `getChainId()`.
 
 ## Platform Support
 
@@ -130,9 +131,29 @@ const avt = new AvatarResolver(provider, {
 
 ### URL DenyList _(Default: [])_
 
+Hostnames to refuse (subdomains included). Entries are hostnames, not URLs; matching ignores case and trailing dots.
+
 ```js
-const avt = new AvatarResolver(provider, {
-  urlDenyList: ['https://maliciouswebsite.com'],
+const avt = new AvatarResolver(client, {
+  urlDenyList: ['maliciouswebsite.com'],
+});
+```
+
+### Limits _(Defaults: 30000 ms, 1 MiB, 5 redirects, 256 KiB SVG)_
+
+- `timeout` — deadline for each HTTP request as a whole: redirects, headers and body.
+- `maxContentLength` — maximum size of a fetched response body (e.g. NFT metadata JSON); larger responses are rejected.
+- `maxRedirects` — redirects followed per request. Each hop is a subrequest; with the default, one resolution makes at most ~30 HTTP requests (under Cloudflare Workers Free's 50).
+- `maxSvgLength` — maximum length of an inline / `data:` SVG avatar; larger ones resolve to `null`. `utils.sanitizeSVG(svg, { maxLength })` takes the same limit.
+
+Values must be positive integers (`maxRedirects` may be 0); `NaN`, `Infinity` and the like throw instead of silently disabling a limit.
+
+```js
+const avt = new AvatarResolver(client, {
+  timeout: 8000,
+  maxContentLength: 512 * 1024,
+  maxRedirects: 3,
+  maxSvgLength: 128 * 1024,
 });
 ```
 
@@ -188,7 +209,16 @@ Common local development scenarios:
 
 **Note**: This flag is ignored if you provide custom agents (you control security in that case).
 
+## Cloudflare Workers
+
+- **viem:** create the client with a `chain`. Without one the adapter has to ask the RPC for `eth_chainId`; it does so without viem's request dedupe, because Workers hang when a promise started in one request is awaited in another.
+- **viem transport:** don't enable request batching (`http(url, { batch: true })`) or `batch: { multicall: true }` on a client shared across requests: both hold calls in a queue whose promises can end up awaited by a different request, which hangs.
+- Requires viem **2.35 or later** (Universal Resolver v3 error handling).
+- **ethers:** **6.13 or later** is required (earlier 6.x releases never time out a hung request, even with `FetchRequest.timeout` set). Use `new JsonRpcProvider(url, network, { staticNetwork: true, batchMaxCount: 1 })`, so the provider neither re-detects the network nor holds calls in a batch shared across requests.
+
 ## Security
+
+> **`getMetadata` returns metadata as published.** Fields like `image`, `image_url` and `image_data` are raw, attacker-controlled values; render them only through `getAvatar` / `getHeader` / `utils.getImageURI`, which validate and sanitize them.
 
 ### XSS Protection
 
@@ -225,15 +255,31 @@ For an SSRF-safe fetch (private-address blocking, redirect re-validation, size c
 **By default**, ens-avatar includes built-in protection against Server-Side Request Forgery (SSRF) attacks in Node.js environments. This prevents malicious actors from using avatar URLs to probe internal networks.
 
 **Default behavior** (recommended for production):
-- ✅ Blocks requests to `localhost`, `127.0.0.1`
-- ✅ Blocks private IP ranges: `10.x.x.x`, `192.168.x.x`, `172.16.x.x-172.31.x.x`
-- ✅ Blocks link-local and other internal addresses
+- ✅ Only `http:` and `https:` URLs are fetched
+- ✅ Only globally routable unicast addresses are allowed: loopback, private, link-local, CGNAT, multicast, reserved, documentation and other special-purpose ranges are blocked, in every textual encoding (IPv4-mapped/NAT64 IPv6, trailing dots, …)
+- ✅ Every redirect hop is re-validated, and request headers other than `Accept`/`Range` (API keys) are dropped once a redirect leaves the original origin
+- ✅ Each request has one deadline covering the body, response bodies are size-capped, and redirects are limited (see [Limits](#limits-defaults-30000-ms-1-mib-5-redirects-256-kib-svg))
 
 **Custom agents**: If you provide your own HTTP/HTTPS agents, ens-avatar will use them as-is without applying SSRF protection. You are responsible for securing your custom agents.
 
 **Local development**: Set `allowPrivateIPs: true` to disable SSRF protection when you need to access local services (e.g., local IPFS nodes). Never use this in production.
 
 See the [Custom Agents](#custom-agents-nodejs-only) section for more details.
+
+### Guarding CCIP-read
+
+ens-avatar never makes CCIP-read (EIP-3668) requests itself: offchain lookups are performed by **your** chain client (ethers' provider or viem's `ccipRead`), with that client's HTTP stack and limits. A name's gateway is attacker-controlled input, so on a server:
+
+Guard it with your client's hook — viem: `ccipRead: { request }` on `createPublicClient`; ethers: `FetchRequest.registerGetUrl` — and in it:
+
+- **Check the URL you actually request**, i.e. after substituting `{sender}` and `{data}` into the gateway template. Checking the template is not enough: `https://{data}/` with data `0x7f000001` targets `127.0.0.1`. Use `avtUtils.validateUrl(url)`.
+- **Don't let `fetch` follow redirects.** Use `redirect: 'manual'` and run `validateUrl` on every `Location` hop, with a hop limit.
+- **Bound each request** (timeout, response size) and the lookup as a whole: the number of gateway URLs tried and nested lookups (ethers stops at 10, `MAX_CCIP_REDIRECTS`; viem has no limit of its own).
+- **On Node, also check resolved addresses.** `validateUrl` only sees the URL: a gateway hostname whose DNS points at a private address passes it. Make the gateway requests through an agent that checks the IP it connects to (e.g. an undici `Agent` with a validating `lookup`, or `ssrf-req-filter`).
+
+### Serving avatars
+
+If you proxy or re-serve avatar bytes from your own origin, send `X-Content-Type-Options: nosniff` and a sandboxing CSP such as `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox`, so a hostile file can't run as a page on your domain.
 
 ---
 

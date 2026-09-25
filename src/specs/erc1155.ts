@@ -1,7 +1,15 @@
-import { BaseError, createFetcher, handleSettled, resolveURI } from '../utils';
-import { base64ToUtf8 } from '../utils/base64';
-import { MetadataParsingError } from '../utils/error';
-import { isURIEncoded } from '../utils/isImageURI';
+import {
+  BaseError,
+  createFetcherFromOptions,
+  handleSettled,
+  resolveURI,
+} from '../utils';
+import {
+  asMetadataObject,
+  assertDataURISize,
+  parseOnChainMetadata,
+} from '../utils/parseOnChainMetadata';
+import { toHttpURL } from '../utils/url';
 import { AvatarResolverOpts, Fetcher } from '../types';
 import { ChainClient } from '../chain/client';
 
@@ -45,15 +53,7 @@ export default class ERC1155 {
     fetcher?: Fetcher
   ) {
     // Use provided fetcher or create a new one
-    const fetch =
-      fetcher ||
-      createFetcher({
-        ttl: options?.cache,
-        dispatcher: options?.dispatcher,
-        allowPrivateIPs: options?.allowPrivateIPs,
-        timeout: options?.timeout,
-        urlDenyList: options?.urlDenyList,
-      });
+    const fetch = fetcher || createFetcherFromOptions(options);
 
     const id = BigInt(tokenID);
     const [tokenURI, balance] = await handleSettled([
@@ -80,25 +80,17 @@ export default class ERC1155 {
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance && balance > BigInt(0));
 
+    assertDataURISize(tokenURI, options?.maxContentLength);
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(tokenURI, {
       ipfs: options?.ipfs,
       arweave: options?.arweave,
     });
-    let _resolvedUri = resolvedURI;
     if (isOnChain) {
-      if (isEncoded) {
-        _resolvedUri = base64ToUtf8(
-          resolvedURI.replace('data:application/json;base64,', '')
-        );
-      }
-      let metadata: Record<string, unknown>;
-      try {
-        metadata = JSON.parse(_resolvedUri);
-      } catch (e) {
-        throw new MetadataParsingError(
-          `Failed to parse token metadata: ${(e as Error).message}`
-        );
-      }
+      const metadata = parseOnChainMetadata(
+        resolvedURI,
+        isEncoded,
+        options?.maxContentLength
+      );
       return { ...metadata, is_owner: isOwner };
     }
 
@@ -114,7 +106,7 @@ export default class ERC1155 {
           .toString(16)
           .padStart(64, '0');
     const replaced = resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex);
-    const finalURI = isURIEncoded(replaced) ? replaced : encodeURI(replaced);
+    const finalURI = toHttpURL(replaced) ?? replaced;
     const response = await fetch.get(
       finalURI,
       marketplaceKey ? { headers: marketplaceKey } : {}
@@ -122,7 +114,7 @@ export default class ERC1155 {
     if (!response?.data) {
       throw new BaseError('Failed to retrieve token metadata from URI');
     }
-    const metadata = response?.data as Record<string, unknown>;
+    const metadata = asMetadataObject(response.data);
     return { ...metadata, is_owner: isOwner };
   }
 }

@@ -4,7 +4,7 @@ import URI from './specs/uri';
 import * as utils from './utils';
 import {
   BaseError,
-  createFetcher,
+  createFetcherFromOptions,
   getImageURI,
   isImageURI,
   parseNFT,
@@ -19,6 +19,8 @@ import {
   Spec,
 } from './types';
 import { ChainClient } from './chain/client';
+import { assertLimit } from './utils/limits';
+import { toHttpURL } from './utils/url';
 
 export const specs: { [key: string]: new () => Spec } = Object.freeze({
   erc721: ERC721,
@@ -30,6 +32,44 @@ export class UnsupportedNamespace extends BaseError {}
 
 export interface UnsupportedMediaKey {}
 export class UnsupportedMediaKey extends BaseError {}
+
+export interface ChainMismatch {}
+export class ChainMismatch extends BaseError {}
+
+/**
+ * Treat null / '' options as unset (as before validation existed), and store
+ * gateway URLs in the canonical form they were validated in.
+ */
+function normalizeOptions(
+  options?: AvatarResolverOpts
+): AvatarResolverOpts | undefined {
+  if (!options) return options;
+  const normalized: Record<string, unknown> = { ...options };
+  for (const [key, value] of Object.entries(normalized)) {
+    if (value === null || value === '') delete normalized[key];
+  }
+  for (const gateway of ['ipfs', 'arweave'] as const) {
+    const url = normalized[gateway];
+    if (url === undefined) continue;
+    const canonical = typeof url === 'string' ? toHttpURL(url) : null;
+    const parsed = canonical ? new URL(canonical) : null;
+    // A gateway is a base URL: a query, fragment or credentials would end up
+    // in (or leak through) every URL built from it.
+    if (
+      !parsed ||
+      parsed.search ||
+      parsed.hash ||
+      parsed.username ||
+      parsed.password
+    ) {
+      throw new TypeError(
+        `${gateway} gateway must be an http(s) URL without query, fragment or credentials`
+      );
+    }
+    normalized[gateway] = canonical;
+  }
+  return normalized as AvatarResolverOpts;
+}
 
 export interface AvatarResolver {
   client: ChainClient;
@@ -61,37 +101,43 @@ export interface AvatarResolver {
 export class AvatarResolver implements AvatarResolver {
   constructor(client: ChainClient, options?: AvatarResolverOpts) {
     this.client = client;
-    this.options = options;
-    this.fetcher = createFetcher({
-      ttl: options?.cache,
-      dispatcher: options?.dispatcher,
-      allowPrivateIPs: options?.allowPrivateIPs,
-      timeout: options?.timeout,
-      urlDenyList: options?.urlDenyList,
-    });
+    this.options = normalizeOptions(options);
+    this.fetcher = createFetcherFromOptions(this.options);
+    if (this.options?.maxSvgLength !== undefined) {
+      assertLimit('maxSvgLength', this.options.maxSvgLength);
+    }
   }
 
   async getMetadata(ens: string, key: MediaKey = 'avatar') {
+    return (await this._resolveMetadata(ens, key)).metadata;
+  }
+
+  /**
+   * getMetadata plus `verifiedImage`: the image URL already confirmed to be an
+   * image while resolving (a record pointing straight at an image).
+   */
+  async _resolveMetadata(
+    ens: string,
+    key: MediaKey
+  ): Promise<{ metadata: NFTMetadata | null; verifiedImage?: string }> {
     // resolve the avatar/header text record + owner address via the chain
     // client (CCIP-read and ENSIP-10 wildcard aware in the bundled adapters)
     const {
       record: mediaURI,
       address: resolvedAddress,
     } = await this.client.getEnsRecord(ens, key);
-    if (!mediaURI) return null;
+    if (!mediaURI) return { metadata: null };
 
-    // test case-insensitive in case of uppercase records
-    if (!/eip155:/i.test(mediaURI)) {
+    // NFT records start with a CAIP-22/29 or DID id; anything else is a URI
+    // (which may merely contain "eip155:", e.g. in a path or JSON text).
+    if (!/^(?:did:nft:)?eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
-      const metadata = await uriSpec.getMetadata(
+      const { metadata, verifiedImage } = await uriSpec.getMetadata(
         mediaURI,
         this.options,
         this.fetcher
       );
-      return {
-        ...(typeof metadata === 'object' ? metadata : { image: metadata }),
-        uri: ens,
-      };
+      return { metadata: { ...metadata, uri: ens }, verifiedImage };
     }
 
     // parse retrieved avatar uri
@@ -100,6 +146,16 @@ export class AvatarResolver implements AvatarResolver {
     // prototype pollution via __proto__/constructor namespace injection
     if (!Object.prototype.hasOwnProperty.call(specs, namespace)) {
       throw new UnsupportedNamespace(`Unsupported namespace: ${namespace}`);
+    }
+    // The contract lives on `chainID`; reading the same address on another
+    // chain would return another contract's data (and a wrong is_owner).
+    if (this.client.getChainId) {
+      const clientChainId = await this.client.getChainId();
+      if (clientChainId !== chainID) {
+        throw new ChainMismatch(
+          `NFT is on chain ${chainID} but the client reads chain ${clientChainId}`
+        );
+      }
     }
     const Spec = specs[namespace];
     const spec = new Spec();
@@ -122,7 +178,7 @@ export class AvatarResolver implements AvatarResolver {
       this.options,
       this.fetcher
     );
-    return { ...metadata, uri: ens, host_meta };
+    return { metadata: { ...metadata, uri: ens, host_meta } };
   }
 
   async getAvatar(
@@ -144,7 +200,10 @@ export class AvatarResolver implements AvatarResolver {
   }
 
   async _getMedia(ens: string, mediaKey: MediaKey = 'avatar') {
-    const metadata = await this.getMetadata(ens, mediaKey);
+    const { metadata, verifiedImage } = await this._resolveMetadata(
+      ens,
+      mediaKey
+    );
     if (!metadata) return null;
     const imageURI = getImageURI({
       metadata,
@@ -153,12 +212,12 @@ export class AvatarResolver implements AvatarResolver {
         arweave: this.options?.arweave,
       },
       urlDenyList: this.options?.urlDenyList,
+      maxSvgLength: this.options?.maxSvgLength,
+      maxContentLength: this.options?.maxContentLength,
     });
-    if (
-      // do check only NFTs since raw uri has this check built-in
-      metadata.hasOwnProperty('host_meta') &&
-      imageURI?.startsWith('http')
-    ) {
+    // Every remote URL we return must be an image. Skip only the URL the
+    // record pointed at directly, which was checked while resolving.
+    if (imageURI && toHttpURL(imageURI) && imageURI !== verifiedImage) {
       const isImage = await isImageURI(imageURI, this.fetcher);
       return isImage ? imageURI : null;
     }

@@ -1,9 +1,7 @@
-import urlJoin from 'url-join';
-
 import { Gateways } from '../types';
-import { base64ToBytes, bytesToBase64, bytesToHex } from './base64';
+import { base64ToBytes, bytesToBase64 } from './base64';
 import { isCID } from './isCID';
-import { IMAGE_SIGNATURES } from './isImageURI';
+import { detectImageMimeType } from './sniffImage';
 
 const IPFS_SUBPATH = '/ipfs/';
 const IPNS_SUBPATH = '/ipns/';
@@ -25,29 +23,20 @@ function _getImageMimeType(uri: string) {
     return null; // not enough data to determine the type
   }
 
-  // get the hex representation of the first 12 bytes
-  const hex = bytesToHex(bytes, 0, 12).toUpperCase();
-
-  // check against magic number mapping
-  for (const [magicNumber, mimeType] of Object.entries({
-    ...IMAGE_SIGNATURES,
-    '52494646': 'special_webp_check',
-    '3C737667': 'image/svg+xml',
-  })) {
-    if (hex.startsWith(magicNumber.toUpperCase())) {
-      if (mimeType === 'special_webp_check') {
-        // RIFF (bytes 0-3) + size (4-7) + 'WEBP' (8-11). The 'WE' marker
-        // (0x5745) is at bytes 8-9 → hex chars 16-19, not 8-11.
-        return hex.slice(16, 20) === '5745' ? 'image/webp' : null;
-      }
-      return mimeType;
-    }
+  const mimeType = detectImageMimeType(bytes);
+  if (mimeType) return mimeType;
+  // "<svg" — base64 SVG data URIs
+  if (String.fromCharCode(...Array.from(bytes.subarray(0, 4))) === '<svg') {
+    return 'image/svg+xml';
   }
-
   return null;
 }
 
-function _isValidBase64(uri: string) {
+/**
+ * True for a well-formed base64 data URI: a JSON document, or an image whose
+ * bytes match the MIME type in its header.
+ */
+export function isValidBase64DataURI(uri: string) {
   if (typeof uri !== 'string') {
     return false;
   }
@@ -58,7 +47,7 @@ function _isValidBase64(uri: string) {
   }
 
   const [header, str] = uri.split('base64,');
-  if (header != JSON_MIMETYPE) {
+  if (header !== JSON_MIMETYPE) {
     const mimeType = _getImageMimeType(uri);
     if (!mimeType || !header.includes(mimeType)) {
       return false;
@@ -77,6 +66,34 @@ function _isValidBase64(uri: string) {
   } catch (e) {
     return false;
   }
+}
+
+const trimSlashes = (part: string, leading: boolean, trailing: boolean) => {
+  let start = 0;
+  let end = part.length;
+  if (leading) while (start < end && part[start] === '/') start++;
+  if (trailing) while (end > start && part[end - 1] === '/') end--;
+  return part.slice(start, end);
+};
+
+/**
+ * Join URL parts with single slashes, like url-join (which this replaces):
+ * url-join's /[\/]+$/ is quadratic on runs of slashes inside a part, and
+ * the parts here (IPFS/Arweave paths) come from records.
+ */
+function joinURL(...parts: string[]): string {
+  let joined = parts
+    .map((part, i) => trimSlashes(part, i > 0, true))
+    .filter(Boolean)
+    .join('/');
+  // Keep a trailing slash, as url-join does (`ipfs://CID/` stays a directory
+  // URL, which gateways would otherwise redirect to).
+  if (parts[parts.length - 1].endsWith('/')) joined += '/';
+  // url-join's post-processing, kept as is so resolved URLs don't change:
+  // drop a slash before '?', '&' or '#' (except '#!'), then turn every '?'
+  // after the first into '&'.
+  const [base, ...query] = joined.replace(/\/(\?|&|#[^!])/g, '$1').split('?');
+  return base + (query.length > 0 ? '?' : '') + query.join('&');
 }
 
 function _replaceGateway(uri: string, source: string, target?: string) {
@@ -98,7 +115,7 @@ export function resolveURI(
   customGateway?: string
 ): { uri: string; isOnChain: boolean; isEncoded: boolean } {
   // resolves uri based on its' protocol
-  const isEncoded = _isValidBase64(uri);
+  const isEncoded = isValidBase64DataURI(uri);
   if (isEncoded || uri.startsWith('http')) {
     uri = _replaceGateway(uri, 'https://ipfs.io/', gateways?.ipfs);
     uri = _replaceGateway(uri, 'https://arweave.net/', gateways?.arweave);
@@ -120,20 +137,20 @@ export function resolveURI(
     networkRegexResult?.groups || {};
   if ((protocol === 'ipns:/' || subpath === 'ipns/') && target) {
     return {
-      uri: urlJoin(ipfsGateway, IPNS_SUBPATH, target, subtarget),
+      uri: joinURL(ipfsGateway, IPNS_SUBPATH, target, subtarget),
       isOnChain: false,
       isEncoded: false,
     };
   } else if (isCID(target)) {
     // Assume that it's a regular IPFS CID and not an IPNS key
     return {
-      uri: urlJoin(ipfsGateway, IPFS_SUBPATH, target, subtarget),
+      uri: joinURL(ipfsGateway, IPFS_SUBPATH, target, subtarget),
       isOnChain: false,
       isEncoded: false,
     };
   } else if (protocol === 'ar:/' && target) {
     return {
-      uri: urlJoin(arGateway, target, subtarget || ''),
+      uri: joinURL(arGateway, target, subtarget || ''),
       isOnChain: false,
       isEncoded: false,
     };

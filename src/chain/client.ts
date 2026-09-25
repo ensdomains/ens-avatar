@@ -38,4 +38,11 @@ export interface ChainClient {
 
   /** Call a read-only contract function and return its decoded result. */
   readContract<T = unknown>(params: ReadContractParams): Promise<T>;
+
+  /**
+   * The EIP-155 chain id this client reads from. When implemented, NFT
+   * avatars (`eip155:<chainId>/…`) on any other chain are rejected instead of
+   * being read from the wrong chain. Optional for backwards compatibility.
+   */
+  getChainId?(): Promise<number>;
 }

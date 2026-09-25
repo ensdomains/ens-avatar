@@ -1,5 +1,7 @@
 import { Fetcher } from '../types';
 import { fetch as defaultFetch } from './fetch';
+import { detectImageMimeType } from './sniffImage';
+import { toHttpURL } from './url';
 
 export const ALLOWED_IMAGE_MIMETYPES = [
   'application/octet-stream',
@@ -15,15 +17,66 @@ export const ALLOWED_IMAGE_MIMETYPES = [
   'image/jxl',
 ];
 
-export const IMAGE_SIGNATURES = {
-  FFD8FF: 'image/jpeg',
-  '89504E47': 'image/png',
-  '47494638': 'image/gif',
-  '424D': 'image/bmp',
-  FF0A: 'image/jxl',
+const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
+const SNIFF_BYTES = 1024;
+
+// Non-standard names servers use for allowed types.
+const MIME_TYPE_ALIASES: Record<string, string> = {
+  'image/jpg': 'image/jpeg',
+  'image/pjpeg': 'image/jpeg',
+  'image/x-png': 'image/png',
+  'image/x-ms-bmp': 'image/bmp',
+  'image/x-bmp': 'image/bmp',
 };
 
-const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
+// Status codes from hosts that refuse HEAD (405, 501) or sign URLs for GET
+// only (S3 presigned URLs answer HEAD with 403): sniff with a ranged GET.
+const HEAD_REFUSED_STATUSES = [403, 405, 501];
+
+/**
+ * True if `text` starts an SVG document: an XML prolog (declaration, other
+ * processing instructions, comments, a doctype with an optional internal
+ * subset, whitespace) followed by the <svg> root. A bare "<?xml" prefix would
+ * also admit XHTML. Scans forward only, so it is linear in `text`.
+ */
+export function isSvgDocument(text: string): boolean {
+  let i = 0;
+  for (;;) {
+    while (i < text.length && /\s/.test(text[i])) i++;
+    let end: number;
+    if (text.startsWith('<?', i)) {
+      end = text.indexOf('?>', i + 2);
+      if (end === -1) return false;
+      i = end + 2;
+    } else if (text.startsWith('<!--', i)) {
+      end = text.indexOf('-->', i + 4);
+      if (end === -1) return false;
+      i = end + 3;
+    } else if (text.slice(i, i + 9).toUpperCase() === '<!DOCTYPE') {
+      end = text.indexOf('>', i);
+      if (end === -1) return false;
+      // An internal subset ("[ … ]") opens before the doctype's first '>'.
+      // Only look there: searching the rest of the input for '[' on every
+      // doctype would be quadratic.
+      let subset = -1;
+      for (let j = i + 9; j < end; j++) {
+        if (text[j] === '[') {
+          subset = j;
+          break;
+        }
+      }
+      if (subset !== -1) {
+        const subsetEnd = text.indexOf(']', subset);
+        if (subsetEnd === -1) return false;
+        end = text.indexOf('>', subsetEnd);
+        if (end === -1) return false;
+      }
+      i = end + 1;
+    } else {
+      return /^<svg[\s>/]/i.test(text.slice(i, i + 5));
+    }
+  }
+}
 
 export function isURIEncoded(uri: string): boolean {
   try {
@@ -44,6 +97,8 @@ async function isStreamAnImage(
       },
     });
 
+    if (response.status !== 200 && response.status !== 206) return false;
+
     if (response.headers['content-length']) {
       const contentLength = parseInt(response.headers['content-length'], 10);
       if (contentLength > MAX_FILE_SIZE) {
@@ -52,19 +107,22 @@ async function isStreamAnImage(
       }
     }
 
-    // Check the binary signature (magic numbers) of the data
-    const magicNumbers = new DataView(response.data).getUint32(0).toString(16);
-
-    const isBinaryImage = Object.keys(IMAGE_SIGNATURES).some(signature =>
-      magicNumbers.toUpperCase().startsWith(signature)
+    // Only the first KiB is inspected, even if a custom fetcher returned more.
+    const head = new Uint8Array(
+      response.data,
+      0,
+      Math.min(response.data.byteLength, SNIFF_BYTES)
     );
+
+    // Check the binary signature (magic numbers) of the data
+    const isBinaryImage = detectImageMimeType(head) !== null;
 
     // Check for SVG image - must start with <svg or <?xml (after stripping whitespace/BOM)
     const chunkAsString = new TextDecoder()
-      .decode(response.data)
+      .decode(head)
       .replace(/^\uFEFF/, '')
       .trimStart();
-    const isSvgImage = /^<(?:svg[\s>]|\?xml\s)/.test(chunkAsString);
+    const isSvgImage = isSvgDocument(chunkAsString);
 
     return isBinaryImage || isSvgImage;
   } catch (error) {
@@ -84,17 +142,19 @@ export async function isImageURI(
   url: string,
   fetcher?: Fetcher
 ): Promise<boolean> {
-  const encodedURI = isURIEncoded(url) ? url : encodeURI(url);
+  const checkedURL = toHttpURL(url);
+  if (!checkedURL) return false;
   const _fetcher = fetcher || defaultFetch;
 
   try {
-    const result = await _fetcher.head(encodedURI);
+    const result = await _fetcher.head(checkedURL);
 
     if (result.status === 200) {
-      const contentType = result.headers['content-type']
+      const rawType = result.headers['content-type']
         ?.toLowerCase()
         .split(';')[0]
         .trim();
+      const contentType = rawType && (MIME_TYPE_ALIASES[rawType] ?? rawType);
 
       if (!contentType || !ALLOWED_IMAGE_MIMETYPES.includes(contentType)) {
         console.warn(`isImageURI: Invalid content type ${contentType}`);
@@ -112,10 +172,12 @@ export async function isImageURI(
 
       if (contentType === 'application/octet-stream') {
         // if image served with generic mimetype, do additional check
-        return isStreamAnImage(encodedURI, _fetcher);
+        return isStreamAnImage(checkedURL, _fetcher);
       }
 
       return true;
+    } else if (HEAD_REFUSED_STATUSES.includes(result.status)) {
+      return isStreamAnImage(checkedURL, _fetcher);
     } else {
       console.warn(`isImageURI: HTTP error ${result.status}`);
       return false;
@@ -150,7 +212,7 @@ export async function isImageURI(
         img.src = '';
         resolve(false);
       };
-      img.src = encodedURI;
+      img.src = checkedURL;
     });
   }
 }

@@ -1,6 +1,7 @@
-// simple assert without nested check
+import { BaseError } from './error';
+
 export function assert(condition: any, message: string) {
   if (!condition) {
-    throw message;
+    throw new BaseError(message);
   }
 }

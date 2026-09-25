@@ -3,7 +3,6 @@ import {
   ALLOWED_IMAGE_MIMETYPES,
   assert,
   BaseError,
-  createFetcher,
   handleSettled,
   isCID,
   isHostDenied,
@@ -286,7 +285,7 @@ describe('getImageURI', () => {
     const base64SVG =
       'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IGhlaWdodD0iMTAwIiB3aWR0aD0iMTAwIj48L3JlY3Q+PC9zdmc+';
     const result = getImageURI({ metadata: { image: base64SVG } });
-    if (!result) throw 'No result';
+    if (!result) throw new Error('No result');
     expect(result).toMatch(/^data:image\/svg\+xml;base64,/);
     expect(compareSVGs(base64SVG, result)).toBe(true);
   });
@@ -780,6 +779,7 @@ describe('sanitizeSVG', () => {
 
     it('blocks javascript: href scheme', () => {
       const result = sanitize('<use href="javascript:alert(1)" />');
+      // eslint-disable-next-line no-script-url
       expect(result).not.toContain('javascript:');
     });
 
