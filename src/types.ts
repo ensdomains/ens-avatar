@@ -32,6 +32,8 @@ export interface AvatarResolverOpts {
   urlDenyList?: string[];
   agents?: AxiosAgents;
   maxContentLength?: number;
+  /** Gas limit for the tokenURI() / uri() calls. @default 10_000_000 */
+  metadataGasLimit?: number;
 }
 
 export interface AvatarRequestOpts {

@@ -72,7 +72,13 @@ export class AvatarResolver implements AvatarResolver {
     if (!/eip155:/i.test(mediaURI)) {
       const uriSpec = new URI();
       const metadata = await uriSpec.getMetadata(mediaURI, this.options);
-      return { uri: ens, ...metadata };
+      // An on-chain record resolves to the image itself (a string): wrap it
+      // rather than spreading it character by character.
+      if (typeof metadata === 'string') return { uri: ens, image: metadata };
+      // Resolver-set fields win over the record's JSON, which must not be able
+      // to claim ownership or NFT host data.
+      const { is_owner: _isOwner, host_meta: _hostMeta, ...rest } = metadata;
+      return Object.assign({ uri: ens }, rest, { uri: ens });
     }
 
     // parse retrieved avatar uri
@@ -100,7 +106,12 @@ export class AvatarResolver implements AvatarResolver {
       tokenID,
       this.options
     );
-    return { uri: ens, host_meta, ...metadata };
+    // Resolver-set fields are applied last, so token metadata can't override
+    // them (key order stays uri, host_meta, …metadata).
+    return Object.assign({ uri: ens, host_meta }, metadata, {
+      uri: ens,
+      host_meta,
+    });
   }
 
   async getAvatar(
