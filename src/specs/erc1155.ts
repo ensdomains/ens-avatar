@@ -1,9 +1,13 @@
 import { Contract, Provider } from 'ethers';
-import { Buffer } from 'buffer/';
 import {
+  METADATA_CALL_GAS_LIMIT,
+  METADATA_REQUEST_LIMITS,
+  assertMetadataSize,
+  assertPlainMetadata,
   createAgentAdapter,
   createCacheAdapter,
   fetch,
+  parseOnChainMetadata,
   resolveURI,
 } from '../utils';
 import { AvatarResolverOpts } from '../types';
@@ -44,25 +48,22 @@ export default class ERC1155 {
       : tokenID;
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, balance] = await Promise.all([
-      contract.uri(tokenID),
+      contract.uri(tokenID, {
+        gasLimit: options?.metadataGasLimit ?? METADATA_CALL_GAS_LIMIT,
+      }),
       ownerAddress ? contract.balanceOf(ownerAddress, tokenID) : BigInt(0),
     ]);
     // if user has valid address and if token balance of given address is greater than 0
     const isOwner = !!(ownerAddress && balance > BigInt(0));
 
+    // bound the contract-supplied URI before resolveURI validates/decodes it
+    assertMetadataSize(tokenURI);
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
       tokenURI,
       options
     );
-    let _resolvedUri = resolvedURI;
     if (isOnChain) {
-      if (isEncoded) {
-        _resolvedUri = Buffer.from(
-          resolvedURI.replace('data:application/json;base64,', ''),
-          'base64'
-        ).toString();
-      }
-      const metadata = JSON.parse(_resolvedUri);
+      const metadata = parseOnChainMetadata(resolvedURI, isEncoded);
       return { ...metadata, is_owner: isOwner };
     }
 
@@ -70,9 +71,13 @@ export default class ERC1155 {
 
     const response = await fetch.get(
       encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenIDHex)),
-      marketplaceKey ? { headers: marketplaceKey } : {}
+      {
+        ...METADATA_REQUEST_LIMITS,
+        ...(marketplaceKey ? { headers: marketplaceKey } : {}),
+      }
     );
     const metadata = await response?.data;
+    assertPlainMetadata(metadata);
     return { ...metadata, is_owner: isOwner };
   }
 }

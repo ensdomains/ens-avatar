@@ -7,9 +7,25 @@ import { resolveURI } from './resolveURI';
 import { createAgentAdapter, createCacheAdapter, fetch } from './fetch';
 import { isCID } from './isCID';
 import { ALLOWED_IMAGE_MIMETYPES, isImageURI } from './isImageURI';
+import {
+  MAX_METADATA_BYTES,
+  MAX_METADATA_PROPERTIES,
+  METADATA_CALL_GAS_LIMIT,
+  METADATA_REQUEST_LIMITS,
+  assertMetadataSize,
+  assertPlainMetadata,
+  parseOnChainMetadata,
+} from './metadata';
 
 export {
   ALLOWED_IMAGE_MIMETYPES,
+  MAX_METADATA_BYTES,
+  MAX_METADATA_PROPERTIES,
+  METADATA_CALL_GAS_LIMIT,
+  METADATA_REQUEST_LIMITS,
+  assertMetadataSize,
+  assertPlainMetadata,
+  parseOnChainMetadata,
   BaseError,
   assert,
   convertToRawSVG,

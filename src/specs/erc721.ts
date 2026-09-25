@@ -1,9 +1,13 @@
 import { Contract, Provider } from 'ethers';
-import { Buffer } from 'buffer/';
 import {
+  METADATA_CALL_GAS_LIMIT,
+  METADATA_REQUEST_LIMITS,
+  assertMetadataSize,
+  assertPlainMetadata,
   createAgentAdapter,
   createCacheAdapter,
   fetch,
+  parseOnChainMetadata,
   resolveURI,
 } from '../utils';
 import { AvatarResolverOpts } from '../types';
@@ -30,7 +34,9 @@ export default class ERC721 {
 
     const contract = new Contract(contractAddress, abi, provider);
     const [tokenURI, owner] = await Promise.all([
-      contract.tokenURI(tokenID),
+      contract.tokenURI(tokenID, {
+        gasLimit: options?.metadataGasLimit ?? METADATA_CALL_GAS_LIMIT,
+      }),
       ownerAddress && contract.ownerOf(tokenID),
     ]);
     // if user has valid address and if owner of the nft matches with the owner address
@@ -38,25 +44,22 @@ export default class ERC721 {
       ownerAddress && owner.toLowerCase() === ownerAddress.toLowerCase()
     );
 
+    // bound the contract-supplied URI before resolveURI validates/decodes it
+    assertMetadataSize(tokenURI);
     const { uri: resolvedURI, isOnChain, isEncoded } = resolveURI(
       tokenURI,
       options
     );
-    let _resolvedUri = resolvedURI;
     if (isOnChain) {
-      if (isEncoded) {
-        _resolvedUri = Buffer.from(
-          resolvedURI.replace('data:application/json;base64,', ''),
-          'base64'
-        ).toString();
-      }
-      const metadata = JSON.parse(_resolvedUri);
+      const metadata = parseOnChainMetadata(resolvedURI, isEncoded);
       return { ...metadata, is_owner: isOwner };
     }
     const response = await fetch(
-      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID))
+      encodeURI(resolvedURI.replace(/(?:0x)?{id}/, tokenID)),
+      METADATA_REQUEST_LIMITS
     );
     const metadata = await response?.data;
+    assertPlainMetadata(metadata);
     return { ...metadata, is_owner: isOwner };
   }
 }
