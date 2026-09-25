@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.3 (2026-09-25)
 
 Security hardening. Most changes are invisible to callers; the ones below can change results or throw where the previous release did not.
 
