@@ -147,6 +147,9 @@ export class AvatarResolver implements AvatarResolver {
       },
       jsdomWindow: data?.jsdomWindow,
       urlDenyList: this.options?.urlDenyList,
+      maxSvgBytes: this.options?.maxSvgBytes,
+      maxSvgElements: this.options?.maxSvgElements,
+      maxSvgAttributes: this.options?.maxSvgAttributes,
     });
     if (
       // do check only NFTs since raw uri has this check built-in

@@ -117,6 +117,18 @@ Gas limit for the NFT contract's `tokenURI()` / `uri()` call. It bounds how larg
 const avt = new AvatarResolver(provider, { metadataGasLimit: 10_000_000 });
 ```
 
+### Inline SVG limits _(Default: 1,000,000 bytes, 20,000 elements, 40,000 attributes)_
+
+Inline and `data:` SVG avatars are sanitized with DOMPurify, which builds a DOM node for every element and attribute. Before that happens, the decoded SVG is checked against a size limit, and a streaming parse (htmlparser2, which builds no tree) counts its elements and attributes, stopping at the first one over a limit. SVGs over any limit resolve to `null`.
+
+```js
+const avt = new AvatarResolver(provider, {
+  maxSvgBytes: 1_000_000,
+  maxSvgElements: 20_000,
+  maxSvgAttributes: 40_000,
+});
+```
+
 ### Metadata limits
 
 NFT and avatar-record metadata must be a JSON object of at most 1,000,000 bytes (`MAX_METADATA_BYTES`, checked before decoding and parsing; HTTP responses are capped with axios `maxContentLength`, which only the Node.js adapter enforces) and at most 1000 top-level properties (`MAX_METADATA_PROPERTIES`). Anything else is rejected with an error. Resolver-set fields (`uri`, `host_meta`, `is_owner`) can't be overridden by the metadata itself.
