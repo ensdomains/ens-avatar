@@ -77,6 +77,38 @@ function _sanitize(data: string, jsDomWindow?: any): Buffer {
   return Buffer.from(cleanDOM);
 }
 
+const isWhitespace = (c: string) => /\s/.test(c);
+
+/**
+ * Remove whitespace around tags — the same output as
+ * `str.replace(/\s*(<[^>]+>)\s*\/g, '$1')`, in linear time. That regex is
+ * quadratic: a long whitespace run not followed by a tag, or a run of
+ * unterminated `<`, is rescanned from every position (80k spaces took ~10 s).
+ */
+export function collapseTagWhitespace(str: string): string {
+  let out = '';
+  let i = 0;
+  while (i < str.length) {
+    const open = str.indexOf('<', i);
+    if (open === -1) break;
+    const close = str.indexOf('>', open + 1);
+    // No '>' after this '<' means no complete tag remains anywhere after it.
+    if (close === -1) break;
+    if (close === open + 1) {
+      // '<>' is not a tag (the regex needs at least one char between).
+      out += str.slice(i, close + 1);
+      i = close + 1;
+      continue;
+    }
+    let textEnd = open;
+    while (textEnd > i && isWhitespace(str[textEnd - 1])) textEnd--;
+    out += str.slice(i, textEnd) + str.slice(open, close + 1);
+    i = close + 1;
+    while (i < str.length && isWhitespace(str[i])) i++;
+  }
+  return out + str.slice(i);
+}
+
 export function getImageURI({
   metadata,
   customGateway,
@@ -93,10 +125,8 @@ export function getImageURI({
 
   if (isSVG(parsedURI) || isSVGDataUri(parsedURI)) {
     // svg - image_data
-    const rawSVG = convertToRawSVG(parsedURI)?.replace(
-      /\s*(<[^>]+>)\s*/g,
-      '$1'
-    );
+    const decoded = convertToRawSVG(parsedURI);
+    const rawSVG = decoded && collapseTagWhitespace(decoded);
     if (!rawSVG) return null;
 
     const data = _sanitize(rawSVG, jsdomWindow);
