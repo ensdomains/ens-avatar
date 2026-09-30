@@ -23,7 +23,7 @@ interface ChainIdParams {
 
 interface EthCallParams {
   method: 'eth_call';
-  params: Array<{ to: string; data: string } | string>;
+  params: Array<{ to: string; data: string; gas?: string } | string>;
   id: number;
   jsonrpc: string;
 }
@@ -34,14 +34,46 @@ interface JsonRpcResult {
   result: string;
 }
 
+// Stable key for a JSON-RPC call: method + params, object keys sorted.
+function callKey(call: { method: string; params?: unknown }): string {
+  return JSON.stringify([call.method, call.params], (_k, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.entries(v).sort(([x], [y]) => (x < y ? -1 : 1))
+        )
+      : v
+  );
+}
+
+// Mocks one JSON-RPC batch. Calls are matched by method and params (not by
+// position or id), and each gets its response under its own request id: the
+// order ethers queues calls in is an implementation detail (e.g. a call with
+// overrides is queued a tick later).
 function nockInfuraBatch(
   body: Array<ChainIdParams | EthCallParams | null>,
   response: JsonRpcResult[]
 ) {
+  const expected = body.map((call, i) => ({
+    key: call ? callKey(call) : 'null',
+    result: response[i],
+  }));
+  const find = (call: { method: string; params?: unknown } | null) =>
+    expected.find(e => e.key === (call ? callKey(call) : 'null'));
   nock(INFURA_URL.origin)
     .persist(false)
-    .post(INFURA_URL.pathname, body as RequestBodyMatcher)
-    .reply(200, response);
+    .post(
+      INFURA_URL.pathname,
+      ((requestBody: unknown) =>
+        Array.isArray(requestBody) &&
+        requestBody.length === expected.length &&
+        requestBody.every(call => find(call))) as RequestBodyMatcher
+    )
+    .reply(200, (_uri, requestBody) =>
+      (requestBody as Array<{ id: number; method: string }>).map(call => ({
+        ...find(call)!.result,
+        id: call.id,
+      }))
+    );
 }
 
 let nonceCall = 1,
@@ -66,10 +98,16 @@ function mockInfuraChainId() {
   nonceJsonRpc++;
 }
 
+// tokenURI(uint256) and uri(uint256) are called with a gas limit
+const METADATA_CALL_SELECTORS = ['0xc87b56dd', '0x0e89341c'];
+
 function ethCallParams(to: string, data: string): EthCallParams {
+  const gas = METADATA_CALL_SELECTORS.includes(data.slice(0, 10))
+    ? { gas: '0x989680' } // 10_000_000
+    : {};
   return {
     method: 'eth_call',
-    params: [{ to, data }, 'latest'],
+    params: [{ ...gas, to, data }, 'latest'],
     id: nonceCall++,
     jsonrpc: '2.0',
   };

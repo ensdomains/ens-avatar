@@ -32,6 +32,14 @@ export interface AvatarResolverOpts {
   urlDenyList?: string[];
   agents?: AxiosAgents;
   maxContentLength?: number;
+  /** Gas limit for the tokenURI() / uri() calls. @default 10_000_000 */
+  metadataGasLimit?: number;
+  /** Maximum decoded inline SVG size in UTF-8 bytes. @default 1_000_000 */
+  maxSvgBytes?: number;
+  /** Maximum number of elements in an inline SVG. @default 20_000 */
+  maxSvgElements?: number;
+  /** Maximum number of attributes in an inline SVG. @default 40_000 */
+  maxSvgAttributes?: number;
 }
 
 export interface AvatarRequestOpts {
@@ -54,4 +62,10 @@ export interface ImageURIOpts {
   gateways?: Gateways;
   jsdomWindow?: any;
   urlDenyList?: string[];
+  /** Maximum decoded inline SVG size in UTF-8 bytes. @default 1_000_000 */
+  maxSvgBytes?: number;
+  /** Maximum number of elements in an inline SVG. @default 20_000 */
+  maxSvgElements?: number;
+  /** Maximum number of attributes in an inline SVG. @default 40_000 */
+  maxSvgAttributes?: number;
 }

@@ -1,5 +1,8 @@
 import { AvatarResolverOpts } from '../types';
 import {
+  METADATA_REQUEST_LIMITS,
+  assertMetadataSize,
+  assertPlainMetadata,
   createAgentAdapter,
   createCacheAdapter,
   fetch,
@@ -16,6 +19,8 @@ export default class URI {
       createAgentAdapter(fetch, options?.agents);
     }
 
+    // bound the record before resolveURI validates/decodes it
+    assertMetadataSize(uri);
     const { uri: resolvedURI, isOnChain } = resolveURI(uri, options);
     if (isOnChain) {
       return resolvedURI;
@@ -32,7 +37,12 @@ export default class URI {
     }
 
     // if resolvedURI is not an image, try retrieve the data.
-    const response = await fetch(encodeURI(resolvedURI));
-    return await response?.data;
+    const response = await fetch(
+      encodeURI(resolvedURI),
+      METADATA_REQUEST_LIMITS
+    );
+    const metadata = await response?.data;
+    assertPlainMetadata(metadata);
+    return metadata;
   }
 }
