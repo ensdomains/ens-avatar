@@ -226,7 +226,10 @@ All user-generated SVG content is automatically sanitized to prevent XSS attacks
 
 - A single, parser-based sanitizer ([sanitize-html](https://github.com/apostrophecms/sanitize-html) + [postcss](https://github.com/postcss/postcss)) runs **identically** in browsers, Node.js, and edge runtimes (Cloudflare Workers) — no DOM or jsdom required.
 - Tags and attributes are restricted to a strict SVG allowlist (no `script`, `foreignObject`, event handlers, or external `href`/`use`/`image` targets).
-- CSS in both `style` attributes and `<style>` blocks is filtered against a property allowlist; `url(...)` is permitted only for internal fragment references (`url(#id)`), so gradients/clips/masks keep working while external resource loading (tracking, exfiltration) is blocked.
+- CSS in `style` attributes and `<style>` blocks is filtered against a property allowlist, and every CSS function must be on a function allowlist (colors, `calc`/`min`/`max`/`clamp`, transforms, filter functions, basic shapes, timing functions; not `var`, `env`, `attr`, `src`, `image-set`, …). Presentation attributes (`fill`, `stroke`, `filter`, `mask`, `clip-path`, `marker-*`, …) are checked the same way.
+- **`url()` is internal-only everywhere** — attributes, `style` attributes and `<style>` blocks: it may only reference `#id` within the document, so gradients, clips, masks, filters and markers keep working while external loading (tracking, exfiltration) is blocked. `href` (and `xlink:href`, which is renamed to `href`) is likewise limited to `#id`, plus `data:image/*` on `<image>`/`<feImage>`.
+- Every `<svg>` element is pinned to the SVG namespace (`xmlns` is added when missing), so a document can't be switched to XHTML.
+- Common editor output survives: Figma filter chains (`fe*` primitives incl. `feDropShadow`), Illustrator `<style>` blocks wrapped in a single CDATA section, gradient inheritance via `href`, and presentation attributes on any element.
 
 Raster avatars (`png`, `jpeg`, `gif`, `webp`, …), whether served as `data:` URIs or remote URLs, are passed through after validation — they are inert as `<img>` sources and are not (and need not be) rewritten.
 
@@ -237,16 +240,18 @@ How an SVG avatar is handled depends on where it comes from:
 - **Inline SVGs** — on-chain `<svg>…</svg>` records and `data:image/svg+xml` URIs — are returned **already sanitized**. `getAvatar` / `utils.getImageURI` hand back a `data:image/svg+xml;base64,…` URI with scripts, event handlers, and external references stripped.
 - **Remote SVGs** — an avatar whose record is an `http(s)` URL that points at an SVG — are returned **as the raw URL, unsanitized**. ens-avatar is a resolver: for remote images it returns _where_ the image lives, not its bytes, so the safe-rendering strategy is yours to pick. (The content-type check performed during resolution is not a safety guarantee — a server can advertise `image/svg+xml` and still return a hostile body.)
 
-When you render a remote SVG, either load it in a context that already sandboxes it — an `<img src>` tag, a CSS `background-image`, or an `<image href>` inside another SVG, none of which execute scripts or load external sub-resources — **or**, if you fetch the bytes and inline them into your DOM, sanitize them first with the same engine the library uses for inline SVGs:
+When you render a remote SVG, either load it in a context that already sandboxes it — an `<img src>` tag, a CSS `background-image`, or an `<image href>` inside another SVG, none of which execute scripts or load external sub-resources — **or**, if you fetch the bytes to serve, store or inline them, sanitize them first with the same engine the library uses for inline SVGs:
 
 ```js
 import { utils as avtUtils } from '@ensdomains/ens-avatar';
 
 // `avatarUrl` came back from resolver.getAvatar(...) and points at an SVG
 const svg = await fetch(avatarUrl).then(res => res.text());
-const safeSvg = avtUtils.sanitizeSVG(svg); // strips scripts/handlers/external refs
-// safeSvg is now safe to inline into the DOM
+const safeSvg = avtUtils.sanitizeSVGDocument(svg, { maxLength: 1024 * 1024 });
+// safeSvg: a standalone '<svg …>…</svg>' document, or null if nothing usable remains
 ```
+
+`sanitizeSVGDocument(svg, { maxLength }): string | null` returns only the root `<svg>` element, so the result is a valid standalone document (text outside the root, e.g. a DOCTYPE's internal subset, is dropped), and keeps whitespace as is. `maxLength` defaults to 256 KiB. `sanitizeSVG(svg, { maxLength })` is the lower-level function: it returns the sanitized markup as a string (`''` when rejected), including any text outside the root.
 
 For an SSRF-safe fetch (private-address blocking, redirect re-validation, size caps — see below), use the library's own fetcher instead of the global `fetch`: `const { get } = avtUtils.createFetcher();`.
 

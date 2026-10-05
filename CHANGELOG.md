@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0-alpha.4 (2026-10-05)
+
+SVG sanitizer: no external loads anywhere, real-world editor output kept intact, and a document-level export.
+
+### Added
+
+- **`utils.sanitizeSVGDocument(svg, { maxLength }): string | null`** — `sanitizeSVG` plus root-only extraction: returns a standalone `<svg …>…</svg>` document (or `null`), with whitespace kept as is.
+- Fidelity: `xlink:href` is renamed to `href` (an existing `href` wins); `href` allowed on gradients, `pattern` and `filter`; every presentation attribute and `xml:space` allowed on every element; `feDropShadow` and the full `fe*` attribute set; `spreadMethod`/`fr` on gradients, `viewBox`/`preserveAspectRatio`/`patternContentUnits` on `pattern`, `textLength`/`lengthAdjust`/`rotate` on text; a single CDATA section around `<style>` CSS is unwrapped (Illustrator).
+
+### Security / behaviour changes
+
+- **`url()` is internal-only everywhere**: attribute values (`fill`, `stroke`, `filter`, `mask`, `clip-path`, `marker-*`, …) are now checked like CSS, so `url(https://…)` (also when written with character references) is dropped.
+- **CSS functions are allowlisted** (colors, math, transforms, filter functions, basic shapes, timing functions) instead of blocking known-bad tokens; `src()`, `var()`, `env()`, `attr()`, `paint()`, `image-set()`, … are dropped. Bare parentheses (`@media (…)`) are unaffected.
+- **Every `<svg>` is pinned to the SVG namespace** (`xmlns` added when missing; other `xmlns*` declarations removed).
+- The output safety net also rejects any `url(` that does not target `#…`.
+- **`getImageURI` no longer collapses whitespace** in inline SVGs (it joined adjacent `<tspan>`s); output keeps the original whitespace.
+
 ## 2.0.0-alpha.3 (2026-09-25)
 
 Security hardening. Most changes are invisible to callers; the ones below can change results or throw where the previous release did not.

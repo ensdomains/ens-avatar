@@ -18,7 +18,7 @@ import {
   isImageURI,
   isURIEncoded,
 } from './isImageURI';
-import { sanitizeSVG } from './sanitize';
+import { sanitizeSVG, sanitizeSVGDocument } from './sanitize';
 
 export {
   ALLOWED_IMAGE_MIMETYPES,
@@ -39,5 +39,6 @@ export {
   parseNFT,
   resolveURI,
   sanitizeSVG,
+  sanitizeSVGDocument,
   validateUrl,
 };

@@ -3,7 +3,7 @@ import { assert } from './assert';
 import { base64ToUtf8, utf8ToBase64 } from './base64';
 import { isHostDenied } from './isHostDenied';
 import { isValidBase64DataURI, resolveURI } from './resolveURI';
-import { DEFAULT_MAX_SVG_LENGTH, sanitizeSVG } from './sanitize';
+import { DEFAULT_MAX_SVG_LENGTH, sanitizeSVGDocument } from './sanitize';
 import { DEFAULT_MAX_CONTENT_LENGTH } from './fetch';
 import { assertLimit } from './limits';
 import { toHttpURL } from './url';
@@ -88,23 +88,6 @@ export function collapseTagWhitespace(str: string): string {
   return out + str.slice(i);
 }
 
-/**
- * Keep only the root <svg> element of sanitized output. sanitize-html keeps
- * text nodes outside the root (e.g. `<?xml?>GIF89a<svg>…` → `GIF89a<svg>…`),
- * which makes the document invalid and lets its first bytes be sniffed as
- * another format. Returns null when there is no root <svg>.
- */
-function extractSVGRoot(svg: string): string | null {
-  const start = svg.search(/<svg[\s>]/);
-  const end = svg.lastIndexOf('</svg>');
-  if (start === -1 || end < start) return null;
-  return svg.slice(start, end + '</svg>'.length);
-}
-
-function _sanitize(data: string, maxLength: number): string | null {
-  return extractSVGRoot(sanitizeSVG(data, { maxLength }));
-}
-
 export function getImageURI({
   metadata,
   customGateway,
@@ -145,10 +128,13 @@ export function getImageURI({
     if (parsedURI.length > maxSvgLength * 9) return null;
     const decoded = convertToRawSVG(parsedURI);
     if (!decoded || decoded.length > maxSvgLength) return null;
-    const rawSVG = collapseTagWhitespace(decoded);
+    // Whitespace is kept as is: collapsing it (the former behaviour) joined
+    // adjacent <tspan>s, e.g. "Hello World" into "HelloWorld".
 
     try {
-      const cleanSVG = _sanitize(rawSVG, maxSvgLength);
+      const cleanSVG = sanitizeSVGDocument(decoded, {
+        maxLength: maxSvgLength,
+      });
       if (!cleanSVG) return null;
       return `data:image/svg+xml;base64,${utf8ToBase64(cleanSVG)}`;
     } catch (error) {

@@ -156,8 +156,104 @@ function normalizeForDetection(value: string): string {
  * Returns true if a CSS value is safe: no script/binding/external-load tokens,
  * and any `url(...)` is an internal fragment reference (`url(#id)`) only.
  */
+// CSS functions allowed in values. Anything else written as `name(` is
+// rejected (an allowlist, not a list of known-bad tokens). Deliberately left
+// out: var, env, attr, src, image-set, cross-fade, element, paint, expression.
+const ALLOWED_CSS_FUNCTIONS = new Set<string>([
+  'url',
+  // colors
+  'rgb',
+  'rgba',
+  'hsl',
+  'hsla',
+  'hwb',
+  'lab',
+  'lch',
+  'oklab',
+  'oklch',
+  'color',
+  'color-mix',
+  'light-dark',
+  // math
+  'calc',
+  'min',
+  'max',
+  'clamp',
+  // transforms
+  'matrix',
+  'matrix3d',
+  'translate',
+  'translatex',
+  'translatey',
+  'translatez',
+  'translate3d',
+  'scale',
+  'scalex',
+  'scaley',
+  'scalez',
+  'scale3d',
+  'rotate',
+  'rotatex',
+  'rotatey',
+  'rotatez',
+  'rotate3d',
+  'skew',
+  'skewx',
+  'skewy',
+  'perspective',
+  // filters
+  'blur',
+  'brightness',
+  'contrast',
+  'drop-shadow',
+  'grayscale',
+  'hue-rotate',
+  'invert',
+  'opacity',
+  'saturate',
+  'sepia',
+  // shapes
+  'inset',
+  'circle',
+  'ellipse',
+  'polygon',
+  'path',
+  // timing
+  'cubic-bezier',
+  'steps',
+]);
+
+const isIdentChar = (code: number) =>
+  (code >= 97 && code <= 122) || // a-z (input is lowercased)
+  (code >= 48 && code <= 57) || // 0-9
+  code === 45 || // -
+  code === 95 || // _
+  code >= 0x80;
+
+/**
+ * True if every function in a normalized CSS value is allowlisted. A function
+ * is an identifier immediately followed by `(` (as CSS tokenizes it), so bare
+ * parentheses such as `@media (min-width: 1px)` are allowed. Each `(` looks
+ * back only over the identifier before it, so the scan is linear.
+ */
+function hasOnlyAllowedFunctions(normalized: string): boolean {
+  for (
+    let paren = normalized.indexOf('(');
+    paren !== -1;
+    paren = normalized.indexOf('(', paren + 1)
+  ) {
+    let start = paren;
+    while (start > 0 && isIdentChar(normalized.charCodeAt(start - 1))) start--;
+    if (start === paren) continue; // bare parenthesis, not a function
+    if (!ALLOWED_CSS_FUNCTIONS.has(normalized.slice(start, paren)))
+      return false;
+  }
+  return true;
+}
+
 function isSafeCssValue(value: string): boolean {
   const normalized = normalizeForDetection(value);
+  if (!hasOnlyAllowedFunctions(normalized)) return false;
   if (
     /expression\s*\(|javascript:|vbscript:|-moz-binding|behavior\s*:|image-set|cross-fade|@import|element\s*\(/.test(
       normalized
@@ -303,6 +399,7 @@ const allowedTags = [
   'feConvolveMatrix',
   'feDiffuseLighting',
   'feDisplacementMap',
+  'feDropShadow',
   'feFlood',
   'feGaussianBlur',
   'feImage',
@@ -442,6 +539,141 @@ const allowedAttributes: { [key: string]: string[] } = {
   symbol: ['id', 'viewBox', 'preserveAspectRatio'],
 };
 
+function allowAttributes(tags: string[], attributes: string[]): void {
+  for (const tag of tags) {
+    allowedAttributes[tag] = Array.from(
+      new Set([...(allowedAttributes[tag] || []), ...attributes])
+    );
+  }
+}
+
+// Presentation attributes are valid on every element (their values are
+// checked like CSS), as is xml:space.
+allowAttributes(['*'], [...SAFE_CSS_PROPERTIES, 'xml:space']);
+// xlink:href is renamed to href before filtering, so its namespace
+// declaration is never needed.
+allowedAttributes.svg = allowedAttributes.svg.filter(a => a !== 'xmlns:xlink');
+// Filter primitives share most of their attributes.
+allowAttributes(
+  allowedTags.filter(tag => tag.startsWith('fe')),
+  [
+    'x',
+    'y',
+    'width',
+    'height',
+    'result',
+    'in',
+    'in2',
+    'stdDeviation',
+    'edgeMode',
+    'operator',
+    'k1',
+    'k2',
+    'k3',
+    'k4',
+    'values',
+    'type',
+    'tableValues',
+    'slope',
+    'intercept',
+    'amplitude',
+    'exponent',
+    'offset',
+    'mode',
+    'dx',
+    'dy',
+    'radius',
+    'scale',
+    'xChannelSelector',
+    'yChannelSelector',
+    'baseFrequency',
+    'numOctaves',
+    'seed',
+    'stitchTiles',
+    'order',
+    'kernelMatrix',
+    'divisor',
+    'bias',
+    'targetX',
+    'targetY',
+    'preserveAlpha',
+    'kernelUnitLength',
+    'surfaceScale',
+    'diffuseConstant',
+    'specularConstant',
+    'specularExponent',
+    'azimuth',
+    'elevation',
+    'z',
+    'pointsAtX',
+    'pointsAtY',
+    'pointsAtZ',
+    'limitingConeAngle',
+  ]
+);
+allowAttributes(['filter'], ['color-interpolation-filters', 'href']);
+allowAttributes(
+  ['linearGradient', 'radialGradient'],
+  ['spreadMethod', 'fr', 'href']
+);
+allowAttributes(
+  ['pattern'],
+  ['viewBox', 'preserveAspectRatio', 'patternContentUnits', 'href']
+);
+allowAttributes(['text', 'tspan'], ['textLength', 'lengthAdjust', 'rotate']);
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+// Elements whose href may also be an inline raster image.
+const DATA_IMAGE_HREF_TAGS = new Set(['image', 'feImage']);
+
+/**
+ * The single attribute transform, for every element (sanitize-html runs only
+ * one transform per tag, so this replaces the per-tag ones):
+ * - xlink:href becomes href (an existing href wins), then href is restricted
+ *   to #id (plus data:image/* on image/feImage);
+ * - style is sanitized against the CSS allowlist;
+ * - every other value is checked like a CSS value, so url() can only point
+ *   at #id and only allowlisted functions survive, in attributes too;
+ * - svg elements get the SVG namespace (and no other xmlns declarations), so
+ *   the document can't be switched to XHTML.
+ */
+function transformAttributes(
+  tagName: string,
+  attribs: sanitizeHtml.Attributes
+): sanitizeHtml.Tag {
+  if (attribs['xlink:href'] !== undefined) {
+    if (attribs.href === undefined) attribs.href = attribs['xlink:href'];
+    delete attribs['xlink:href'];
+  }
+  restrictHref(attribs, DATA_IMAGE_HREF_TAGS.has(tagName));
+  for (const name of Object.keys(attribs)) {
+    if (name === 'href') continue;
+    if (name === 'style') {
+      const clean = sanitizeStyleAttribute(attribs.style);
+      if (clean) attribs.style = clean;
+      else delete attribs.style;
+    } else if (!isSafeCssValue(attribs[name])) {
+      delete attribs[name];
+    }
+  }
+  if (tagName === 'svg') {
+    for (const name of Object.keys(attribs)) {
+      if (name === 'xmlns' || name.startsWith('xmlns:')) delete attribs[name];
+    }
+    attribs.xmlns = SVG_NAMESPACE;
+  }
+  return { tagName, attribs };
+}
+
+/**
+ * Unwrap a single CDATA section around a <style> block's CSS (as Illustrator
+ * writes them). Anything else containing '<' or '&' is still dropped.
+ */
+function unwrapCDATA(css: string): string {
+  const match = /^\s*<!\[CDATA\[([\s\S]*)\]\]>\s*$/.exec(css);
+  return match ? match[1] : css;
+}
+
 const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
 const TOO_DEEP = new Error('SVG too deep or too many <style> elements');
@@ -476,6 +708,40 @@ function isInertMarkup(html: string): boolean {
     const end = scanAttributes(html, TAG_START.lastIndex);
     if (end === -1) return false;
     i = html.indexOf('<', end);
+  }
+  // Normalizing (unescaping, comment stripping) can only produce "url(" from
+  // text that contains "url", a CSS escape or a comment; skip it otherwise.
+  if (!/url|\\|\/\*/i.test(html)) return true;
+  return onlyInternalUrls(normalizeForDetection(html));
+}
+
+// A quote that may open a url() target: raw, or as serialized in an attribute.
+const LEADING_QUOTE = /^(?:["']|&quot;|&#34;|&#x22;|&#39;|&#x27;|&apos;)/;
+
+/**
+ * Safety net: every url( in the (normalized) output must target #… — in
+ * attributes, style attributes and <style> blocks alike — so a later change
+ * to an allowlist can't reopen external loads. One forward scan: each step
+ * moves past the previous match, and an unterminated url( fails at once.
+ */
+function onlyInternalUrls(normalized: string): boolean {
+  let i = normalized.indexOf('url');
+  while (i !== -1) {
+    let j = i + 3;
+    while (j < normalized.length && /\s/.test(normalized[j])) j++;
+    if (normalized[j] !== '(') {
+      i = normalized.indexOf('url', i + 3);
+      continue;
+    }
+    const close = normalized.indexOf(')', j + 1);
+    if (close === -1) return false;
+    const target = normalized
+      .slice(j + 1, close)
+      .trim()
+      .replace(LEADING_QUOTE, '')
+      .trim();
+    if (!target.startsWith('#')) return false;
+    i = normalized.indexOf('url', close + 1);
   }
   return true;
 }
@@ -563,6 +829,36 @@ function exceedsLimits(svg: string, max: number): boolean {
  * @param options.maxLength - Maximum input length @default 262144 (256 KiB)
  * @returns Sanitized SVG string
  */
+/**
+ * Keep only the root <svg> element of sanitized output. sanitize-html keeps
+ * text outside the root (a DOCTYPE's internal subset comes out as `]&gt;`,
+ * `<?xml?>GIF89a<svg>…` as `GIF89a<svg>…`), which makes the document invalid
+ * and lets its first bytes be sniffed as another format. Returns null when
+ * there is no root <svg>.
+ */
+export function extractSVGRoot(svg: string): string | null {
+  const start = svg.search(/<svg[\s>]/);
+  const end = svg.lastIndexOf('</svg>');
+  if (start === -1 || end < start) return null;
+  return svg.slice(start, end + '</svg>'.length);
+}
+
+/**
+ * Sanitize an SVG to a standalone document: `sanitizeSVG` plus root-only
+ * extraction, so the result starts with `<svg` and ends with `</svg>`.
+ * Use this for SVG bytes you serve or store as a file (e.g. a fetched remote
+ * avatar). Whitespace is kept as is (collapsing it would join adjacent
+ * `<tspan>`s). Returns null when nothing usable remains, or the input is
+ * over `maxLength` / the nesting or <style> limits.
+ */
+export function sanitizeSVGDocument(
+  svg: string,
+  options: { maxLength?: number } = {}
+): string | null {
+  const clean = sanitizeSVG(svg, options);
+  return clean ? extractSVGRoot(clean) : null;
+}
+
 export function sanitizeSVG(
   svg: string,
   { maxLength = DEFAULT_MAX_SVG_LENGTH }: { maxLength?: number } = {}
@@ -579,7 +875,8 @@ export function sanitizeSVG(
     // Preserve case for SVG elements/attributes (viewBox, clipPath, …).
     parser: PARSER_OPTIONS,
     // Drop <style> whose text holds markup or entities (see below).
-    exclusiveFilter: frame => frame.tag === 'style' && /[<&]/.test(frame.text),
+    exclusiveFilter: frame =>
+      frame.tag === 'style' && /[<&]/.test(unwrapCDATA(frame.text)),
     allowedSchemes: ['http', 'https', 'data'],
     allowedSchemesByTag: {
       // image/feImage: only data:image/* (transform enforces further) — no external loading.
@@ -591,51 +888,30 @@ export function sanitizeSVG(
     },
     disallowedTagsMode: 'discard',
     allowIframeRelativeUrls: false,
-    transformTags: {
-      '*': (tagName, attribs) => {
-        if (typeof attribs.style === 'string') {
-          const clean = sanitizeStyleAttribute(attribs.style);
-          if (clean) attribs.style = clean;
-          else delete attribs.style;
-        }
-        return { tagName, attribs };
-      },
-      use: (tagName, attribs) => ({
-        tagName,
-        attribs: restrictHref(attribs, false),
-      }),
-      textPath: (tagName, attribs) => ({
-        tagName,
-        attribs: restrictHref(attribs, false),
-      }),
-      image: (tagName, attribs) => ({
-        tagName,
-        attribs: restrictHref(attribs, true),
-      }),
-      feImage: (tagName, attribs) => ({
-        tagName,
-        attribs: restrictHref(attribs, true),
-      }),
-    },
+    transformTags: { '*': transformAttributes },
   });
 
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
   let parseBudget = MAX_STYLE_PARSE_LENGTH;
   let styleBudget = MAX_STYLE_OUTPUT_LENGTH;
-  const output = cleaned.replace(STYLE_BLOCK_REGEX, (_match, css: string) => {
-    if (css.length > MAX_STYLE_BLOCK_LENGTH || css.length > parseBudget) {
-      return '';
+  const output = cleaned.replace(
+    STYLE_BLOCK_REGEX,
+    (_match, rawCss: string) => {
+      const css = unwrapCDATA(rawCss);
+      if (css.length > MAX_STYLE_BLOCK_LENGTH || css.length > parseBudget) {
+        return '';
+      }
+      parseBudget -= css.length;
+      const safe = sanitizeStyleBlock(css);
+      // Inlined into HTML, <style> inside <svg> is parsed as markup, not raw
+      // text: a '<' (or an entity that decodes to one) in the CSS would become a
+      // live element. CSS never needs them, so drop such blocks.
+      if (!safe || /[<&]/.test(safe)) return '';
+      if (safe.length > styleBudget) return '';
+      styleBudget -= safe.length;
+      return `<style>${safe}</style>`;
     }
-    parseBudget -= css.length;
-    const safe = sanitizeStyleBlock(css);
-    // Inlined into HTML, <style> inside <svg> is parsed as markup, not raw
-    // text: a '<' (or an entity that decodes to one) in the CSS would become a
-    // live element. CSS never needs them, so drop such blocks.
-    if (!safe || /[<&]/.test(safe)) return '';
-    if (safe.length > styleBudget) return '';
-    styleBudget -= safe.length;
-    return `<style>${safe}</style>`;
-  });
+  );
   return isInertMarkup(output) ? output : '';
 }
