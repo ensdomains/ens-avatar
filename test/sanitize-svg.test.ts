@@ -1,5 +1,6 @@
 import { Parser } from 'htmlparser2';
 import { getImageURI, sanitizeSVG, sanitizeSVGDocument } from '../src/utils';
+import { hasWellFormedMarkupStarts } from '../src/utils/sanitize';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const X = `xmlns="${SVG_NS}"`;
@@ -522,5 +523,56 @@ describe('linear-time scans for the new checks', () => {
     expect(
       elapsed(() => sanitizeSVGDocument(input, { maxLength: MAX }))
     ).toBeLessThan(1500);
+  });
+});
+
+describe('malformed "<" is rejected before parsing', () => {
+  it.each([
+    ['a tag', `<svg ${X}><rect/></svg>`],
+    ['an end tag', '</g>'],
+    ['a comment containing <', `<svg ${X}><!-- a < b --><rect/></svg>`],
+    ['CDATA containing <', `<svg ${X}><style><![CDATA[a<b{}]]></style></svg>`],
+    ['a processing instruction', `<?xml version="1.0"?><svg ${X}/>`],
+    [
+      'a DOCTYPE with an internal subset',
+      `<!DOCTYPE svg [<!ENTITY a "b">]><svg ${X}/>`,
+    ],
+    ['a non-ASCII element name', '<ö/>'],
+  ])('allows %s', (_label, svg) => {
+    expect(hasWellFormedMarkupStarts(svg)).toBe(true);
+  });
+
+  it.each([
+    ['a stray < in text', `<svg ${X}><text>a < b</text></svg>`],
+    ['<< ', `<svg ${X}><<rect/></svg>`],
+    ['< followed by a digit', `<svg ${X}><text>x<3</text></svg>`],
+    ['an unterminated comment', `<svg ${X}><!-- open`],
+    [
+      'an unterminated CDATA section',
+      `<svg ${X}><style><![CDATA[a{}</style></svg>`,
+    ],
+    [
+      'an unterminated processing instruction',
+      `<?xml version="1.0"<svg ${X}/>`,
+    ],
+  ])('rejects %s', (_label, svg) => {
+    expect(hasWellFormedMarkupStarts(svg)).toBe(false);
+    expect(sanitizeSVG(svg)).toBe('');
+    expect(sanitizeSVGDocument(svg)).toBeNull();
+  });
+
+  it('rejects 1 MiB of bare "<" almost immediately (the former worst case)', () => {
+    const svg = `<svg ${X}>` + '<'.repeat(1024 * 1024);
+    expect(
+      elapsed(() =>
+        expect(sanitizeSVGDocument(svg, { maxLength: svg.length })).toBeNull()
+      )
+    ).toBeLessThan(50);
+  });
+
+  it('is linear on many comments and CDATA sections', () => {
+    const svg =
+      `<svg ${X}>` + '<!-- < --><![CDATA[<]]>'.repeat(40000) + '</svg>';
+    expect(elapsed(() => hasWellFormedMarkupStarts(svg))).toBeLessThan(200);
   });
 });

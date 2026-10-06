@@ -251,7 +251,7 @@ const safeSvg = avtUtils.sanitizeSVGDocument(svg, { maxLength: 1024 * 1024 });
 // safeSvg: a standalone '<svg …>…</svg>' document, or null if nothing usable remains
 ```
 
-`sanitizeSVGDocument(svg, { maxLength }): string | null` returns only the root `<svg>` element, so the result is a valid standalone document (text outside the root, e.g. a DOCTYPE's internal subset, is dropped), and keeps whitespace as is. `maxLength` defaults to 256 KiB. `sanitizeSVG(svg, { maxLength })` is the lower-level function: it returns the sanitized markup as a string (`''` when rejected), including any text outside the root.
+`sanitizeSVGDocument(svg, { maxLength }): string | null` returns only the root `<svg>` element, so the result is a valid standalone document (text outside the root, e.g. a DOCTYPE's internal subset, is dropped), and keeps whitespace as is. `maxLength` defaults to 256 KiB. `sanitizeSVG(svg, { maxLength })` is the lower-level function: it returns the sanitized markup as a string (`''` when rejected), including any text outside the root. Both reject malformed input up front: a `<` that doesn't start a tag, comment, CDATA section, processing instruction or declaration isn't valid XML (no SVG renderer would display it) and is the most expensive input to sanitize.
 
 For an SSRF-safe fetch (private-address blocking, redirect re-validation, size caps — see below), use the library's own fetcher instead of the global `fetch`: `const { get } = avtUtils.createFetcher();`.
 

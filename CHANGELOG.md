@@ -15,6 +15,7 @@ SVG sanitizer: no external loads anywhere, real-world editor output kept intact,
 - **CSS functions are allowlisted** (colors, math, transforms, filter functions, basic shapes, timing functions) instead of blocking known-bad tokens; `src()`, `var()`, `env()`, `attr()`, `paint()`, `image-set()`, … are dropped. Bare parentheses (`@media (…)`) are unaffected.
 - **Every `<svg>` is pinned to the SVG namespace** (`xmlns` added when missing; other `xmlns*` declarations removed).
 - The output safety net also rejects any `url(` that does not target `#…`.
+- **Malformed SVGs are rejected before parsing**: a `<` that doesn't start markup (e.g. `a < b` in text) makes `sanitizeSVG` return `''` and `sanitizeSVGDocument` / `getImageURI` return `null`. Such a file isn't valid XML, and it was the slowest input to sanitize.
 - **`getImageURI` no longer collapses whitespace** in inline SVGs (it joined adjacent `<tspan>`s); output keeps the original whitespace.
 
 ## 2.0.0-alpha.3 (2026-09-25)

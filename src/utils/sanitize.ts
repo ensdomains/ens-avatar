@@ -805,6 +805,51 @@ function scanAttributes(html: string, i: number): number {
 }
 
 /**
+ * True if every `<` starts markup, as XML requires: a tag (a name start
+ * character or `/`), a comment, a CDATA section, a processing instruction or
+ * a declaration (`<!DOCTYPE`, `<!ENTITY`). A `<` anywhere else makes the
+ * document malformed (no SVG renderer would display it) and is the most
+ * expensive input for the sanitizer, so such input is rejected before
+ * parsing. `<` inside comments, CDATA and processing instructions is legal and
+ * skipped; an unterminated one is rejected. Linear: every step jumps forward.
+ */
+export function hasWellFormedMarkupStarts(svg: string): boolean {
+  let i = svg.indexOf('<');
+  while (i !== -1) {
+    const next = svg.charCodeAt(i + 1);
+    let resume = i + 1;
+    if (
+      (next >= 65 && next <= 90) || // A-Z
+      (next >= 97 && next <= 122) || // a-z
+      next === 95 || // _
+      next === 58 || // :
+      next === 47 || // /
+      next >= 0x80
+    ) {
+      // a start or end tag
+    } else if (svg.startsWith('<!--', i)) {
+      const end = svg.indexOf('-->', i + 4);
+      if (end === -1) return false;
+      resume = end + 3;
+    } else if (svg.startsWith('<![CDATA[', i)) {
+      const end = svg.indexOf(']]>', i + 9);
+      if (end === -1) return false;
+      resume = end + 3;
+    } else if (next === 63) {
+      // <? … ?>
+      const end = svg.indexOf('?>', i + 2);
+      if (end === -1) return false;
+      resume = end + 2;
+    } else if (next !== 33) {
+      // not "<!" (DOCTYPE / ENTITY / other declaration) either
+      return false;
+    }
+    i = svg.indexOf('<', resume);
+  }
+  return true;
+}
+
+/**
  * True if elements nest deeper than `max` or there are more than
  * MAX_STYLE_ELEMENTS <style> elements. Uses the same parser (and options) as
  * sanitize-html, and stops as soon as a limit is crossed, so the parser's
@@ -846,8 +891,9 @@ function exceedsLimits(svg: string, max: number): boolean {
  * inlining them into the DOM. (No need to call it when rendering remote SVGs via
  * a sandboxed context like `<img>`, CSS `background-image`, or `<image href>`.)
  *
- * Returns '' (fail closed) for SVGs longer than `maxLength` or nested deeper
- * than 256 elements, or with more than 64 <style> elements.
+ * Returns '' (fail closed) for SVGs longer than `maxLength`, nested deeper
+ * than 256 elements, with more than 64 <style> elements, or with a `<` that
+ * doesn't start markup (malformed XML; see hasWellFormedMarkupStarts).
  *
  * @param svg - Raw SVG string
  * @param options.maxLength - Maximum input length @default 262144 (256 KiB)
@@ -873,7 +919,7 @@ export function extractSVGRoot(svg: string): string | null {
  * Use this for SVG bytes you serve or store as a file (e.g. a fetched remote
  * avatar). Whitespace is kept as is (collapsing it would join adjacent
  * `<tspan>`s). Returns null when nothing usable remains, or the input is
- * over `maxLength` / the nesting or <style> limits.
+ * over `maxLength`, the nesting or <style> limits, or malformed (a stray `<`).
  */
 export function sanitizeSVGDocument(
   svg: string,
@@ -889,6 +935,7 @@ export function sanitizeSVG(
 ): string {
   assertLimit('maxLength', maxLength);
   if (svg.length > maxLength) return '';
+  if (!hasWellFormedMarkupStarts(svg)) return '';
   if (exceedsLimits(svg, MAX_SVG_NESTING_DEPTH)) return '';
 
   const cleaned = sanitizeHtml(svg, {
