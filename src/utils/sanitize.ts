@@ -251,7 +251,14 @@ function hasOnlyAllowedFunctions(normalized: string): boolean {
   return true;
 }
 
+// Characters without which a CSS value can't call a function (`(`, or a
+// `\` escape that decodes to one) or carry a dangerous keyword token
+// (`javascript:`, `behavior:`, `@import`).
+const NEEDS_CSS_CHECK = /[(\\:@]/;
+
 function isSafeCssValue(value: string): boolean {
+  // Fast path: most values (numbers, colors, path data) can't load anything.
+  if (!NEEDS_CSS_CHECK.test(value)) return true;
   const normalized = normalizeForDetection(value);
   if (!hasOnlyAllowedFunctions(normalized)) return false;
   if (
@@ -752,30 +759,47 @@ function onlyInternalUrls(normalized: string): boolean {
  * handler attribute. Only attribute names are checked: quoted values are
  * skipped, so text like title="turn onx=1" isn't mistaken for a handler.
  */
+// HTML whitespace (tab, LF, FF, CR, space): how browsers split attributes.
+const isHtmlSpace = (code: number) =>
+  code === 32 || code === 9 || code === 10 || code === 12 || code === 13;
+
 function scanAttributes(html: string, i: number): number {
-  const WHITESPACE = /\s/;
+  const length = html.length;
+  const skipSpace = () => {
+    while (i < length && isHtmlSpace(html.charCodeAt(i))) i++;
+  };
   for (;;) {
-    while (i < html.length && WHITESPACE.test(html[i])) i++;
-    if (i >= html.length) return -1;
-    if (html[i] === '>') return i;
-    if (html[i] === '/') {
+    skipSpace();
+    if (i >= length) return -1;
+    const code = html.charCodeAt(i);
+    if (code === 62) return i; // >
+    if (code === 47) {
+      // /
       i++;
       continue;
     }
     const nameStart = i;
-    while (i < html.length && !/[\s/>=]/.test(html[i])) i++;
-    if (/^on/i.test(html.slice(nameStart, i))) return -1;
-    while (i < html.length && WHITESPACE.test(html[i])) i++;
-    if (html[i] !== '=') continue;
+    while (i < length) {
+      const c = html.charCodeAt(i);
+      if (isHtmlSpace(c) || c === 47 || c === 62 || c === 61) break; // / > =
+      i++;
+    }
+    if (/^on/i.test(html.slice(nameStart, nameStart + 2))) return -1;
+    skipSpace();
+    if (html.charCodeAt(i) !== 61) continue; // =
     i++;
-    while (i < html.length && WHITESPACE.test(html[i])) i++;
+    skipSpace();
     const quote = html[i];
     if (quote === '"' || quote === "'") {
       const close = html.indexOf(quote, i + 1);
       if (close === -1) return -1;
       i = close + 1;
     } else {
-      while (i < html.length && !/[\s>]/.test(html[i])) i++;
+      while (i < length) {
+        const c = html.charCodeAt(i);
+        if (isHtmlSpace(c) || c === 62) break;
+        i++;
+      }
     }
   }
 }
@@ -893,6 +917,8 @@ export function sanitizeSVG(
 
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
+  // Nothing to do (and no need to copy the output) without a <style>.
+  if (!/<style/i.test(cleaned)) return isInertMarkup(cleaned) ? cleaned : '';
   let parseBudget = MAX_STYLE_PARSE_LENGTH;
   let styleBudget = MAX_STYLE_OUTPUT_LENGTH;
   const output = cleaned.replace(
