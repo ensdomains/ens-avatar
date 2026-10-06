@@ -140,16 +140,35 @@ function stripCssComments(value: string): string {
   return out;
 }
 
+// A CSS hex escape decoded the way browsers do: code points that aren't
+// valid (0, surrogates, beyond U+10FFFF) become U+FFFD.
+function decodeCssHexEscape(hex: string): string {
+  const codePoint = parseInt(hex, 16);
+  if (
+    codePoint === 0 ||
+    codePoint > 0x10ffff ||
+    (codePoint >= 0xd800 && codePoint <= 0xdfff)
+  ) {
+    return '\ufffd';
+  }
+  return String.fromCodePoint(codePoint);
+}
+
 /**
  * Normalizes CSS escape sequences and comments so obfuscated payloads
  * (e.g. `ur\6c(...)`, `ur/* *​/l(...)`) are caught by the checks below.
  */
 function normalizeForDetection(value: string): string {
-  return stripCssComments(value.toLowerCase())
-    .replace(/\\([0-9a-f]{1,6})\s?/g, (_match, hex) =>
-      String.fromCharCode(parseInt(hex, 16))
-    ) // hex escapes: \6c -> l
-    .replace(/\\(.)/g, '$1'); // simple escapes: \l -> l
+  return (
+    stripCssComments(value.toLowerCase())
+      .replace(/\\([0-9a-f]{1,6})\s?/g, (_match, hex) =>
+        decodeCssHexEscape(hex)
+      ) // hex escapes: \6c -> l
+      .replace(/\\(.)/g, '$1') // simple escapes: \l -> l
+      // Escapes can spell uppercase letters (\55 \52 \4c is "URL"), and CSS
+      // matches function names and keywords case-insensitively.
+      .toLowerCase()
+  );
 }
 
 /**
@@ -681,6 +700,28 @@ function unwrapCDATA(css: string): string {
   return match ? match[1] : css;
 }
 
+/** Every upper/lower-case spelling of `word` (2^length strings). */
+function caseVariants(word: string): string[] {
+  return Array.from({ length: 2 ** word.length }, (_, mask) =>
+    Array.from(word, (char, i) =>
+      mask & (1 << i) ? char.toUpperCase() : char
+    ).join('')
+  );
+}
+
+// Disallowed tags whose content is dropped along with them. sanitize-html
+// compares tag names exactly, and the allowlist is case-sensitive, so
+// `<STYLE>` or `<Script>` would be discarded but their content kept as text;
+// list every case spelling of script and style. (Renaming tags to lowercase in
+// the transform instead hits a sanitize-html bug with void elements inside
+// renamed tags.)
+const NON_TEXT_TAGS = [
+  'textarea',
+  'option',
+  ...caseVariants('script'),
+  ...caseVariants('style'),
+];
+
 const STYLE_BLOCK_REGEX = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
 const TOO_DEEP = new Error('SVG too deep or too many <style> elements');
@@ -948,6 +989,7 @@ export function sanitizeSVG(
     // Drop <style> whose text holds markup or entities (see below).
     exclusiveFilter: frame =>
       frame.tag === 'style' && /[<&]/.test(unwrapCDATA(frame.text)),
+    nonTextTags: NON_TEXT_TAGS,
     allowedSchemes: ['http', 'https', 'data'],
     allowedSchemesByTag: {
       // image/feImage: only data:image/* (transform enforces further) — no external loading.

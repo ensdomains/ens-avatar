@@ -576,3 +576,131 @@ describe('malformed "<" is rejected before parsing', () => {
     expect(elapsed(() => hasWellFormedMarkupStarts(svg))).toBeLessThan(200);
   });
 });
+
+describe('case and CSS-escape obfuscation', () => {
+  // CSS matches function names case-insensitively, and an escape can spell a
+  // letter in either case: \55 \52 \4c is "URL".
+  it.each([
+    [
+      'style attribute',
+      `<svg ${X}><rect style="fill:\\55 \\52 \\4c (https://evil.example/p#g)"/></svg>`,
+    ],
+    [
+      'presentation attribute',
+      `<svg ${X}><rect fill="\\55 \\52 \\4c (https://evil.example/p#g)"/></svg>`,
+    ],
+    [
+      '<style> block',
+      `<svg ${X}><style>rect{fill:\\55 \\52 \\4c (https://evil.example/p#g)}</style></svg>`,
+    ],
+    [
+      'mixed escapes',
+      `<svg ${X}><rect style="fill:u\\52 l(https://evil.example/p#g)"/></svg>`,
+    ],
+    [
+      'escaped src()',
+      `<svg ${X}><style>rect{fill:\\53 RC("https://evil.example/p#g")}</style></svg>`,
+    ],
+    [
+      'escaped @import',
+      `<svg ${X}><style>@\\49 MPORT url(https://evil.example/x.css);a{fill:red}</style></svg>`,
+    ],
+    [
+      'uppercase url()',
+      `<svg ${X}><rect fill="URL(https://evil.example/p#g)"/></svg>`,
+    ],
+  ])('blocks %s', (_label, input) => {
+    expectSafe(sanitizeSVGDocument(input));
+  });
+
+  it('keeps an escaped internal url()', () => {
+    const out = sanitizeSVGDocument(
+      `<svg ${X}><rect style="fill:\\55 RL(#g)"/></svg>`
+    )!;
+    expect(out).toContain('style=');
+  });
+
+  it.each([
+    [
+      '<STYLE>',
+      `<svg ${X}><STYLE>rect{fill:url(https://evil.example/p#g)}</STYLE><rect/></svg>`,
+    ],
+    [
+      '<Style>',
+      `<svg ${X}><Style>rect{fill:src("https://evil.example/p#g")}</Style><rect/></svg>`,
+    ],
+    ['<SCRIPT>', `<svg ${X}><SCRIPT>alert(1)</SCRIPT><rect/></svg>`],
+  ])('drops the content of %s and keeps its siblings', (_label, input) => {
+    const out = sanitizeSVGDocument(input)!;
+    expectSafe(out);
+    expect(out).not.toMatch(/alert|evil|fill:/);
+    expect(out).toContain('<rect>');
+  });
+
+  it('holds up under random case mutation and escaping', () => {
+    let seed = 42;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+    const pick = <T>(items: T[]) => items[Math.floor(rnd() * items.length)];
+    const encodeChar = (c: string) => {
+      const options = [
+        c.toLowerCase(),
+        c.toUpperCase(),
+        `\\${c
+          .toLowerCase()
+          .charCodeAt(0)
+          .toString(16)} `,
+        `\\${c
+          .toUpperCase()
+          .charCodeAt(0)
+          .toString(16)} `,
+      ];
+      if (!'abcdef'.includes(c.toLowerCase()))
+        options.push(`\\${pick([c.toLowerCase(), c.toUpperCase()])}`);
+      return pick(options);
+    };
+    const encode = (word: string) => Array.from(word, encodeChar).join('');
+    const makers = [
+      () =>
+        `<svg ${X}><rect style="fill:${encode(
+          'url'
+        )}(https://evil.example/p#g)"/></svg>`,
+      () =>
+        `<svg ${X}><rect fill="${encode(
+          'url'
+        )}(https://evil.example/p#g)"/></svg>`,
+      () =>
+        `<svg ${X}><style>rect{fill:${encode(
+          'url'
+        )}(https://evil.example/p#g)}</style></svg>`,
+      () =>
+        `<svg ${X}><style>rect{fill:${encode(
+          'src'
+        )}("https://evil.example/p#g")}</style></svg>`,
+      () =>
+        `<svg ${X}><style>@${encode(
+          'import'
+        )} url(https://evil.example/x.css);</style></svg>`,
+      () =>
+        VECTORS[Math.floor(rnd() * VECTORS.length)][1].replace(/[a-z]/gi, c =>
+          rnd() < 0.5 ? c.toUpperCase() : c.toLowerCase()
+        ),
+    ];
+    for (let i = 0; i < 600; i++) {
+      const out = sanitizeSVGDocument(pick(makers)());
+      if (out === null) continue;
+      // decode CSS escapes the way a browser would, then check
+      const css = out
+        .replace(/\\([0-9a-fA-F]{1,6})[ \t\n]?/g, (_m, hex) =>
+          String.fromCodePoint(Math.min(parseInt(hex, 16), 0x10ffff) || 0xfffd)
+        )
+        .replace(/\\(.)/g, '$1')
+        .toLowerCase();
+      expect(css).not.toMatch(
+        /evil\.example|src\(|@import|javascript:|<script/
+      );
+      for (const target of urlTargets(css)) {
+        expect(target.startsWith('#')).toBe(true);
+      }
+    }
+  });
+});
