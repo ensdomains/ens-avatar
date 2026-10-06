@@ -159,8 +159,18 @@ function decodeCssHexEscape(hex: string): string {
  * (e.g. `ur\6c(...)`, `ur/* *​/l(...)`) are caught by the checks below.
  */
 function normalizeForDetection(value: string): string {
+  return decodeCssEscapes(stripCssComments(value.toLowerCase()));
+}
+
+/**
+ * Decode CSS escapes and lowercase, keeping comments. Inside `url(…)` a
+ * `/* *\/` is not a comment but part of the URL: `url(/**\/#a)` requests the
+ * path "/**\/", so url() targets are also checked on this form.
+ */
+function decodeCssEscapes(value: string): string {
   return (
-    stripCssComments(value.toLowerCase())
+    value
+      .toLowerCase()
       .replace(/\\([0-9a-f]{1,6})\s?/g, (_match, hex) =>
         decodeCssHexEscape(hex)
       ) // hex escapes: \6c -> l
@@ -287,22 +297,11 @@ function isSafeCssValue(value: string): boolean {
   ) {
     return false;
   }
-  // Scan url(...) tokens in linear time; `/url\s*\([^)]*\)/g` rescans to the
-  // end of the input for every unterminated `url(`, which is quadratic.
-  const urlOpen = /url\s*\(/g;
-  while (urlOpen.exec(normalized) !== null) {
-    const close = normalized.indexOf(')', urlOpen.lastIndex);
-    if (close === -1) return false; // unterminated url( — fail closed
-    const inner = normalized
-      .slice(urlOpen.lastIndex, close)
-      .trim()
-      .replace(/^['"]/, '')
-      .replace(/['"]$/, '')
-      .trim();
-    if (!inner.startsWith('#')) return false; // only internal references
-    urlOpen.lastIndex = close + 1;
-  }
-  return true;
+  // url() may only target #id: checked with comments stripped (as CSS
+  // tokenizes outside url()) and with comments kept (literal inside url()).
+  return (
+    onlyInternalUrls(normalized) && onlyInternalUrls(decodeCssEscapes(value))
+  );
 }
 
 function isAllowedDeclaration(property: string, value: string): boolean {
@@ -760,7 +759,10 @@ function isInertMarkup(html: string): boolean {
   // Normalizing (unescaping, comment stripping) can only produce "url(" from
   // text that contains "url", a CSS escape or a comment; skip it otherwise.
   if (!/url|\\|\/\*/i.test(html)) return true;
-  return onlyInternalUrls(normalizeForDetection(html));
+  return (
+    onlyInternalUrls(normalizeForDetection(html)) &&
+    onlyInternalUrls(decodeCssEscapes(html))
+  );
 }
 
 // A quote that may open a url() target: raw, or as serialized in an attribute.
@@ -940,6 +942,47 @@ function exceedsLimits(svg: string, max: number): boolean {
  * @param options.maxLength - Maximum input length @default 262144 (256 KiB)
  * @returns Sanitized SVG string
  */
+// SVG <desc> and <title> hold text only. They are also HTML integration
+// points: inlined into a page, their child elements are parsed as HTML, so an
+// allowed <title> or <style> inside them would become an HTML element (a page
+// title, page-wide CSS). Their child elements are dropped; text is kept.
+const TEXT_ONLY_CONTAINERS = new Set(['desc', 'title']);
+const TAG_TOKEN = /<(\/?)([A-Za-z][\w:-]*)[^>]*>/y;
+
+/**
+ * Remove element tags nested inside <desc>/<title> from sanitize-html's
+ * output (where every '<' starts a tag: text and attribute values are
+ * escaped, and <style> CSS contains no '<'). One forward scan.
+ */
+function dropElementsInTextOnlyContainers(html: string): string {
+  if (!/<(?:desc|title)\b/i.test(html)) return html;
+  let out = '';
+  let last = 0; // start of the not-yet-copied text
+  let container: string | null = null; // the open desc/title
+  let nested = 0; // same-name tags opened inside it
+  let i = html.indexOf('<');
+  while (i !== -1) {
+    TAG_TOKEN.lastIndex = i;
+    const match = TAG_TOKEN.exec(html);
+    if (!match) return html; // not sanitize-html output: let the net decide
+    const closing = match[1] === '/';
+    const name = match[2].toLowerCase();
+    const end = TAG_TOKEN.lastIndex;
+    if (container === null) {
+      if (!closing && TEXT_ONLY_CONTAINERS.has(name)) container = name;
+    } else if (closing && name === container && nested === 0) {
+      container = null;
+    } else {
+      if (name === container) nested += closing ? -1 : 1;
+      // an element inside desc/title: copy the text before it, skip the tag
+      out += html.slice(last, i);
+      last = end;
+    }
+    i = html.indexOf('<', end);
+  }
+  return out + html.slice(last);
+}
+
 /**
  * Keep only the root <svg> element of sanitized output. sanitize-html keeps
  * text outside the root (a DOCTYPE's internal subset comes out as `]&gt;`,
@@ -1007,7 +1050,7 @@ export function sanitizeSVG(
   // Second pass: sanitize the CSS inside any surviving <style> blocks. sanitize-html
   // keeps their content verbatim; here we run it through the same allowlist.
   // Nothing to do (and no need to copy the output) without a <style>.
-  if (!/<style/i.test(cleaned)) return isInertMarkup(cleaned) ? cleaned : '';
+  if (!/<style/i.test(cleaned)) return finalize(cleaned);
   let parseBudget = MAX_STYLE_PARSE_LENGTH;
   let styleBudget = MAX_STYLE_OUTPUT_LENGTH;
   const output = cleaned.replace(
@@ -1028,5 +1071,10 @@ export function sanitizeSVG(
       return `<style>${safe}</style>`;
     }
   );
-  return isInertMarkup(output) ? output : '';
+  return finalize(output);
+}
+
+function finalize(output: string): string {
+  const textOnly = dropElementsInTextOnlyContainers(output);
+  return isInertMarkup(textOnly) ? textOnly : '';
 }

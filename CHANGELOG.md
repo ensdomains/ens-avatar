@@ -16,6 +16,8 @@ SVG sanitizer: no external loads anywhere, real-world editor output kept intact,
 - **Every `<svg>` is pinned to the SVG namespace** (`xmlns` added when missing; other `xmlns*` declarations removed).
 - The output safety net also rejects any `url(` that does not target `#…`.
 - CSS checks are case- and escape-proof: escapes are decoded the way browsers decode them and the result lowercased, so `\55 \52 \4c (…)` is recognised as `url(`. `<STYLE>`/`<Script>` (any case) are dropped together with their content.
+- `url()` targets are also checked with comments kept, because inside `url(…)` a `/* */` is part of the URL (`url(/**/#a)` would request the path `/**/`).
+- Elements nested inside `<desc>`/`<title>` are dropped (their text is kept): inlined into a page, those are HTML integration points where children are parsed as HTML.
 - **Malformed SVGs are rejected before parsing**: a `<` that doesn't start markup (e.g. `a < b` in text) makes `sanitizeSVG` return `''` and `sanitizeSVGDocument` / `getImageURI` return `null`. Such a file isn't valid XML, and it was the slowest input to sanitize.
 - **`getImageURI` no longer collapses whitespace** in inline SVGs (it joined adjacent `<tspan>`s); output keeps the original whitespace.
 

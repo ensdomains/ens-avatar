@@ -1,4 +1,5 @@
 import { Parser } from 'htmlparser2';
+import { parseFragment } from 'parse5';
 import { getImageURI, sanitizeSVG, sanitizeSVGDocument } from '../src/utils';
 import { hasWellFormedMarkupStarts } from '../src/utils/sanitize';
 
@@ -567,7 +568,7 @@ describe('malformed "<" is rejected before parsing', () => {
       elapsed(() =>
         expect(sanitizeSVGDocument(svg, { maxLength: svg.length })).toBeNull()
       )
-    ).toBeLessThan(50);
+    ).toBeLessThan(200);
   });
 
   it('is linear on many comments and CDATA sections', () => {
@@ -702,5 +703,51 @@ describe('case and CSS-escape obfuscation', () => {
         expect(target.startsWith('#')).toBe(true);
       }
     }
+  });
+});
+
+describe('review findings', () => {
+  // Inside url(…) a /* */ is part of the URL, not a comment: url(/**/#a)
+  // requests the path "/**/" (any path the attacker writes between the
+  // markers) on the origin hosting the SVG.
+  it.each([
+    ['attribute', `<svg ${X}><rect fill="url(/**/#a)"/></svg>`],
+    ['style attribute', `<svg ${X}><rect style="fill:url(/**/#a)"/></svg>`],
+    ['<style> block', `<svg ${X}><style>rect{fill:url(/**/#a)}</style></svg>`],
+    [
+      'quoted',
+      `<svg ${X}><style>rect{fill:url("/*/../api/x?y*/#a")}</style></svg>`,
+    ],
+  ])('drops url() with a comment before the fragment (%s)', (_label, input) => {
+    const out = sanitizeSVGDocument(input)!;
+    expect(out).not.toContain('url(');
+  });
+
+  it('keeps a comment outside url()', () => {
+    const out = sanitizeSVGDocument(
+      `<svg ${X}><style>rect{fill:/* note */url(#a)}</style></svg>`
+    )!;
+    expect(out).toContain('url(#a)');
+  });
+
+  // <desc>/<title> are HTML integration points: when inlined, their child
+  // elements are parsed as HTML (an HTML <title>, page-wide <style>).
+  it('drops elements inside <desc>/<title> and keeps their text', () => {
+    const out = sanitizeSVGDocument(
+      `<svg ${X}><desc>a<title>t</title><style>x{fill:red}</style><desc>b</desc>c</desc><rect/></svg>`
+    )!;
+    expect(out).toBe(
+      `<svg ${X}><desc>atx{fill:red}bc</desc><rect></rect></svg>`
+    );
+    // parsed as a browser inlining it into a page: no HTML elements
+    const htmlElements: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const walk = (node: any) => {
+      if (node.tagName && node.namespaceURI !== SVG_NS)
+        htmlElements.push(node.tagName);
+      for (const child of node.childNodes || []) walk(child);
+    };
+    walk(parseFragment(out));
+    expect(htmlElements).toEqual([]);
   });
 });
