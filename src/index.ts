@@ -82,10 +82,16 @@ export interface AvatarResolver {
    * `data:image/svg+xml;base64,...` URI for inline/on-chain SVGs (scripts,
    * event handlers, and external references stripped).
    *
+   * Sanitized SVGs keep only allowlisted elements, attributes and CSS, carry
+   * the SVG namespace, and load nothing external: `url()` (in attributes,
+   * `style` and `<style>`) and `href` may only point at `#id` within the
+   * document (plus `data:image/*` on `<image>`/`<feImage>`).
+   *
    * SECURITY: a **remote** SVG (an `http(s)` URL pointing at an SVG) is returned
    * as the raw URL and is NOT sanitized — render it in a sandboxed context
    * (`<img>`, CSS `background-image`, or `<image href>` in an SVG), or run the
-   * fetched bytes through `utils.sanitizeSVG` before inlining into the DOM.
+   * fetched bytes through `utils.sanitizeSVGDocument` before serving or
+   * inlining them.
    *
    * @returns the image reference, or null if the name has no avatar record.
    */

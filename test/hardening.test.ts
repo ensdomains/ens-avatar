@@ -154,7 +154,9 @@ describe('SVG output keeps only the root element', () => {
 
   it('drops text after the root', () => {
     const out = getImageURI({ metadata: { image: '<svg><rect/></svg>trail' } });
-    expect(decodeDataURI(out)).toBe('<svg><rect></rect></svg>');
+    expect(decodeDataURI(out)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect></rect></svg>'
+    );
   });
 
   it('returns null when sanitizing leaves no root <svg>', () => {
@@ -795,7 +797,9 @@ describe('on-chain JSON avatar records', () => {
     const record =
       'data:application/json,{"image":"<svg><rect onclick=\'x()\'/></svg>"}';
     const out = await resolverFor(record).getAvatar('x.eth');
-    expect(decodeDataURI(out)).toBe('<svg><rect></rect></svg>');
+    expect(decodeDataURI(out)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect></rect></svg>'
+    );
   });
 
   it('throws MetadataParsingError for malformed JSON', async () => {
@@ -820,7 +824,7 @@ describe('sanitizeSVG resource limits', () => {
     expect(sanitizeSVG(big)).toBe('');
     expect(sanitizeSVG('<svg><rect/></svg>', { maxLength: 10 })).toBe('');
     expect(sanitizeSVG('<svg><rect/></svg>', { maxLength: 100 })).toBe(
-      '<svg><rect></rect></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect></rect></svg>'
     );
   });
 
@@ -840,9 +844,13 @@ describe('sanitizeSVG resource limits', () => {
     const block = `<svg><style>a{fill:red}${' '.repeat(
       65 * 1024
     )}</style></svg>`;
-    expect(sanitizeSVG(block)).toBe('<svg></svg>');
+    expect(sanitizeSVG(block)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    );
     const attr = `<svg><rect style="fill:red;${' '.repeat(17 * 1024)}"/></svg>`;
-    expect(sanitizeSVG(attr)).toBe('<svg><rect></rect></svg>');
+    expect(sanitizeSVG(attr)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect></rect></svg>'
+    );
   });
 
   it('worst cases within the limits stay fast', () => {
@@ -878,13 +886,17 @@ describe('<style> content cannot become markup when inlined', () => {
     sanitizeSVG(`<svg><style>${css}</style></svg>`);
 
   it('drops style blocks containing "<" or "&"', () => {
-    expect(style('a{fill:"<img src=x onerror=alert(1)>"}')).toBe('<svg></svg>');
-    expect(style('a{fill:"&lt;img src=x&gt;"}')).toBe('<svg></svg>');
+    expect(style('a{fill:"<img src=x onerror=alert(1)>"}')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    );
+    expect(style('a{fill:"&lt;img src=x&gt;"}')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    );
   });
 
   it('keeps ordinary style blocks (">" combinator included)', () => {
     expect(style('g > rect{fill:red}')).toBe(
-      '<svg><style>g > rect{fill:red}</style></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>g > rect{fill:red}</style></svg>'
     );
   });
 });
@@ -900,7 +912,7 @@ describe('CSS at-rules are allowlisted after unescaping', () => {
     '@namespace svg url(http://www.w3.org/2000/svg);',
   ])('removes %s', rule => {
     expect(style(`${rule}a{fill:red}`)).toBe(
-      '<svg><style>a{fill:red}</style></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>a{fill:red}</style></svg>'
     );
   });
 
@@ -1377,7 +1389,7 @@ describe('<style/> in HTML-context elements cannot smuggle markup', () => {
 
   it('keeps a normal <style> block', () => {
     expect(sanitizeSVG('<svg><style>a{fill:red}</style><rect/></svg>')).toBe(
-      '<svg><style>a{fill:red}</style><rect></rect></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>a{fill:red}</style><rect></rect></svg>'
     );
   });
 });
@@ -1409,7 +1421,7 @@ describe('CSS work per SVG is bounded', () => {
       'fill:x'
     );
     expect(sanitizeSVG(`<svg>${discarded.repeat(4)}${kept}</svg>`)).toBe(
-      '<svg></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
     );
   });
 
@@ -1426,19 +1438,21 @@ describe('CSS work per SVG is bounded', () => {
     )}</style>`;
     const kept = '<style>a{fill:red}</style>';
     expect(sanitizeSVG(`<svg>${discarded}${kept}</svg>`)).toBe(
-      '<svg><style>a{fill:red}</style></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>a{fill:red}</style></svg>'
     );
   });
 
   it('drops a single block over 32 KiB of raw CSS', () => {
     const block = `<style>a{fill:red}${' '.repeat(33 * 1024)}</style>`;
-    expect(sanitizeSVG(`<svg>${block}</svg>`)).toBe('<svg></svg>');
+    expect(sanitizeSVG(`<svg>${block}</svg>`)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    );
   });
 
   it('drops a block with more than 2000 CSS nodes', () => {
     const many = 'a{fill:red}'.repeat(1500); // 3000 nodes (rule + decl)
     expect(sanitizeSVG(`<svg><style>${many}</style></svg>`)).toBe(
-      '<svg></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
     );
     const few = 'a{fill:red}'.repeat(100);
     expect(sanitizeSVG(`<svg><style>${few}</style></svg>`)).toContain(
